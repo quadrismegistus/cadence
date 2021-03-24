@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle
 from collections import defaultdict,Counter
-from constraints import *
+from .constraints import *
 
 sortby_l=['stanza_i','line_i','word_i','word_ipa_i','syll_i']#,'phon_i']
 MIN_WORDS_IN_PHRASE=2
@@ -49,6 +49,11 @@ class Language(object):
         elif sylipa.startswith("`"):
             return 0.5
         return 0.0
+    def getstress_str(self,sylipa):
+        x=self.getstress(sylipa)
+        if x==1.0: return 'P'
+        if x==0.5: return 'S'
+        return 'U'
 
     def getweight(self,df_syll):
         ends_with_cons=df_syll.sort_values('phon_i')['phon_cons'].iloc[-1]==True
@@ -223,6 +228,7 @@ class Text(Unit):
                 for i,df_word in df.groupby(['word_i','word_ipa_i'])
                 for weight in self.lang.getstrength(df_word)
             ]
+            # df['']
 
 
         return self._df
@@ -250,7 +256,6 @@ class Text(Unit):
             if word_row_div: word_rows_div.append(word_row_div)
         
             from pprint import pprint
-            # pprint(word_rows_div)
             
             # gen combos
             all_combos = []
@@ -295,6 +300,13 @@ class Text(Unit):
             df_mcombo['*'+cname]=cfunc(df_mcombo)
         return df_mcombo
 
+    def combo2stress(self,word_ipas):
+        return '|'.join(
+            ''.join(
+                self.lang.getstress_str(s)
+                for s in w.split('.')
+            ) for w in word_ipas
+        )
 
     def parse_phonological_combo(self,df_combo):
         wordsyllsmeter_combos = self.all_metrical_combos(df_combo)
@@ -309,10 +321,15 @@ class Text(Unit):
             df_mcombo_parsed = self.parse_metrical_combo(df_mcombo)
             df_mcombo_parsed['meter_combo_i']=int(wi)
             df_mcombo_parsed['meter_combo_str']=''.join(df_mcombo['parse'])
+            df_mcombo_parsed['meter_combo_str_w']='|'.join(
+                ''.join(grp.sort_values('syll_i').parse)
+                for grpname,grp in df_mcombo.groupby('word_i')
+            )
+            # df_mcombo_parsed['line_combo_stress']=self.combo2stress(df_mcombo.word_ipa)
+            # df_mcombo_parsed['line_combo_ipa']=' '.join(df_mcombo_parsed.word_ipa)
             cstrcols=[col for col in df_mcombo_parsed.columns if col.startswith('*')]
             df_mcombo_parsed['*total']=df_mcombo_parsed[cstrcols].sum(axis=1)
-            
-            dfcols=['stanza_i','line_i','word_i','word_ipa_i','syll_i','meter_combo_i','meter_combo_str','parse']
+            dfcols=['stanza_i','line_i','word_i','word_ipa_i','syll_i','line_combo_stress','line_combo_ipa','meter_combo_i','meter_combo_str','meter_combo_str_w','parse']
             dfall=dfall.append(df_mcombo_parsed[
                 dfcols+cstrcols+['*total']
             ])
@@ -322,9 +339,18 @@ class Text(Unit):
         
         # df=self.df.groupby(('word_i','word_ipa_i'))
 
+    # def combos2stresses(self,line2combo):
+    #     # return dict(
+    #     #     (
+    #     #         line,
+
+    #     #     )
+    #     # )
+
 
     def parse(self):
         line2combos = self.all_phonological_combos()
+        # line2stressstr = 
         dfall=pd.DataFrame()
         for line_i,line_combos in tqdm(sorted(line2combos.items()),desc='Parsing lines',position=0):
             for ci,combo in enumerate(line_combos):
@@ -341,10 +367,9 @@ class Text(Unit):
         # join?
         idxcols=['stanza_i','line_i','word_i','word_ipa_i','syll_i']#,'phon_i']
         #newcols=idxcols[:2] + ['line_str','word_str','line_combo_i','meter_combo_i'] + idxcols[2:]
-        newcols=['stanza_i','line_i','line_str','line_combo_i','meter_combo_i','meter_combo_str','word_i','word_str','word_ipa_i','word_ipa','syll_i','syll_ipa','parse']
+        newcols=['stanza_i','line_i','line_str','line_combo_i','line_combo_stress','line_combo_ipa','meter_combo_i','meter_combo_str','meter_combo_str_w','word_i','word_str','word_ipa_i','word_ipa','syll_i','syll_ipa','parse']
         dfj=self._df.set_index(idxcols).join(dfall.set_index(idxcols)).reset_index()
         return dfj.sort_values(newcols)[newcols+list(set(dfj.columns)-set(newcols))].set_index(newcols)
-
 
 
 ## code 2 lang lookup
