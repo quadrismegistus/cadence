@@ -125,3 +125,13 @@ def pmap_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=Fa
 		**attrs
 	):
 		yield from group_iter
+
+
+
+
+
+
+### utils
+def printm(x):
+	from IPython.display import display,Markdown
+	display(Markdown(x))

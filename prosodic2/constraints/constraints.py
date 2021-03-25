@@ -44,15 +44,11 @@ DEFAULT_CONSTRAINTS = {
 
 
 
-def apply_constraints(df_mcombo,constraints=DEFAULT_CONSTRAINTS):
-    dfc=pd.DataFrame(df_mcombo)
-    # dfc['parse']=df_mcombo['parse']
+def apply_constraints(mpos_window,constraints=DEFAULT_CONSTRAINTS):
     total=None
+    dfc=pd.DataFrame(index=mpos_window.index)
     for cname,cfunc in constraints.items():
-        cvals=cfunc(df_mcombo)
-        cvals=pd.to_numeric(cvals,errors='coerce')
-        if total is None: total=cvals
-        else: total+=cvals
+        cvals=cfunc(mpos_window)
         dfc['*'+cname]=cvals
-    dfc['*total']=total
+    dfc['*total']=dfc.sum(axis=1)
     return dfc
