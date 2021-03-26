@@ -1,30 +1,30 @@
 Timer unit: 1e-06 s
 
-Total time: 0.067573 s
+Total time: 0.039222 s
 File: ../prosodic2/constraints/constraints.py
 Function: no_weak_peaks at line 13
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     13                                           def no_weak_peaks(df_mcombo):
-    14       150      67573.0    450.5    100.0      return np.multiply(df_mcombo.is_w, df_mcombo.is_peak)
+    14        98      39222.0    400.2    100.0      return np.multiply(df_mcombo.is_w, df_mcombo.is_peak)
 
-Total time: 0.317776 s
+Total time: 0.200118 s
 File: ../prosodic2/constraints/constraints.py
 Function: apply_constraints at line 47
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     47                                           def apply_constraints(mpos_window,constraints=DEFAULT_CONSTRAINTS):
-    48       150         56.0      0.4      0.0      total=None
-    49       150      42462.0    283.1     13.4      dfc=pd.DataFrame(index=mpos_window.index)
-    50       300        372.0      1.2      0.1      for cname,cfunc in constraints.items():
-    51       150      67911.0    452.7     21.4          cvals=cfunc(mpos_window)
-    52       150      82953.0    553.0     26.1          dfc['*'+cname]=cvals
-    53       150     123892.0    825.9     39.0      dfc['*total']=dfc.sum(axis=1)
-    54       150        130.0      0.9      0.0      return dfc
+    48        98         63.0      0.6      0.0      total=None
+    49        98      27156.0    277.1     13.6      dfc=pd.DataFrame(index=mpos_window.index)
+    50       196        227.0      1.2      0.1      for cname,cfunc in constraints.items():
+    51        98      39426.0    402.3     19.7          cvals=cfunc(mpos_window)
+    52        98      51782.0    528.4     25.9          dfc['*'+cname]=cvals
+    53        98      81385.0    830.5     40.7      dfc['*total']=dfc.sum(axis=1)
+    54        98         79.0      0.8      0.0      return dfc
 
-Total time: 0.000708 s
+Total time: 0.002291 s
 File: ../prosodic2/langs/english.py
 Function: parse at line 36
 
@@ -32,301 +32,440 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     36                                           def parse(line,incl_alt=True,**y):
     37                                           	return [
-    38         2          1.0      0.5      0.1  		{
+    38         3          6.0      2.0      0.3  		{
     39                                           			'word_i':word_i,
     40                                           			**word_dx
-    41         2        707.0    353.5     99.9  		} for word_i,word in enumerate(tokenize(line))
+    41         3       2285.0    761.7     99.7  		} for word_i,word in enumerate(tokenize(line))
     42                                           		for word_dx in get(word,incl_alt=incl_alt)
     43                                           	]
 
-Total time: 0.013334 s
+Total time: 0.029009 s
 File: ../prosodic2/langs/langs.py
 Function: line2df at line 20
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     20                                           def line2df(line_txt,lang=DEFAULT_LANG,sby=['word_i','word_ipa_i','syll_i'],incl_alt=INCL_ALT,**y):
-    21         2          3.0      1.5      0.0      func = CODE2LANG.get(lang, CODE2LANG[DEFAULT_LANG] )
-    22         2        720.0    360.0      5.4      ld=func(line_txt,incl_alt=incl_alt,**y)
-    23         2          1.0      0.5      0.0      if not ld: return pd.DataFrame()
-    24         2       3239.0   1619.5     24.3      df=pd.DataFrame(ld)
+    21         3          9.0      3.0      0.0      func = CODE2LANG.get(lang, CODE2LANG[DEFAULT_LANG] )
+    22         3       2329.0    776.3      8.0      ld=func(line_txt,incl_alt=incl_alt,**y)
+    23         3          7.0      2.3      0.0      if not ld: return pd.DataFrame()
+    24         3      10762.0   3587.3     37.1      df=pd.DataFrame(ld)
     25                                               # annotate proms
     26                                               # df=anno_proms(df)
-    27         2          4.0      2.0      0.0      try:
-    28         2       9367.0   4683.5     70.2          return df.sort_values(sby)[sby + [col for col in df.columns if col not in set(sby)]]
+    27         3          6.0      2.0      0.0      try:
+    28         3      15896.0   5298.7     54.8          return df.sort_values(sby)[sby + [col for col in df.columns if col not in set(sby)]]
     29                                               except KeyError:
     30                                                   return df
 
-Total time: 0.000194 s
+Total time: 2.1e-05 s
 File: ../prosodic2/langs/langs.py
 Function: getstress at line 61
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     61                                           def getstress(sylipa):
-    62       106         81.0      0.8     41.8      if not sylipa.strip(): return ' '
-    63       105         76.0      0.7     39.2      if sylipa.startswith("'"): return 1.0#""
-    64        59         25.0      0.4     12.9      elif sylipa.startswith("`"): return 0.5
-    65        59         12.0      0.2      6.2      return 0.0
+    62        17         10.0      0.6     47.6      if not sylipa.strip(): return ' '
+    63        17          5.0      0.3     23.8      if sylipa.startswith("'"): return 1.0#""
+    64         9          3.0      0.3     14.3      elif sylipa.startswith("`"): return 0.5
+    65         9          3.0      0.3     14.3      return 0.0
 
-Total time: 0.000458 s
-File: ../prosodic2/langs/langs.py
-Function: getstress_str at line 67
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-    67                                           def getstress_str(sylipa):
-    68        86        396.0      4.6     86.5      x=getstress(sylipa)
-    69        86         40.0      0.5      8.7      if x==1.0: return 'P'
-    70        48         12.0      0.2      2.6      if x==0.5: return 'S'
-    71        48         10.0      0.2      2.2      return 'U'
-
-Total time: 0.002425 s
+Total time: 0.001467 s
 File: ../prosodic2/langs/langs.py
 Function: getstrength at line 81
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     81                                           def getstrength(df_word):
-    82        13       2059.0    158.4     84.9      stresses=dict(zip(df_word.syll_i,df_word.prom_stress))
-    83        13          7.0      0.5      0.3      strengths={}
-    84        28         41.0      1.5      1.7      for si,(syll_i,syl) in enumerate(sorted(stresses.items())):
-    85        15         12.0      0.8      0.5          prv=stresses.get(syll_i-1)
-    86        15          7.0      0.5      0.3          nxt=stresses.get(syll_i+1)
-    87        15          7.0      0.5      0.3          if nxt!=None and prv!=None:
-    88         1          1.0      1.0      0.0              if syl>nxt or syl>prv:
+    82         7       1219.0    174.1     83.1      stresses=dict(zip(df_word.syll_i,df_word.prom_stress))
+    83         7          5.0      0.7      0.3      strengths={}
+    84        18         24.0      1.3      1.6      for si,(syll_i,syl) in enumerate(sorted(stresses.items())):
+    85        11          8.0      0.7      0.5          prv=stresses.get(syll_i-1)
+    86        11          6.0      0.5      0.4          nxt=stresses.get(syll_i+1)
+    87        11          9.0      0.8      0.6          if nxt!=None and prv!=None:
+    88                                                       if syl>nxt or syl>prv:
     89                                                           strength=1.0
-    90         1          1.0      1.0      0.0              elif syl<nxt or syl<prv:
+    90                                                       elif syl<nxt or syl<prv:
     91                                                           strength=0.0
     92                                                       else:
-    93         1          1.0      1.0      0.0                  strength=np.nan
-    94        14          4.0      0.3      0.2          elif prv==None and nxt!=None:
-    95         1          0.0      0.0      0.0              if syl>nxt:
-    96                                                           strength=1.0
-    97         1          0.0      0.0      0.0              elif syl<nxt:
+    93                                                           strength=np.nan
+    94        11          7.0      0.6      0.5          elif prv==None and nxt!=None:
+    95         4          2.0      0.5      0.1              if syl>nxt:
+    96         2          2.0      1.0      0.1                  strength=1.0
+    97         2          0.0      0.0      0.0              elif syl<nxt:
     98                                                           strength=0.0
     99                                                       else:
-   100         1          0.0      0.0      0.0                  strength=np.nan
-   101        13          5.0      0.4      0.2          elif prv!=None and nxt==None:
-   102         1          0.0      0.0      0.0              if syl>prv:
+   100         2          1.0      0.5      0.1                  strength=np.nan
+   101         7          4.0      0.6      0.3          elif prv!=None and nxt==None:
+   102         4          1.0      0.2      0.1              if syl>prv:
    103                                                           strength=1.0
-   104         1          0.0      0.0      0.0              elif syl<prv:
-   105                                                           strength=0.0
+   104         4          0.0      0.0      0.0              elif syl<prv:
+   105         2          0.0      0.0      0.0                  strength=0.0
    106                                                       else:
-   107         1          0.0      0.0      0.0                  strength=np.nan
-   108        12          7.0      0.6      0.3          elif prv==None and nxt==None:
-   109        12          8.0      0.7      0.3              strength=np.nan
+   107         2          1.0      0.5      0.1                  strength=np.nan
+   108         3          2.0      0.7      0.1          elif prv==None and nxt==None:
+   109         3          3.0      1.0      0.2              strength=np.nan
    110                                                   else:
    111                                                       raise Exception("How? -getstrength()")
    112                                                   #strengths.append(strength)
-   113        15         10.0      0.7      0.4          strengths[syll_i]=strength
+   113        11          6.0      0.5      0.4          strengths[syll_i]=strength
    114                                               return [
-   115        13          7.0      0.5      0.3          strengths.get(syll_i)
-   116        13        248.0     19.1     10.2          for syll_i in df_word.syll_i
+   115         7          6.0      0.9      0.4          strengths.get(syll_i)
+   116         7        161.0     23.0     11.0          for syll_i in df_word.syll_i
    117                                               ]
 
-Total time: 0.42658 s
+Total time: 18.9626 s
 File: ../prosodic2/parsers/metrics.py
-Function: parse_lines at line 3
+Function: parse_lines at line 28
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-     3                                           def parse_lines(df_phon,num_proc=1,keep_best=KEEP_BEST,**y):
-     4         1          1.0      1.0      0.0      yield from pmap_groups(
-     5         1          1.0      1.0      0.0          parse_line,
-     6         1        413.0    413.0      0.1          df_phon.groupby(['stanza_i','line_i']),
-     7         1          1.0      1.0      0.0          num_proc=num_proc,
-     8         1          1.0      1.0      0.0          kwargs=dict(keep_best=keep_best,num_proc=1),
-     9         1          0.0      0.0      0.0          progress=True,
-    10         1          1.0      1.0      0.0          desc='Parsing lines',
-    11         1     426162.0 426162.0     99.9          **y
-    12                                               )
+    28                                           def parse_lines(df_phon,num_proc=1,keep_best=KEEP_BEST,**y):
+    29         1          1.0      1.0      0.0      yield from pmap_groups(
+    30         1          0.0      0.0      0.0          parse_line,
+    31         1        318.0    318.0      0.0          df_phon.groupby(['stanza_i','line_i']),
+    32         1          1.0      1.0      0.0          num_proc=num_proc,
+    33         1          1.0      1.0      0.0          kwargs=dict(keep_best=keep_best,num_proc=1),
+    34         1          0.0      0.0      0.0          progress=True,
+    35         1          0.0      0.0      0.0          desc='Parsing lines',
+    36         1   18962317.0 18962317.0    100.0          **y
+    37                                               )
 
-Total time: 1.09825 s
+Total time: 0.116131 s
 File: ../prosodic2/parsers/metrics.py
-Function: combos2windows at line 22
+Function: line2combos at line 47
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    22                                           def combos2windows(df_combos,window_len=3,maxS=2,maxW=2):
-    23         2          2.0      1.0      0.0      windows_done=set()
-    24         2          2.0      1.0      0.0      window=[]
-    25        11       3386.0    307.8      0.3      for i_combo,dfcombo in df_combos.groupby('line_combo_i'):
-    26        95      13459.0    141.7      1.2          for i,row in dfcombo.iterrows():
-    27                                                       # loop windows
-    28        86        303.0      3.5      0.0              window=window[1:]+[row] if len(window)>=window_len else window+[row]
-    29        86         88.0      1.0      0.0              if len(window)<window_len: continue
-    30                                           
-    31                                                       # unique windows
-    32        82       4178.0     51.0      0.4              window_key = tuple(row.syll_ipa for row in window)
-    33                                                       # window_key = (i_combo,i)
-    34        82        108.0      1.3      0.0              if window_key in windows_done: continue
-    35        25         42.0      1.7      0.0              windows_done|={window_key}
-    36                                           
-    37                                                       # loop metrical possibilities
-    38        25        616.0     24.6      0.1              poss = list(product(*[('w','s') for n in range(window_len)]))
-    39        25         93.0      3.7      0.0              poss = [''.join(x) for x in poss]
-    40        25        126.0      5.0      0.0              poss = [x for x in poss if not maxS or x.count('s')<=maxS]
-    41        25         72.0      2.9      0.0              poss = [x for x in poss if not maxW or x.count('w')<=maxW]
-    42                                           
-    43       175        328.0      1.9      0.0              for parse_i,posx in enumerate(sorted(poss)):
-    44       150     426627.0   2844.2     38.8                  windowdf=pd.DataFrame(window)
-    45       150      90725.0    604.8      8.3                  windowdf['syll_parse']=[x for x in posx]
-    46       150      81027.0    540.2      7.4                  windowdf['parse']=posx
-    47       150      80354.0    535.7      7.3                  windowdf['parse_i']=parse_i
-    48       150     163359.0   1089.1     14.9                  windowdf['is_w']=(windowdf['syll_parse']=='w').apply(np.int32)
-    49       150     151960.0   1013.1     13.8                  windowdf['is_s']=(windowdf['syll_parse']=='s').apply(np.int32)
-    50       150      81187.0    541.2      7.4                  windowdf['window_i']=len(windows_done)-1
-    51       150        208.0      1.4      0.0                  yield windowdf
+    47                                           def line2combos(line_df,**y):
+    48         3      17798.0   5932.7     15.3      line_df=line_df.reset_index()
+    49                                               word_rows = [
+    50         3          5.0      1.7      0.0          set(list(zip(word_df.word_i, word_df.word_ipa_i)))                
+    51         3       7501.0   2500.3      6.5          for word_i,word_df in sorted(line_df.groupby('word_i'))
+    52                                               ]
+    53                                           
+    54         3          4.0      1.3      0.0      dfww=line_df#.groupby(['word_i','word_ipa_i'])
+    55         3          5.0      1.7      0.0      ii2row=defaultdict(list)
+    56        20       2848.0    142.4      2.5      for i,row in line_df.iterrows():
+    57        17        570.0     33.5      0.5          ik=(row.word_i, row.word_ipa_i)
+    58        17         32.0      1.9      0.0          ii2row[ik]+=[row]
+    59                                                   
+    60         3          1.0      0.3      0.0      o=[]
+    61         8         96.0     12.0      0.1      for ci,combo in enumerate(product(*word_rows)):
+    62                                                   combo_rows = [
+    63         5          6.0      1.2      0.0              y
+    64         5         24.0      4.8      0.0              for x in combo
+    65                                                       for y in ii2row[x]
+    66                                                   ]
+    67         5      22742.0   4548.4     19.6          combodf = pd.DataFrame(combo_rows).sort_values(['word_i','syll_i'])
+    68         5       3198.0    639.6      2.8          combodf['combo_i']=ci
+    69                                                   # combodf['window_key']=get_window_keys(combodf)
+    70         5         11.0      2.2      0.0          o+=[combodf]
+    71         3      10516.0   3505.3      9.1      odf=pd.concat(o)
+    72         3      50770.0  16923.3     43.7      odf=setindex(odf,LINEKEY)
+    73         3          4.0      1.3      0.0      return odf
 
-Total time: 2.60341 s
+Total time: 0.246534 s
 File: ../prosodic2/parsers/metrics.py
-Function: parse_line at line 53
+Function: get_unique_windows at line 76
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    53                                           def parse_line(line_df,num_proc=1,by_line=True,keep_best=KEEP_BEST,addback_str=False,**y):
-    54         2     186360.0  93180.0      7.2      df_combos = pd.concat(line2combos(line_df))
-    55         2    1274948.0 637474.0     49.0      df_windows = pd.concat(combos2windows(df_combos))
-    56                                               # print(len(df_combos),'-->',len(df_windows))
-    57                                           
-    58         2          3.0      1.5      0.0      out = pmap_groups(
-    59         2          1.0      0.5      0.0          do_parse_window,
-    60         2        779.0    389.5      0.0          df_windows.groupby(['window_i','parse_i']),
-    61         2          1.0      0.5      0.0          num_proc=num_proc,
-    62         2          0.0      0.0      0.0          progress=False,#num_proc==1,
-    63         2          1.0      0.5      0.0          desc='Parsing all combinations for line',
-    64         2          4.0      2.0      0.0          **y
-    65                                               )
-    66         2    1141311.0 570655.5     43.8      yield parses_by_line(pd.concat(out))# if by_line else out
+    76                                           def get_unique_windows(df_combos,window_len=3,rolling=True):
+    77         3          2.0      0.7      0.0      allwindows={}
+    78                                           
+    79         8      25266.0   3158.2     10.2      for ci,dfcombo in df_combos.reset_index().groupby('combo_i'):
+    80         5     119517.0  23903.4     48.5          combo_windows = get_windows_in_combo(dfcombo, window_len=window_len, rolling=rolling)
+    81        32         40.0      1.2      0.0          for window_key,windowdf in combo_windows:
+    82                                                       #print(window_key)
+    83                                                       #display(windowdf)
+    84                                                       #print()
+    85        27         10.0      0.4      0.0              if not window_key in allwindows:
+    86        19          8.0      0.4      0.0                  allwindows[window_key]=windowdf
+    87         3      55435.0  18478.3     22.5      dfo=pd.concat(allwindows.values()).drop('combo_i',1).drop('stanza_i',1).drop('line_i',1).drop_duplicates()
+    88         3      46256.0  15418.7     18.8      return setindex(dfo,['window_key','window_ii'] + LINEKEY)
 
-Total time: 0.606262 s
+Total time: 0.001694 s
 File: ../prosodic2/parsers/metrics.py
-Function: do_parse_window at line 69
+Function: possible_parses at line 90
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    69                                           def do_parse_window(df):
-    70                                               # apply constraints
-    71       150     318811.0   2125.4     52.6      dfc = apply_constraints(df)
-    72       150     287451.0   1916.3     47.4      yield df.join(dfc)
+    90                                           def possible_parses(window_len,maxS=2,maxW=2):
+    91        24        779.0     32.5     46.0      poss = list(product(*[('w','s') for n in range(window_len)]))
+    92        24        148.0      6.2      8.7      poss = [''.join(x) for x in poss]
+    93        24        638.0     26.6     37.7      poss = [x for x in poss if is_ok_parse(x,maxS=maxS,maxW=maxW)]
+    94        24         64.0      2.7      3.8      poss = [x for x in poss if len(x)==window_len]
+    95        24         53.0      2.2      3.1      poss = list(set(poss))
+    96        24         12.0      0.5      0.7      return poss
 
-Total time: 0.282289 s
+Total time: 0.299705 s
 File: ../prosodic2/parsers/metrics.py
-Function: parses_by_line at line 74
+Function: setindex at line 99
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    74                                           def parses_by_line(df_parses, keep_best=1, maxS=2, maxW=2):
-    75         2       4309.0   2154.5      1.5      df=df_parses.sort_values(['parse_i','window_i'])
-    76                                           
-    77                                               combos = [
-    78         2          4.0      2.0      0.0          pd.concat([pdf for parse_i,pdf in sorted(wdf.groupby('parse_i'))])
-    79         2     185477.0  92738.5     65.7          for window_i,wdf in sorted(df.groupby('window_i'))
-    80                                               ]
-    81                                               combos_meta = [
-    82         2          5.0      2.5      0.0          (i,combodf.drop_duplicates(['stanza_i','line_i','line_combo_i','word_i','word_ipa_i','syll_i','parse_i']))
-    83         2      89017.0  44508.5     31.5          for i,combodf in enumerate(combos)
-    84                                               ]
-    85                                               combos_parses = [
-    86         2          4.0      2.0      0.0          (i,''.join(combodfmeta.syll_parse))
-    87         2       2284.0   1142.0      0.8          for i,combodfmeta in combos_meta
-    88                                               ]
-    89                                               ok_combo_is = [
-    90         2          4.0      2.0      0.0          i
-    91         2         17.0      8.5      0.0          for i,parse in enumerate(combos_parses)
-    92                                                   if ('s'*(maxS+1)) not in parse and ('w'*(maxW+1)) not in parse
-    93                                               ]
-    94                                           
-    95         2        188.0     94.0      0.1      print(len(combos),len(ok_combo_is))
-    96         2        980.0    490.0      0.3      return pd.DataFrame()
-    97                                           
-    98                                           
-    99                                               # print(len(combos), combos)
-   100                                               all_combos = list(product(*combos))
-   101                                               # print(len(all_combos),all_combos)
-   102                                               
-   103                                               alldf=pd.DataFrame()
-   104                                               for combo_i,combo in enumerate(all_combos):
-   105                                                   combodf=pd.concat(combo)
-   106                                                   combodf_meta=combodf.drop_duplicates(['stanza_i','line_i','line_combo_i','word_i','word_ipa_i','syll_i','parse_i'])
-   107                                                   combodf_meta['parse']=parse=''.join(combodf_meta.syll_parse)
-   108                                                   display(combodf_meta)
-   109                                                   stop
-   110                                                   # print(combodf.columns)
-   111                                                   # stop
-   112                                                   combodf_avg = combodf.fillna(0).groupby(
-   113                                                       # ['stanza_i','line_i','word_i','word_ipa_i','syll_i']
-   114                                                       ['stanza_i','line_i','line_combo_i','parse_i','parse']
-   115                                                   ).mean().reset_index()
-   116                                                   combodf['combo_i']=combo_i
-   117                                                   display(combodf)
-   118                                                   stop
-   119                                                   alldf=alldf.append(combodf)
-   120                                               print(alldf.columns)
-   121                                               print(alldf.shape)
-   122                                               stop
+    99                                           def setindex(df,key):
+   100        18          8.0      0.4      0.0      cols=[]
+   101       327         93.0      0.3      0.0      for x in key:
+   102       309       1118.0      3.6      0.4          if not x in set(cols) and x in set(df.columns):
+   103       171         58.0      0.3      0.0              cols.append(x)
+   104        18     298428.0  16579.3     99.6      return df.sort_values(cols).set_index(cols).sort_index()
 
-Total time: 0.176548 s
+Total time: 0.835889 s
 File: ../prosodic2/parsers/metrics.py
-Function: line2combos at line 126
+Function: get_metrical_possibilities at line 107
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   126                                           def line2combos(line_df,**y):
-   127                                               word_rows = [
-   128         2          2.0      1.0      0.0          set(list(zip(word_df.word_i, word_df.word_ipa_i, word_df.word_ipa)))                
-   129                                                   # set(list(zip(word_df.word_i, word_df.word_ipa_i, word_df.word_ipa)))                
-   130         2       7616.0   3808.0      4.3          for word_i,word_df in sorted(line_df.groupby('word_i'))
-   131                                               ]
-   132                                           
-   133                                               # divide at blank points
-   134         2          3.0      1.5      0.0      word_rows_div=[]
-   135         2          2.0      1.0      0.0      word_row_div = []
-   136        17         17.0      1.0      0.0      for wordforms in word_rows:
-   137                                                   # split into phrases?
-   138        15         23.0      1.5      0.0          if len(wordforms)==1 and not list(wordforms)[0][-1].strip():
-   139         1          2.0      2.0      0.0              if len(word_row_div)>=MIN_WORDS_IN_PHRASE:
-   140         1          1.0      1.0      0.0                  word_rows_div.append(word_row_div)
-   141         1          1.0      1.0      0.0                  word_row_div=[]
-   142                                                   else:
-   143        14         16.0      1.1      0.0              word_row_div.append(wordforms)
-   144         2          3.0      1.5      0.0      if word_row_div: word_rows_div.append(word_row_div)
-   145                                           
-   146         2         15.0      7.5      0.0      from pprint import pprint
-   147                                               
-   148                                               # gen combos
-   149         2          2.0      1.0      0.0      all_combos = []
-   150         4          4.0      1.0      0.0      for word_row_div in word_rows_div:
-   151         2         79.0     39.5      0.0          combos = list(product(*word_row_div))
-   152         2          2.0      1.0      0.0          all_combos.extend(combos)
-   153                                               
-   154                                               # loop
-   155         2       1148.0    574.0      0.7      combo_dfs=pd.DataFrame()
-   156         2       3784.0   1892.0      2.1      ldf=line_df.set_index(['word_i','word_ipa_i'])
-   157        11         20.0      1.8      0.0      for combo_i,combo in enumerate(all_combos):
-   158                                                   # print(combo)
-   159         9      50919.0   5657.7     28.8          combo_df=pd.DataFrame(ldf.loc[[(cx[0],cx[1]) for cx in combo]].reset_index())
-   160                                                   # display(combo_df)
-   161         9       4935.0    548.3      2.8          combo_df['line_combo_i']=combo_i
-   162         9         15.0      1.7      0.0          combo_df['stress_parse']=''.join(
-   163         9         12.0      1.3      0.0              ''.join([getstress_str(sylipa) for sylipa in df_word.syll_ipa])
-   164         9      34693.0   3854.8     19.7              for i,df_word in combo_df.groupby(['word_i','word_ipa_i'])
-   165                                                   ).lower()
-   166         9         13.0      1.4      0.0          combo_df['stress_parse_ipa']='|'.join(
-   167         9         11.0      1.2      0.0              '.'.join(df_word.syll_ipa)
-   168         9      34078.0   3786.4     19.3              for i,df_word in combo_df.groupby(['word_i','word_ipa_i'])
-   169                                                   )#.lower()
-   170         9         15.0      1.7      0.0          combo_df['stress_parse_repr']='|'.join(
-   171         9         10.0      1.1      0.0              '.'.join([
-   172                                                           tok.upper() if stress>0 else tok.lower()
-   173                                                           for tok,stress in zip(df_word.syll_str, df_word.prom_stress)
-   174                                                       ])
-   175         9      39094.0   4343.8     22.1              for i,df_word in combo_df.groupby(['word_i','word_ipa_i'])
-   176                                                   )
-   177         9         13.0      1.4      0.0          yield combo_df
+   107                                           def get_metrical_possibilities(df_uniq_windows,maxS=2,maxW=2):
+   108         3       1364.0    454.7      0.2      df=pd.DataFrame()
+   109         3      17145.0   5715.0      2.1      dfuq=df_uniq_windows.reset_index()
+   110        22       7839.0    356.3      0.9      for window_i,wdf in dfuq[~dfuq.syll_i.isna()].groupby('window_key'):
+   111        19       9309.0    489.9      1.1          wdf=wdf.sort_values('window_ii')
+   112                                                   # display(wdf)
+   113                                                   # print(len(wdf))
+   114                                                   # stop
+   115        19         51.0      2.7      0.0          posnum=len(wdf)
+   116       117       1086.0      9.3      0.1          for pi,poss_parse in enumerate(possible_parses(posnum, maxS=maxS,maxW=maxW)):
+   117        98       1085.0     11.1      0.1              wdf2=pd.DataFrame(wdf)
+   118                                                       # wdf2['parse_i']=pi
+   119        98      21533.0    219.7      2.6              wdf2['mpos_parse']=str(poss_parse)
+   120        98      12764.0    130.2      1.5              wdf2['window_ii']=list(range(len(wdf2)))
+   121        98      21246.0    216.8      2.5              wdf2['syll_parse']=list(poss_parse)
+   122        98      71197.0    726.5      8.5              wdf2['is_w']=(wdf2['syll_parse']=='w').apply(np.int32)
+   123        98      68261.0    696.5      8.2              wdf2['is_s']=(wdf2['syll_parse']=='s').apply(np.int32)
+   124        98     545003.0   5561.3     65.2              df=df.append(wdf2)
+   125         3      58006.0  19335.3      6.9      return setindex(df,['window_key','mpos_parse','window_ii','syll_parse'] + LINEKEY)
 
-Total time: 1.7e-05 s
+Total time: 9.06023 s
+File: ../prosodic2/parsers/metrics.py
+Function: merge at line 134
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   134                                           def merge(x,y,on=[],left_on=[],right_on=[],how='outer'):
+   135       918        646.0      0.7      0.0      if type(on)==str: on=[on]
+   136       918        383.0      0.4      0.0      if on: left_on,right_on=on,on
+   137       918        308.0      0.3      0.0      if not (left_on and right_on): return 
+   138                                               
+   139       918       6722.0      7.3      0.1      xcols = set(x.columns)
+   140       918       2957.0      3.2      0.0      ycols = set(y.columns)
+   141                                               
+   142       918    1132504.0   1233.7     12.5      return x[xcols | set(left_on)].merge(
+   143       918    1141051.0   1243.0     12.6          y[(ycols - xcols) | set(right_on)],
+   144       918        793.0      0.9      0.0          left_on=left_on,
+   145       918        344.0      0.4      0.0          right_on=right_on,
+   146       918    6774521.0   7379.7     74.8          how=how
+   147                                               )
+
+Total time: 1.14827 s
+File: ../prosodic2/parsers/metrics.py
+Function: parse_windows at line 149
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   149                                           def parse_windows(df_metrical_poss,num_proc=1,progress=False,**y):
+   150         3      20217.0   6739.0      1.8      df_metrical_poss=df_metrical_poss.reset_index()
+   151                                               # parse
+   152         3          3.0      1.0      0.0      out = pmap_groups(
+   153         3          1.0      0.3      0.0          do_parse_window,
+   154         3        932.0    310.7      0.1          df_metrical_poss.groupby(['window_key','mpos_parse']),
+   155         3          3.0      1.0      0.0          num_proc=num_proc,
+   156         3          1.0      0.3      0.0          progress=progress,
+   157         3          2.0      0.7      0.0          desc='Parsing all combinations for line',
+   158         3          6.0      2.0      0.0          **y
+   159                                               )
+   160         3    1060992.0 353664.0     92.4      df_parsed_windows=pd.concat(out)#.sort_values(['window_i','mpos_parse','word_i','syll_i'])
+   161         3      58077.0  19359.0      5.1      df_parsed_windows=setindex(df_parsed_windows,LINEKEY)
+   162                                               # mean by window type
+   163         3       8039.0   2679.7      0.7      dfm = df_parsed_windows.groupby(['window_key','mpos_parse','window_ii','syll_parse']).mean()
+   164         3          1.0      0.3      0.0      return dfm
+
+Total time: 0.209272 s
+File: ../prosodic2/parsers/metrics.py
+Function: get_window_key_from_slice at line 170
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   170                                           def get_window_key_from_slice(windowdf):
+   171       945        622.0      0.7      0.3      return "|".join(
+   172       945        433.0      0.5      0.2          f'{x.lower()}_{y}_{z}' if type(x)==str else ''
+   173       945     208217.0    220.3     99.5          for x,y,z in zip(windowdf.word_str, windowdf.syll_i, windowdf.syll_ipa))
+
+Total time: 4.29257 s
+File: ../prosodic2/parsers/metrics.py
+Function: get_windows_in_combo at line 176
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   176                                           def get_windows_in_combo(dfcombo,window_len=3,rolling=True):
+   177       143         72.0      0.5      0.0      allwindows=[]
+   178      1088    3099725.0   2849.0     72.2      for slicedf in rolling_slices(dfcombo,window_len=3):
+   179       945       7721.0      8.2      0.2          windowdf=pd.DataFrame(slicedf)
+   180       945     212273.0    224.6      4.9          window_key = get_window_key_from_slice(windowdf)
+   181       945     477582.0    505.4     11.1          windowdf['window_key']=str(window_key)
+   182                                                   # windowdf['window_i']=len(allwindows)
+   183       945     494114.0    522.9     11.5          windowdf['window_ii']=list(range(len(windowdf)))
+   184       945       1030.0      1.1      0.0          allwindows.append((window_key,windowdf))
+   185       143         57.0      0.4      0.0      return allwindows
+
+Total time: 18.2443 s
+File: ../prosodic2/parsers/metrics.py
+Function: rejoin_windows_and_combos at line 190
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   190                                           def rejoin_windows_and_combos(df_combos, df_parsed_windows, window_len=3, by_parse=True):
+   191         3      18617.0   6205.7      0.1      df_combos=df_combos.reset_index()
+   192         3      14159.0   4719.7      0.1      dfpw=df_parsed_windows.reset_index().set_index(['window_key','mpos_parse'])
+   193         3          3.0      1.0      0.0      o=[]
+   194         8       4186.0    523.2      0.0      for ci,dfcombo in df_combos.groupby('combo_i'):
+   195                                           
+   196       143       1053.0      7.4      0.0          for poss_i,poss_parse in enumerate(possible_parses(len(dfcombo))):
+   197       138       1473.0     10.7      0.0              dfparse=pd.DataFrame(dfcombo)
+   198       138      18771.0    136.0      0.1              dfparse['combo_i']=ci
+   199       138      18024.0    130.6      0.1              dfparse['parse_i']=poss_i
+   200       138      17633.0    127.8      0.1              dfparse['combo_parse_i']=len(o)
+   201       138      20850.0    151.1      0.1              dfparse['syll_parse']=list(poss_parse)
+   202                                           
+   203       138       2621.0     19.0      0.0              poss_parse_rows = []
+   204                                           
+   205      1056    4182396.0   3960.6     22.9              for window_key,window_df in get_windows_in_combo(dfparse):
+   206       918     238715.0    260.0      1.3                  mpos_key=''.join(window_df.syll_parse.dropna())
+   207       918    1761576.0   1918.9      9.7                  mstatdf=dfpw.loc[(window_key,mpos_key)].reset_index()
+   208       918       1094.0      1.2      0.0                  windowstatdf = merge(
+   209       918        554.0      0.6      0.0                      window_df,
+   210       918     698451.0    760.8      3.8                      mstatdf.reset_index(),
+   211       918       1043.0      1.1      0.0                      left_on=['window_key','window_ii'],
+   212       918        589.0      0.6      0.0                      right_on=['window_key','window_ii'],
+   213       918    9077445.0   9888.3     49.8                      how='outer'
+   214                                                           )
+   215       918     255893.0    278.8      1.4                  correct_row=windowstatdf.iloc[1]
+   216       918       1326.0      1.4      0.0                  poss_parse_rows+=[correct_row]
+   217                                                       
+   218                                                       # add back
+   219       138        101.0      0.7      0.0              if by_parse:
+   220       138    1863206.0  13501.5     10.2                  avg_row = avg_for_parse(poss_parse_rows)
+   221       138        142.0      1.0      0.0                  o+=[avg_row]
+   222                                                       else:
+   223                                                           o+=poss_parse_rows
+   224                                           
+   225         3       6446.0   2148.7      0.0      odf=pd.DataFrame(o)
+   226                                               # for col in odf.columns:
+   227                                                   # if col.endswith('_i') or col.endswith('_ii'):
+   228                                                       # odf[col]=odf[col].apply(int)
+   229         3       1312.0    437.3      0.0      odf=odf.sort_values('*total')
+   230         3      36586.0  12195.3      0.2      return setindex(odf,LINEKEY) if not by_parse else setindex(odf,PARSELINEKEY)
+
+Total time: 1.85831 s
+File: ../prosodic2/parsers/metrics.py
+Function: avg_for_parse at line 233
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   233                                           def avg_for_parse(rows):
+   234       138     488868.0   3542.5     26.3      dfparse=pd.DataFrame(rows)
+   235                                               
+   236       138     310890.0   2252.8     16.7      linestr = ' '.join(dfparse.drop_duplicates('word_i').word_str)
+   237       138     173437.0   1256.8      9.3      ipastr = ' '.join(dfparse.drop_duplicates('word_i').word_ipa)
+   238       138      52196.0    378.2      2.8      stressstr = ''.join(dfparse.prom_stress.apply(stressint2str))
+   239       138       3019.0     21.9      0.2      meterstr = ''.join(dfparse.syll_parse)
+   240                                           
+   241       138     816580.0   5917.2     43.9      statrow=dict(dfparse.mean())
+   242       138       2067.0     15.0      0.1      statrow=dict((k,v) for k,v in statrow.items() if not k in set(LINEKEY))
+   243      1104        616.0      0.6      0.0      for k in PARSELINEKEY:
+   244       966       1504.0      1.6      0.1          if k in dfparse.columns:
+   245       414       8787.0     21.2      0.5              statrow[k]=dfparse[k].iloc[0]
+   246       138         88.0      0.6      0.0      statrow['line_str']=linestr
+   247       138         62.0      0.4      0.0      statrow['line_ipa']=ipastr
+   248       138         75.0      0.5      0.0      statrow['stress']=stressstr
+   249       138         69.0      0.5      0.0      statrow['meter']=meterstr
+   250       138         54.0      0.4      0.0      return statrow
+
+Total time: 20.6532 s
+File: ../prosodic2/parsers/metrics.py
+Function: parse_line at line 255
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   255                                           def parse_line(line_df,num_proc=1,window_len=3,by_line=True,keep_best=KEEP_BEST,addback_str=False,**y):
+   256                                               """
+   257                                               Parse Line
+   258                                               """
+   259         3        110.0     36.7      0.0      pd.options.display.max_columns=None
+   260         3         68.0     22.7      0.0      pd.options.display.max_rows=100
+   261                                           
+   262                                               # line_df=line_df[[c for c in line_df.columns if not c in {'stanza_i','line_i'}]]
+   263         3      50393.0  16797.7      0.2      line_df=setindex(line_df,LINEKEY)
+   264                                               
+   265                                               # printm('## line df')
+   266                                               # display(line_df)
+   267                                           
+   268                                               # get all combos and window types
+   269         3          3.0      1.0      0.0      csby=['combo_i','word_i','word_ipa_i','syll_i']
+   270         3     116358.0  38786.0      0.6      df_combos = line2combos(line_df)
+   271                                               # printm('## df combos')
+   272                                               # display(df_combos)
+   273                                           
+   274                                               # # metrical pss for combos?
+   275                                               # all_combo_all_poss = get_metrical_possibilities(df_combos)
+   276                                               # printm('## all combo all poss')
+   277                                               # display(all_combo_all_poss)
+   278                                               # stop
+   279                                               
+   280                                               # get just the unique 3-syll windows
+   281         3     246761.0  82253.7      1.2      df_uniq_windows = get_unique_windows(df_combos,window_len=window_len)
+   282                                               # printm('## df_uniq_windows')
+   283                                               # display(df_uniq_windows)
+   284                                           
+   285                                               # add metrical pos
+   286                                               # printm('## df metrical poss')
+   287         3     836762.0 278920.7      4.1      df_metrical_poss = get_metrical_possibilities(df_uniq_windows)
+   288                                               # display(df_metrical_poss)
+   289                                           
+   290                                               # printm('## df_parsed_windows')
+   291         3    1148386.0 382795.3      5.6      df_parsed_windows=parse_windows(df_metrical_poss)
+   292                                               # display(df_parsed_windows.head(10))
+   293                                           
+   294                                               # connect back to original line df?
+   295                                               # printm('## df_rejoined')
+   296         3   18254337.0 6084779.0     88.4      df_rejoined = rejoin_windows_and_combos(df_combos, df_parsed_windows)
+   297                                               # display(df_rejoined)
+   298                                               # display(df_rejoined.head(100))
+   299         3          4.0      1.3      0.0      yield df_rejoined
+
+Total time: 0.000772 s
+File: ../prosodic2/parsers/metrics.py
+Function: stressint2str at line 327
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   327                                           def stressint2str(x):
+   328       918        441.0      0.5     57.1      if x==1.0: return 'p'
+   329       558        171.0      0.3     22.2      if x==0.5: return 's'
+   330       558        160.0      0.3     20.7      return 'u'
+
+Total time: 0.000216 s
+File: ../prosodic2/parsers/metrics.py
+Function: is_ok_parse at line 347
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   347                                           def is_ok_parse(parse,maxS=2,maxW=2):
+   348       520        216.0      0.4    100.0      return ('s'*(maxS+1)) not in parse and ('w'*(maxW+1)) not in parse
+
+Total time: 0.712913 s
+File: ../prosodic2/parsers/metrics.py
+Function: do_parse_window at line 350
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   350                                           def do_parse_window(windowdf):
+   351                                               # apply constraints
+   352        98     200833.0   2049.3     28.2      dfc = apply_constraints(windowdf)
+   353        98     512080.0   5225.3     71.8      yield windowdf[list(set(windowdf.columns) - set(dfc.columns))].join(dfc)
+
+Total time: 6.1e-05 s
 File: ../prosodic2/parsers/phonology.py
 Function: to_txt at line 4
 
@@ -334,83 +473,83 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
      4                                           def to_txt(txt_or_fn):
      5                                               # load txt
-     6         1          0.0      0.0      0.0      if not txt_or_fn: return
-     7         1         16.0     16.0     94.1      if os.path.exists(txt_or_fn):
+     6         1          2.0      2.0      3.3      if not txt_or_fn: return
+     7         1         56.0     56.0     91.8      if os.path.exists(txt_or_fn):
      8                                                   with open(txt_or_fn) as f:
      9                                                       txt=f.read()
     10                                               else:
-    11         1          1.0      1.0      5.9          txt=txt_or_fn
-    12         1          0.0      0.0      0.0      return txt
+    11         1          1.0      1.0      1.6          txt=txt_or_fn
+    12         1          2.0      2.0      3.3      return txt
 
-Total time: 3e-06 s
+Total time: 1.2e-05 s
 File: ../prosodic2/parsers/phonology.py
 Function: to_stanzas at line 17
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     17                                           def to_stanzas(full_txt):
-    18         1          3.0      3.0    100.0      return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
+    18         1         12.0     12.0    100.0      return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
 
-Total time: 2e-06 s
+Total time: 9e-06 s
 File: ../prosodic2/parsers/phonology.py
 Function: to_lines at line 21
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     21                                           def to_lines(stanza_txt):
-    22         1          2.0      2.0    100.0      return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
+    22         1          9.0      9.0    100.0      return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
 
-Total time: 0.019526 s
+Total time: 0.039681 s
 File: ../prosodic2/parsers/phonology.py
 Function: do_parse_phon at line 37
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     37                                           def do_parse_phon(obj):
-    38         2          1.0      0.5      0.0      stanza_i,line_i,line_txt,lang_code,incl_alt,kwargs = obj
-    39         2      13443.0   6721.5     68.8      df=line2df(line_txt,lang=lang_code,incl_alt=incl_alt,**kwargs)
-    40         2         53.0     26.5      0.3      cols=list(df.columns)
-    41         2       1904.0    952.0      9.8      df['stanza_i']=stanza_i
-    42         2       1375.0    687.5      7.0      df['line_i']=line_i
-    43         2          3.0      1.5      0.0      prefix=['stanza_i','line_i','word_i','word_ipa_i','syll_i']
-    44         2       2744.0   1372.0     14.1      df=df[prefix + [c for c in cols if c not in set(prefix)]]
-    45         2          3.0      1.5      0.0      return df
+    38         3          7.0      2.3      0.0      stanza_i,line_i,line_txt,lang_code,incl_alt,kwargs = obj
+    39         3      29106.0   9702.0     73.3      df=line2df(line_txt,lang=lang_code,incl_alt=incl_alt,**kwargs)
+    40         3         34.0     11.3      0.1      cols=list(df.columns)
+    41         3       2913.0    971.0      7.3      df['stanza_i']=stanza_i
+    42         3       2423.0    807.7      6.1      df['line_i']=line_i
+    43         3          5.0      1.7      0.0      prefix=['stanza_i','line_i','word_i','word_ipa_i','syll_i']
+    44         3       5187.0   1729.0     13.1      df=df[prefix + [c for c in cols if c not in set(prefix)]]
+    45         3          6.0      2.0      0.0      return df
 
-Total time: 0.035651 s
+Total time: 0.061316 s
 File: ../prosodic2/parsers/phonology.py
 Function: parse_phon at line 47
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     47                                           def parse_phon(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
-    48         1         20.0     20.0      0.1      full_txt=to_txt(txt_or_fn)
-    49         1          0.0      0.0      0.0      if not full_txt: return
+    48         1         92.0     92.0      0.2      full_txt=to_txt(txt_or_fn)
+    49         1          3.0      3.0      0.0      if not full_txt: return
     50                                           
     51                                               #stanza_iter = to_stanzas(full_txt) if not progress else tqdm(to_stanzas(full_txt),desc='Tokenizing and syllabifying')
     52                                           
     53                                           
-    54         1        640.0    640.0      1.8      df=pd.DataFrame()
-    55         1          0.0      0.0      0.0      objs=[]
+    54         1       2766.0   2766.0      4.5      df=pd.DataFrame()
+    55         1          4.0      4.0      0.0      objs=[]
     56                                           
-    57         2          6.0      3.0      0.0      for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt)):
-    58         3          5.0      1.7      0.0          for line_i,line_txt in enumerate(to_lines(stanza_txt)):
-    59         2          2.0      1.0      0.0              objs+=[(stanza_i,line_i,line_txt,lang,incl_alt,kwargs)]
+    57         2         27.0     13.5      0.0      for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt)):
+    58         4         24.0      6.0      0.0          for line_i,line_txt in enumerate(to_lines(stanza_txt)):
+    59         3         10.0      3.3      0.0              objs+=[(stanza_i,line_i,line_txt,lang,incl_alt,kwargs)]
     60                                               
-    61         1          1.0      1.0      0.0      df = pd.concat(
-    62         1          1.0      1.0      0.0          pmap(
-    63         1          1.0      1.0      0.0              do_parse_phon,
-    64         1          0.0      0.0      0.0              objs,
-    65         1          0.0      0.0      0.0              num_proc=num_proc,
-    66         1          0.0      0.0      0.0              desc='Tokenizing and syllabifying',
-    67         1      22766.0  22766.0     63.9              progress=progress
+    61         1          3.0      3.0      0.0      df = pd.concat(
+    62         1          2.0      2.0      0.0          pmap(
+    63         1          2.0      2.0      0.0              do_parse_phon,
+    64         1          2.0      2.0      0.0              objs,
+    65         1          2.0      2.0      0.0              num_proc=num_proc,
+    66         1          2.0      2.0      0.0              desc='Tokenizing and syllabifying',
+    67         1      47711.0  47711.0     77.8              progress=progress
     68                                                   )
     69                                               )
     70                                           
     71                                               # assign proms
-    72         1      12208.0  12208.0     34.2      assign_proms(df)
+    72         1      10665.0  10665.0     17.4      assign_proms(df)
     73         1          1.0      1.0      0.0      return df
 
-Total time: 0.012189 s
+Total time: 0.010648 s
 File: ../prosodic2/parsers/phonology.py
 Function: assign_proms at line 76
 
@@ -418,212 +557,236 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     76                                           def assign_proms(df):
     77                                               # set proms
-    78         1       1398.0   1398.0     11.5      df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
+    78         1       1353.0   1353.0     12.7      df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
     79                                               # # df['syll_weight']=[
     80                                               # #     weight
     81                                               # #     for i,df_syll in df.groupby(['word_i','word_ipa_i','syll_i'])
     82                                               # #     for weight in self.lang.getweight(df_syll)
     83                                               # # ]f
     84                                               df['prom_strength']=[
-    85         1          1.0      1.0      0.0          x
-    86         1       5768.0   5768.0     47.3          for i,df_word in df.groupby(['word_i','word_ipa_i'])
+    85         1          2.0      2.0      0.0          x
+    86         1       4967.0   4967.0     46.6          for i,df_word in df.groupby(['word_i','word_ipa_i'])
     87                                                   for x in getstrength(df_word)
     88                                               ]
     89                                               
-    90         1       1336.0   1336.0     11.0      df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
-    91         1       1000.0   1000.0      8.2      df['is_unstressed']=1-df['is_stressed']
-    92         1       1287.0   1287.0     10.6      df['is_peak']=(df['prom_strength']==True).apply(np.int32)
-    93         1       1399.0   1399.0     11.5      df['is_trough']=(df['prom_strength']==False).apply(np.int32)
+    90         1       1340.0   1340.0     12.6      df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
+    91         1        796.0    796.0      7.5      df['is_unstressed']=1-df['is_stressed']
+    92         1       1146.0   1146.0     10.8      df['is_peak']=(df['prom_strength']==True).apply(np.int32)
+    93         1       1044.0   1044.0      9.8      df['is_trough']=(df['prom_strength']==False).apply(np.int32)
 
-Total time: 2e-06 s
+Total time: 1e-05 s
 File: ../prosodic2/prosodic2.py
 Function: __init__ at line 13
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     13                                               def __init__(self,txt_or_fn,lang='en'):
-    14         1          0.0      0.0      0.0          self.txt_or_fn=txt_or_fn
-    15         1          0.0      0.0      0.0          self.lang=lang
-    16         1          1.0      1.0     50.0          self._df_phon={}
-    17         1          1.0      1.0     50.0          self._df_metr={}
+    14         1          3.0      3.0     30.0          self.txt_or_fn=txt_or_fn
+    15         1          3.0      3.0     30.0          self.lang=lang
+    16         1          2.0      2.0     20.0          self._df_phon={}
+    17         1          2.0      2.0     20.0          self._df_metr={}
 
-Total time: 0.035706 s
+Total time: 0.061408 s
 File: ../prosodic2/prosodic2.py
 Function: parse_phon at line 19
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     19                                               def parse_phon(self,**y):
-    20         1         19.0     19.0      0.1          key=hashstr(self.txt_or_fn,self.lang)[:12]
-    21         1          0.0      0.0      0.0          if key not in self._df_phon:
-    22         1      35686.0  35686.0     99.9              self._df_phon[key] = parse_phon(self.txt_or_fn, lang=self.lang,**y)
-    23         1          1.0      1.0      0.0          return self._df_phon[key]
+    20         1         26.0     26.0      0.0          key=hashstr(self.txt_or_fn,self.lang)[:12]
+    21         1          3.0      3.0      0.0          if key not in self._df_phon:
+    22         1      61379.0  61379.0    100.0              self._df_phon[key] = parse_phon(self.txt_or_fn, lang=self.lang,**y)
+    23         1          0.0      0.0      0.0          return self._df_phon[key]
 
-Total time: 2.65109 s
+Total time: 20.7261 s
 File: ../prosodic2/prosodic2.py
 Function: parse_meter at line 29
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
     29                                               def parse_meter(self,df=None,**y):
-    30         1         26.0     26.0      0.0          key=hashstr(y)[:12]
-    31         1          1.0      1.0      0.0          if not key in self._df_metr:
-    32         1      35709.0  35709.0      1.3              if df is None: df = self.parse_phon(**y)
+    30         1         48.0     48.0      0.0          key=hashstr(y)[:12]
+    31         1          4.0      4.0      0.0          if not key in self._df_metr:
+    32         1      61421.0  61421.0      0.3              if df is None: df = self.parse_phon(**y)
     33         1          0.0      0.0      0.0              l=[]
-    34         3    2615349.0 871783.0     98.7              for group in parse_lines(df,**y):
-    35         2          1.0      0.5      0.0                  yield group
-    36         2          2.0      1.0      0.0                  l+=[group]
+    34         4   20664662.0 5166165.5     99.7              for group in parse_lines(df,**y):
+    35         3          1.0      0.3      0.0                  yield group
+    36         3          3.0      1.0      0.0                  l+=[group]
     37         1          1.0      1.0      0.0              self._df_metr[key] = l
     38                                                   # return self._df_metr[key]
     39                                                   else:
     40                                                       yield from l
 
-Total time: 0.000154 s
+Total time: 3.08624 s
 File: ../prosodic2/tools/tools.py
-Function: product at line 12
+Function: rolling_slices at line 13
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    12                                           def product(*args):
-    13       116         45.0      0.4     29.2  	if not args:
-    14        27         14.0      0.5      9.1  		return iter(((),)) # yield tuple()
-    15        89         40.0      0.4     26.0  	return (items + (item,)
-    16        89         55.0      0.6     35.7  		for items in product(*args[:-1]) for item in args[-1])
+    13                                           def rolling_slices(df,window_len=3,incl_empty=True):
+    14       143      54675.0    382.3      1.8  	empty_row=pd.Series(dict((k,np.nan) for k in df.columns))
+    15       143        154.0      1.1      0.0  	nrad=(window_len - 1)//2
+    16      1088        857.0      0.8      0.0  	for i in range(len(df)):
+    17       945        428.0      0.5      0.0  		mini = i-nrad
+    18       945        423.0      0.4      0.0  		maxi = i+nrad
+    19                                           
+    20       945       4939.0      5.2      0.2  		irows=[]
+    21       945        457.0      0.5      0.0  		inames=[]
+    22      3780       3405.0      0.9      0.1  		for ii in range(mini,maxi+1):
+    23      2835       1718.0      0.6      0.1  			inames+=[ii]
+    24      2835       5142.0      1.8      0.2  			if ii<0 or ii>=len(df):
+    25       286        114.0      0.4      0.0  				if incl_empty:
+    26       286        147.0      0.5      0.0  					irows+=[empty_row]
+    27                                           			else:
+    28      2549     617649.0    242.3     20.0  				irows+=[df.iloc[ii]]
+    29       945    2396132.0   2535.6     77.6  		yield pd.DataFrame(irows,index=inames)
 
-Total time: 4e-05 s
+Total time: 0.000147 s
 File: ../prosodic2/tools/tools.py
-Function: hashstr at line 19
+Function: product at line 32
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    19                                           def hashstr(*x):
-    20         2          1.0      0.5      2.5  	import hashlib
-    21         2         39.0     19.5     97.5  	return hashlib.sha224(str(x).encode('utf-8')).hexdigest()
+    32                                           def product(*args):
+    33       114         54.0      0.5     36.7  	if not args:
+    34        27         17.0      0.6     11.6  		return iter(((),)) # yield tuple()
+    35        87         31.0      0.4     21.1  	return (items + (item,)
+    36        87         45.0      0.5     30.6  		for items in product(*args[:-1]) for item in args[-1])
 
-Total time: 0.024838 s
+Total time: 5e-05 s
 File: ../prosodic2/tools/tools.py
-Function: pmap_iter at line 27
+Function: hashstr at line 39
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    27                                           def pmap_iter(func, objs, args=[], kwargs={}, num_proc=DEFAULT_NUM_PROC, use_threads=False, progress=True, desc=None, **y):
-    28                                           	"""
-    29                                           	Yields results of func(obj) for each obj in objs
-    30                                           	Uses multiprocessing.Pool(num_proc) for parallelism.
-    31                                           	If use_threads, use ThreadPool instead of Pool.
-    32                                           	Results in any order.
-    33                                           	"""
-    34                                           	
-    35                                           	# imports
-    36         4          9.0      2.2      0.0  	import multiprocessing as mp
-    37         4         21.0      5.2      0.1  	from tqdm import tqdm
-    38                                           	
-    39                                           	# check num proc
-    40         4         62.0     15.5      0.2  	num_cpu = mp.cpu_count()
-    41         4          2.0      0.5      0.0  	if num_proc>num_cpu: num_proc=num_cpu
-    42                                           
-    43                                           	# if parallel
-    44         4          2.0      0.5      0.0  	if not desc: desc=f'Mapping {func.__name__}()'
-    45         4          5.0      1.2      0.0  	if desc: desc=f'{desc} [x{num_proc}]'
-    46         4          2.0      0.5      0.0  	if num_proc>1 and len(objs)>1:
-    47                                           
-    48                                           		# real objects
-    49                                           		objects = [(func,obj,args,kwargs) for obj in objs]
-    50                                           
-    51                                           		# create pool
-    52                                           		pool=mp.Pool(num_proc) if not use_threads else mp.pool.ThreadPool(num_proc)
-    53                                           
-    54                                           		# yield iter
-    55                                           		iterr = pool.imap(pmap_do, objects)
-    56                                           		
-    57                                           		for res in tqdm(iterr,total=len(objects),desc=desc) if progress else iterr:
-    58                                           			yield res
-    59                                           
-    60                                           		# Close the pool?
-    61                                           		pool.close()
-    62                                           		pool.join()
-    63                                           	else:
-    64                                           		# yield
-    65       158       4942.0     31.3     19.9  		for obj in (tqdm(objs,desc=desc) if progress else objs):
-    66       154      19793.0    128.5     79.7  			yield func(obj,*args,**kwargs)
+    39                                           def hashstr(*x):
+    40         2          9.0      4.5     18.0  	import hashlib
+    41         2         41.0     20.5     82.0  	return hashlib.sha224(str(x).encode('utf-8')).hexdigest()
 
-Total time: 0.021542 s
+Total time: 0.049902 s
 File: ../prosodic2/tools/tools.py
-Function: pmap at line 68
+Function: pmap_iter at line 47
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    68                                           def pmap(*x,**y):
-    69                                           	"""
-    70                                           	Non iterator version of pmap_iter
-    71                                           	"""
-    72                                           	# return as list
-    73         1      21542.0  21542.0    100.0  	return list(pmap_iter(*x,**y))
+    47                                           def pmap_iter(func, objs, args=[], kwargs={}, num_proc=DEFAULT_NUM_PROC, use_threads=False, progress=True, desc=None, **y):
+    48                                           	"""
+    49                                           	Yields results of func(obj) for each obj in objs
+    50                                           	Uses multiprocessing.Pool(num_proc) for parallelism.
+    51                                           	If use_threads, use ThreadPool instead of Pool.
+    52                                           	Results in any order.
+    53                                           	"""
+    54                                           	
+    55                                           	# imports
+    56         5         15.0      3.0      0.0  	import multiprocessing as mp
+    57         5         39.0      7.8      0.1  	from tqdm import tqdm
+    58                                           	
+    59                                           	# check num proc
+    60         5        142.0     28.4      0.3  	num_cpu = mp.cpu_count()
+    61         5          4.0      0.8      0.0  	if num_proc>num_cpu: num_proc=num_cpu
+    62                                           
+    63                                           	# if parallel
+    64         5          5.0      1.0      0.0  	if not desc: desc=f'Mapping {func.__name__}()'
+    65         5         14.0      2.8      0.0  	if desc: desc=f'{desc} [x{num_proc}]'
+    66         5          6.0      1.2      0.0  	if num_proc>1 and len(objs)>1:
+    67                                           
+    68                                           		# real objects
+    69                                           		objects = [(func,obj,args,kwargs) for obj in objs]
+    70                                           
+    71                                           		# create pool
+    72                                           		pool=mp.Pool(num_proc) if not use_threads else mp.pool.ThreadPool(num_proc)
+    73                                           
+    74                                           		# yield iter
+    75                                           		iterr = pool.imap(pmap_do, objects)
+    76                                           		
+    77                                           		for res in tqdm(iterr,total=len(objects),desc=desc) if progress else iterr:
+    78                                           			yield res
+    79                                           
+    80                                           		# Close the pool?
+    81                                           		pool.close()
+    82                                           		pool.join()
+    83                                           	else:
+    84                                           		# yield
+    85       109       9798.0     89.9     19.6  		for obj in (tqdm(objs,desc=desc) if progress else objs):
+    86       104      39879.0    383.5     79.9  			yield func(obj,*args,**kwargs)
 
-Total time: 2.13984 s
+Total time: 0.046015 s
 File: ../prosodic2/tools/tools.py
-Function: do_pmap_group at line 77
+Function: pmap at line 88
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    77                                           def do_pmap_group(obj,*args,**kwargs):
-    78       152        191.0      1.3      0.0  	import pandas as pd
-    79       152        132.0      0.9      0.0  	import types
-    80       152         76.0      0.5      0.0  	func,group_df,group_key,group_name = obj
-    81                                           	
-    82       152        179.0      1.2      0.0  	if type(group_name) not in {list,tuple}:group_name=[group_name]
-    83       152         74.0      0.5      0.0  	if type(group_df)==str: group_df=pd.read_pickle(group_df)
-    84                                           
-    85       152        129.0      0.8      0.0  	outgen=func(group_df,*args,**kwargs)
-    86                                           	# outdf=pd.concat(out) if isinstance(out, types.GeneratorType) else out
-    87       304    2086602.0   6863.8     97.5  	for outdf in outgen:
-    88       456      52407.0    114.9      2.4  		for x,y in zip(group_key,group_name): outdf[x]=y
-    89       152         46.0      0.3      0.0  		yield outdf
+    88                                           def pmap(*x,**y):
+    89                                           	"""
+    90                                           	Non iterator version of pmap_iter
+    91                                           	"""
+    92                                           	# return as list
+    93         1      46015.0  46015.0    100.0  	return list(pmap_iter(*x,**y))
 
-Total time: 2.14787 s
+Total time: 2.04009 s
 File: ../prosodic2/tools/tools.py
-Function: pmap_groups at line 92
+Function: do_pmap_group at line 97
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    92                                           def pmap_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
-    93         3         10.0      3.3      0.0  	import os,tempfile,pandas as pd
-    94         3         14.0      4.7      0.0  	from tqdm import tqdm
-    95                                           	
-    96                                           
-    97                                           	# get index/groupby col name(s)
-    98         3         13.0      4.3      0.0  	group_key=df_grouped.grouper.names
-    99                                           	# if not using cache
-   100                                           	# if not use_cache or attrs.get('num_proc',1)<2:
-   101         3       8165.0   2721.7      0.4  	if not use_cache or len(df_grouped)<2 or num_proc<2:
-   102                                           		objs=[
-   103         3          7.0      2.3      0.0  			(func,group_df,group_key,group_name)
-   104         3      14606.0   4868.7      0.7  			for group_name,group_df in df_grouped
-   105                                           		]
-   106                                           	else:
-   107                                           		objs=[]
-   108                                           		tmpdir=tempfile.mkdtemp()
-   109                                           		# for i,(group_name,group_df) in enumerate(tqdm(list(df_grouped),desc='Preparing input')):
-   110                                           		for i,(group_name,group_df) in enumerate(df_grouped):
-   111                                           			tmp_path = os.path.join(tmpdir, str(i)+'.pkl')
-   112                                           			# print([i,group_name,tmp_path,group_df])
-   113                                           			group_df.to_pickle(tmp_path)
-   114                                           			objs+=[(func,tmp_path,group_key,group_name)]
-   115                                           
-   116                                           	# desc?
-   117         3          7.0      2.3      0.0  	if not attrs.get('desc'): attrs['desc']=f'Mapping {func.__name__}'
-   118                                           
-   119                                           	#iterfunc = pmap if not iter else pmap_iter
-   120                                           	#return pd.concat(iterfunc) if not iter else
-   121         3          4.0      1.3      0.0  	for group_iter in pmap_iter(
-   122         3          2.0      0.7      0.0  		do_pmap_group,
-   123         3          2.0      0.7      0.0  		objs,
-   124         3          1.0      0.3      0.0  		num_proc=num_proc,
-   125       155       4043.0     26.1      0.2  		**attrs
-   126                                           	):
-   127       152    2120995.0  13953.9     98.7  		yield from group_iter
+    97                                           def do_pmap_group(obj,*args,**kwargs):
+    98       101        104.0      1.0      0.0  	import pandas as pd
+    99       101         79.0      0.8      0.0  	import types
+   100       101         41.0      0.4      0.0  	func,group_df,group_key,group_name = obj
+   101                                           	
+   102       101        107.0      1.1      0.0  	if type(group_name) not in {list,tuple}:group_name=[group_name]
+   103       101         52.0      0.5      0.0  	if type(group_df)==str: group_df=pd.read_pickle(group_df)
+   104                                           
+   105       101         81.0      0.8      0.0  	outgen=func(group_df,*args,**kwargs)
+   106                                           	# outdf=pd.concat(out) if isinstance(out, types.GeneratorType) else out
+   107       202    2003767.0   9919.6     98.2  	for outdf in outgen:
+   108       303      35829.0    118.2      1.8  		for x,y in zip(group_key,group_name): outdf[x]=y
+   109       101         29.0      0.3      0.0  		yield outdf
 
-Total time: 0.001895 s
+Total time: 2.04445 s
+File: ../prosodic2/tools/tools.py
+Function: pmap_groups at line 112
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   112                                           def pmap_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
+   113         4         13.0      3.2      0.0  	import os,tempfile,pandas as pd
+   114         4         19.0      4.8      0.0  	from tqdm import tqdm
+   115                                           	
+   116                                           
+   117                                           	# get index/groupby col name(s)
+   118         4         18.0      4.5      0.0  	group_key=df_grouped.grouper.names
+   119                                           	# if not using cache
+   120                                           	# if not use_cache or attrs.get('num_proc',1)<2:
+   121         4       7634.0   1908.5      0.4  	if not use_cache or len(df_grouped)<2 or num_proc<2:
+   122                                           		objs=[
+   123         4          6.0      1.5      0.0  			(func,group_df,group_key,group_name)
+   124         4      13805.0   3451.2      0.7  			for group_name,group_df in df_grouped
+   125                                           		]
+   126                                           	else:
+   127                                           		objs=[]
+   128                                           		tmpdir=tempfile.mkdtemp()
+   129                                           		# for i,(group_name,group_df) in enumerate(tqdm(list(df_grouped),desc='Preparing input')):
+   130                                           		for i,(group_name,group_df) in enumerate(df_grouped):
+   131                                           			tmp_path = os.path.join(tmpdir, str(i)+'.pkl')
+   132                                           			# print([i,group_name,tmp_path,group_df])
+   133                                           			group_df.to_pickle(tmp_path)
+   134                                           			objs+=[(func,tmp_path,group_key,group_name)]
+   135                                           
+   136                                           	# desc?
+   137         4          7.0      1.8      0.0  	if not attrs.get('desc'): attrs['desc']=f'Mapping {func.__name__}'
+   138                                           
+   139                                           	#iterfunc = pmap if not iter else pmap_iter
+   140                                           	#return pd.concat(iterfunc) if not iter else
+   141         4          3.0      0.8      0.0  	for group_iter in pmap_iter(
+   142         4          3.0      0.8      0.0  		do_pmap_group,
+   143         4          2.0      0.5      0.0  		objs,
+   144         4          3.0      0.8      0.0  		num_proc=num_proc,
+   145       105       4405.0     42.0      0.2  		**attrs
+   146                                           	):
+   147       101    2018537.0  19985.5     98.7  		yield from group_iter
+
+Total time: 0.004965 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: __init__ at line 826
 
@@ -752,33 +915,33 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    946                                                   -------
    947                                                   out  : decorated iterator.
    948                                                   """
-   949         2          2.0      1.0      0.1          if write_bytes is None:
-   950         2          5.0      2.5      0.3              write_bytes = file is None and sys.version_info < (3,)
+   949         2          7.0      3.5      0.1          if write_bytes is None:
+   950         2          9.0      4.5      0.2              write_bytes = file is None and sys.version_info < (3,)
    951                                           
-   952         2          2.0      1.0      0.1          if file is None:
-   953         2          2.0      1.0      0.1              file = sys.stderr
+   952         2          6.0      3.0      0.1          if file is None:
+   953         2          6.0      3.0      0.1              file = sys.stderr
    954                                           
-   955         2          0.0      0.0      0.0          if write_bytes:
+   955         2          6.0      3.0      0.1          if write_bytes:
    956                                                       # Despite coercing unicode into bytes, py2 sys.std* streams
    957                                                       # should have bytes written to them.
    958                                                       file = SimpleTextIOWrapper(
    959                                                           file, encoding=getattr(file, 'encoding', None) or 'utf-8')
    960                                           
-   961         2         28.0     14.0      1.5          file = DisableOnWriteError(file, tqdm_instance=self)
+   961         2         67.0     33.5      1.3          file = DisableOnWriteError(file, tqdm_instance=self)
    962                                           
-   963         2          2.0      1.0      0.1          if disable is None and hasattr(file, "isatty") and not file.isatty():
+   963         2          5.0      2.5      0.1          if disable is None and hasattr(file, "isatty") and not file.isatty():
    964                                                       disable = True
    965                                           
-   966         2          2.0      1.0      0.1          if total is None and iterable is not None:
-   967         2          2.0      1.0      0.1              try:
-   968         2          2.0      1.0      0.1                  total = len(iterable)
+   966         2          6.0      3.0      0.1          if total is None and iterable is not None:
+   967         2          4.0      2.0      0.1              try:
+   968         2          7.0      3.5      0.1                  total = len(iterable)
    969                                                       except (TypeError, AttributeError):
    970                                                           total = None
-   971         2          4.0      2.0      0.2          if total == float("inf"):
+   971         2         12.0      6.0      0.2          if total == float("inf"):
    972                                                       # Infinite iterations, behave same as unknown
    973                                                       total = None
    974                                           
-   975         2          1.0      0.5      0.1          if disable:
+   975         2          5.0      2.5      0.1          if disable:
    976                                                       self.iterable = iterable
    977                                                       self.disable = disable
    978                                                       with self._lock:
@@ -789,7 +952,7 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    983                                                       self.leave = leave
    984                                                       return
    985                                           
-   986         2          2.0      1.0      0.1          if kwargs:
+   986         2          7.0      3.5      0.1          if kwargs:
    987                                                       self.disable = True
    988                                                       with self._lock:
    989                                                           self.pos = self._get_free_pos(self)
@@ -803,127 +966,127 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    997                                                           TqdmKeyError("Unknown argument(s): " + str(kwargs)))
    998                                           
    999                                                   # Preprocess the arguments
-  1000         2          2.0      1.0      0.1          if ((ncols is None or nrows is None) and
-  1001         2          7.0      3.5      0.4              (file in (sys.stderr, sys.stdout))) or \
+  1000         2          6.0      3.0      0.1          if ((ncols is None or nrows is None) and
+  1001         2         20.0     10.0      0.4              (file in (sys.stderr, sys.stdout))) or \
   1002                                                           dynamic_ncols:  # pragma: no cover
-  1003         2          2.0      1.0      0.1              if dynamic_ncols:
+  1003         2          6.0      3.0      0.1              if dynamic_ncols:
   1004                                                           dynamic_ncols = _screen_shape_wrapper()
   1005                                                           if dynamic_ncols:
   1006                                                               ncols, nrows = dynamic_ncols(file)
   1007                                                       else:
-  1008         2          5.0      2.5      0.3                  _dynamic_ncols = _screen_shape_wrapper()
-  1009         2          2.0      1.0      0.1                  if _dynamic_ncols:
-  1010         2         78.0     39.0      4.1                      _ncols, _nrows = _dynamic_ncols(file)
-  1011         2          2.0      1.0      0.1                      if ncols is None:
-  1012         2          2.0      1.0      0.1                          ncols = _ncols
-  1013         2          2.0      1.0      0.1                      if nrows is None:
-  1014         2          2.0      1.0      0.1                          nrows = _nrows
+  1008         2         13.0      6.5      0.3                  _dynamic_ncols = _screen_shape_wrapper()
+  1009         2          5.0      2.5      0.1                  if _dynamic_ncols:
+  1010         2        163.0     81.5      3.3                      _ncols, _nrows = _dynamic_ncols(file)
+  1011         2          6.0      3.0      0.1                      if ncols is None:
+  1012         2          5.0      2.5      0.1                          ncols = _ncols
+  1013         2          4.0      2.0      0.1                      if nrows is None:
+  1014         2          6.0      3.0      0.1                          nrows = _nrows
   1015                                           
-  1016         2          2.0      1.0      0.1          if miniters is None:
-  1017         2          2.0      1.0      0.1              miniters = 0
-  1018         2          2.0      1.0      0.1              dynamic_miniters = True
+  1016         2          6.0      3.0      0.1          if miniters is None:
+  1017         2          6.0      3.0      0.1              miniters = 0
+  1018         2          6.0      3.0      0.1              dynamic_miniters = True
   1019                                                   else:
   1020                                                       dynamic_miniters = False
   1021                                           
-  1022         2          2.0      1.0      0.1          if mininterval is None:
+  1022         2          6.0      3.0      0.1          if mininterval is None:
   1023                                                       mininterval = 0
   1024                                           
-  1025         2          2.0      1.0      0.1          if maxinterval is None:
+  1025         2          6.0      3.0      0.1          if maxinterval is None:
   1026                                                       maxinterval = 0
   1027                                           
-  1028         2          2.0      1.0      0.1          if ascii is None:
-  1029         2         11.0      5.5      0.6              ascii = not _supports_unicode(file)
+  1028         2          6.0      3.0      0.1          if ascii is None:
+  1029         2         28.0     14.0      0.6              ascii = not _supports_unicode(file)
   1030                                           
-  1031         2          1.0      0.5      0.1          if bar_format and not ((ascii is True) or _is_ascii(ascii)):
+  1031         2          6.0      3.0      0.1          if bar_format and not ((ascii is True) or _is_ascii(ascii)):
   1032                                                       # Convert bar format into unicode since terminal uses unicode
   1033                                                       bar_format = _unicode(bar_format)
   1034                                           
-  1035         2          2.0      1.0      0.1          if smoothing is None:
+  1035         2          6.0      3.0      0.1          if smoothing is None:
   1036                                                       smoothing = 0
   1037                                           
   1038                                                   # Store the arguments
-  1039         2         20.0     10.0      1.1          self.iterable = iterable
-  1040         2          3.0      1.5      0.2          self.desc = desc or ''
-  1041         2          2.0      1.0      0.1          self.total = total
-  1042         2          2.0      1.0      0.1          self.leave = leave
-  1043         2          2.0      1.0      0.1          self.fp = file
-  1044         2          2.0      1.0      0.1          self.ncols = ncols
-  1045         2          2.0      1.0      0.1          self.nrows = nrows
-  1046         2          2.0      1.0      0.1          self.mininterval = mininterval
-  1047         2          3.0      1.5      0.2          self.maxinterval = maxinterval
-  1048         2          2.0      1.0      0.1          self.miniters = miniters
-  1049         2          2.0      1.0      0.1          self.dynamic_miniters = dynamic_miniters
-  1050         2          2.0      1.0      0.1          self.ascii = ascii
-  1051         2          2.0      1.0      0.1          self.disable = disable
-  1052         2          2.0      1.0      0.1          self.unit = unit
-  1053         2          2.0      1.0      0.1          self.unit_scale = unit_scale
-  1054         2          2.0      1.0      0.1          self.unit_divisor = unit_divisor
-  1055         2          2.0      1.0      0.1          self.initial = initial
-  1056         2          2.0      1.0      0.1          self.lock_args = lock_args
-  1057         2          1.0      0.5      0.1          self.gui = gui
-  1058         2          2.0      1.0      0.1          self.dynamic_ncols = dynamic_ncols
-  1059         2          1.0      0.5      0.1          self.smoothing = smoothing
-  1060         2          2.0      1.0      0.1          self.avg_time = None
-  1061         2          2.0      1.0      0.1          self.bar_format = bar_format
-  1062         2          3.0      1.5      0.2          self.postfix = None
-  1063         2          2.0      1.0      0.1          self.colour = colour
-  1064         2          2.0      1.0      0.1          self._time = time
-  1065         2          2.0      1.0      0.1          if postfix:
+  1039         2          8.0      4.0      0.2          self.iterable = iterable
+  1040         2          6.0      3.0      0.1          self.desc = desc or ''
+  1041         2          6.0      3.0      0.1          self.total = total
+  1042         2          6.0      3.0      0.1          self.leave = leave
+  1043         2          7.0      3.5      0.1          self.fp = file
+  1044         2          6.0      3.0      0.1          self.ncols = ncols
+  1045         2          6.0      3.0      0.1          self.nrows = nrows
+  1046         2          5.0      2.5      0.1          self.mininterval = mininterval
+  1047         2          6.0      3.0      0.1          self.maxinterval = maxinterval
+  1048         2          6.0      3.0      0.1          self.miniters = miniters
+  1049         2          6.0      3.0      0.1          self.dynamic_miniters = dynamic_miniters
+  1050         2          6.0      3.0      0.1          self.ascii = ascii
+  1051         2        384.0    192.0      7.7          self.disable = disable
+  1052         2         11.0      5.5      0.2          self.unit = unit
+  1053         2          7.0      3.5      0.1          self.unit_scale = unit_scale
+  1054         2          6.0      3.0      0.1          self.unit_divisor = unit_divisor
+  1055         2          8.0      4.0      0.2          self.initial = initial
+  1056         2          7.0      3.5      0.1          self.lock_args = lock_args
+  1057         2          6.0      3.0      0.1          self.gui = gui
+  1058         2          7.0      3.5      0.1          self.dynamic_ncols = dynamic_ncols
+  1059         2          7.0      3.5      0.1          self.smoothing = smoothing
+  1060         2          6.0      3.0      0.1          self.avg_time = None
+  1061         2          5.0      2.5      0.1          self.bar_format = bar_format
+  1062         2          5.0      2.5      0.1          self.postfix = None
+  1063         2          6.0      3.0      0.1          self.colour = colour
+  1064         2          7.0      3.5      0.1          self._time = time
+  1065         2          7.0      3.5      0.1          if postfix:
   1066                                                       try:
   1067                                                           self.set_postfix(refresh=False, **postfix)
   1068                                                       except TypeError:
   1069                                                           self.postfix = postfix
   1070                                           
   1071                                                   # Init the iterations counters
-  1072         2          2.0      1.0      0.1          self.last_print_n = initial
-  1073         2          1.0      0.5      0.1          self.n = initial
+  1072         2          5.0      2.5      0.1          self.last_print_n = initial
+  1073         2          5.0      2.5      0.1          self.n = initial
   1074                                           
   1075                                                   # if nested, at initial sp() call we replace '\r' by '\n' to
   1076                                                   # not overwrite the outer progress bar
-  1077         2          9.0      4.5      0.5          with self._lock:
-  1078         2          2.0      1.0      0.1              if position is None:
-  1079         2         63.0     31.5      3.3                  self.pos = self._get_free_pos(self)
+  1077         2         35.0     17.5      0.7          with self._lock:
+  1078         2          7.0      3.5      0.1              if position is None:
+  1079         2        136.0     68.0      2.7                  self.pos = self._get_free_pos(self)
   1080                                                       else:  # mark fixed positions as negative
   1081                                                           self.pos = -position
   1082                                           
-  1083         2          2.0      1.0      0.1          if not gui:
+  1083         2          7.0      3.5      0.1          if not gui:
   1084                                                       # Initialize the screen printer
-  1085         2         12.0      6.0      0.6              self.sp = self.status_printer(self.fp)
-  1086         2       1539.0    769.5     81.2              self.refresh(lock_args=self.lock_args)
+  1085         2         34.0     17.0      0.7              self.sp = self.status_printer(self.fp)
+  1086         2       3710.0   1855.0     74.7              self.refresh(lock_args=self.lock_args)
   1087                                           
   1088                                                   # Init the time counter
-  1089         2          6.0      3.0      0.3          self.last_print_t = self._time()
+  1089         2          9.0      4.5      0.2          self.last_print_t = self._time()
   1090                                                   # NB: Avoid race conditions by setting start_t at the very end of init
-  1091         2          2.0      1.0      0.1          self.start_t = self.last_print_t
+  1091         2          7.0      3.5      0.1          self.start_t = self.last_print_t
 
-Total time: 9e-06 s
+Total time: 6e-06 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: __del__ at line 1121
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
   1121                                               def __del__(self):
-  1122         1          9.0      9.0    100.0          self.close()
+  1122         1          6.0      6.0    100.0          self.close()
 
-Total time: 0.000527 s
+Total time: 0.000996 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: __repr__ at line 1124
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
   1124                                               def __repr__(self):
-  1125         6        527.0     87.8    100.0          return self.format_meter(**self.format_dict)
+  1125         7        996.0    142.3    100.0          return self.format_meter(**self.format_dict)
 
-Total time: 1e-06 s
+Total time: 4e-06 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: __hash__ at line 1131
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
   1131                                               def __hash__(self):
-  1132         4          1.0      0.2    100.0          return id(self)
+  1132         4          4.0      1.0    100.0          return id(self)
 
-Total time: 0.002544 s
+Total time: 0.003823 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: __iter__ at line 1134
 
@@ -933,89 +1096,89 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
   1135                                                   """Backward-compatibility to use: for x in tqdm(iterable)"""
   1136                                           
   1137                                                   # Inlining instance variables as locals (speed optimisation)
-  1138         2          2.0      1.0      0.1          iterable = self.iterable
+  1138         2          5.0      2.5      0.1          iterable = self.iterable
   1139                                           
   1140                                                   # If the bar is disabled, then just walk the iterable
   1141                                                   # (note: keep this check outside the loop for performance)
-  1142         2          1.0      0.5      0.0          if self.disable:
+  1142         2          4.0      2.0      0.1          if self.disable:
   1143                                                       for obj in iterable:
   1144                                                           yield obj
   1145                                                       return
   1146                                           
-  1147         2          1.0      0.5      0.0          mininterval = self.mininterval
-  1148         2          1.0      0.5      0.0          maxinterval = self.maxinterval
-  1149         2          1.0      0.5      0.0          miniters = self.miniters
-  1150         2          1.0      0.5      0.0          dynamic_miniters = self.dynamic_miniters
-  1151         2          1.0      0.5      0.0          last_print_t = self.last_print_t
-  1152         2          1.0      0.5      0.0          last_print_n = self.last_print_n
-  1153         2          2.0      1.0      0.1          n = self.n
-  1154         2          2.0      1.0      0.1          smoothing = self.smoothing
-  1155         2          0.0      0.0      0.0          avg_time = self.avg_time
-  1156         2          1.0      0.5      0.0          time = self._time
+  1147         2          2.0      1.0      0.1          mininterval = self.mininterval
+  1148         2          2.0      1.0      0.1          maxinterval = self.maxinterval
+  1149         2          3.0      1.5      0.1          miniters = self.miniters
+  1150         2          3.0      1.5      0.1          dynamic_miniters = self.dynamic_miniters
+  1151         2          2.0      1.0      0.1          last_print_t = self.last_print_t
+  1152         2          3.0      1.5      0.1          last_print_n = self.last_print_n
+  1153         2          3.0      1.5      0.1          n = self.n
+  1154         2          3.0      1.5      0.1          smoothing = self.smoothing
+  1155         2          3.0      1.5      0.1          avg_time = self.avg_time
+  1156         2          3.0      1.5      0.1          time = self._time
   1157                                           
-  1158         2          2.0      1.0      0.1          if not hasattr(self, 'sp'):
+  1158         2          6.0      3.0      0.2          if not hasattr(self, 'sp'):
   1159                                                       raise TqdmDeprecationWarning(
   1160                                                           "Please use `tqdm.gui.tqdm(...)` instead of"
   1161                                                           " `tqdm(..., gui=True)`\n",
   1162                                                           fp_write=getattr(self.fp, 'write', sys.stderr.write))
   1163                                           
-  1164         2          1.0      0.5      0.0          try:
-  1165         6          3.0      0.5      0.1              for obj in iterable:
-  1166         4          3.0      0.8      0.1                  yield obj
+  1164         2          4.0      2.0      0.1          try:
+  1165         8          8.0      1.0      0.2              for obj in iterable:
+  1166         6          4.0      0.7      0.1                  yield obj
   1167                                                           # Update and possibly print the progressbar.
   1168                                                           # Note: does not call self.update(1) for speed optimisation.
-  1169         4          5.0      1.2      0.2                  n += 1
+  1169         6          8.0      1.3      0.2                  n += 1
   1170                                                           # check counter first to avoid calls to time()
-  1171         4          6.0      1.5      0.2                  if n - last_print_n >= self.miniters:
-  1172         4          1.0      0.2      0.0                      miniters = self.miniters  # watch monitoring thread changes
-  1173         4          7.0      1.8      0.3                      delta_t = time() - last_print_t
-  1174         4          2.0      0.5      0.1                      if delta_t >= mininterval:
-  1175         2          0.0      0.0      0.0                          cur_t = time()
-  1176         2          1.0      0.5      0.0                          delta_it = n - last_print_n
+  1171         6         14.0      2.3      0.4                  if n - last_print_n >= self.miniters:
+  1172         6          3.0      0.5      0.1                      miniters = self.miniters  # watch monitoring thread changes
+  1173         6          9.0      1.5      0.2                      delta_t = time() - last_print_t
+  1174         6          6.0      1.0      0.2                      if delta_t >= mininterval:
+  1175         3          2.0      0.7      0.1                          cur_t = time()
+  1176         3          1.0      0.3      0.0                          delta_it = n - last_print_n
   1177                                                                   # EMA (not just overall average)
-  1178         2          2.0      1.0      0.1                          if smoothing and delta_t and delta_it:
-  1179         2          0.0      0.0      0.0                              rate = delta_t / delta_it
-  1180         2          4.0      2.0      0.2                              avg_time = self.ema(rate, avg_time, smoothing)
-  1181         2          2.0      1.0      0.1                              self.avg_time = avg_time
+  1178         3          1.0      0.3      0.0                          if smoothing and delta_t and delta_it:
+  1179         3          3.0      1.0      0.1                              rate = delta_t / delta_it
+  1180         3          5.0      1.7      0.1                              avg_time = self.ema(rate, avg_time, smoothing)
+  1181         3          3.0      1.0      0.1                              self.avg_time = avg_time
   1182                                           
-  1183         2          2.0      1.0      0.1                          self.n = n
-  1184         2       1235.0    617.5     48.5                          self.refresh(lock_args=self.lock_args)
+  1183         3          2.0      0.7      0.1                          self.n = n
+  1184         3       2063.0    687.7     54.0                          self.refresh(lock_args=self.lock_args)
   1185                                           
   1186                                                                   # If no `miniters` was specified, adjust automatically
   1187                                                                   # to the max iteration rate seen so far between 2 prints
-  1188         2          1.0      0.5      0.0                          if dynamic_miniters:
-  1189         2          2.0      1.0      0.1                              if maxinterval and delta_t >= maxinterval:
+  1188         3          1.0      0.3      0.0                          if dynamic_miniters:
+  1189         3          3.0      1.0      0.1                              if maxinterval and delta_t >= maxinterval:
   1190                                                                           # Adjust miniters to time interval by rule of 3
-  1191                                                                           if mininterval:
+  1191         1          0.0      0.0      0.0                                  if mininterval:
   1192                                                                               # Set miniters to correspond to mininterval
-  1193                                                                               miniters = delta_it * mininterval / delta_t
+  1193         1          1.0      1.0      0.0                                      miniters = delta_it * mininterval / delta_t
   1194                                                                           else:
   1195                                                                               # Set miniters to correspond to maxinterval
   1196                                                                               miniters = delta_it * maxinterval / delta_t
   1197         2          1.0      0.5      0.0                              elif smoothing:
   1198                                                                           # EMA-weight miniters to converge
   1199                                                                           # towards the timeframe of mininterval
-  1200         2          1.0      0.5      0.0                                  rate = delta_it
-  1201         2          2.0      1.0      0.1                                  if mininterval and delta_t:
+  1200         2          0.0      0.0      0.0                                  rate = delta_it
+  1201         2          1.0      0.5      0.0                                  if mininterval and delta_t:
   1202         2          2.0      1.0      0.1                                      rate *= mininterval / delta_t
-  1203         2          4.0      2.0      0.2                                  miniters = self.ema(rate, miniters, smoothing)
+  1203         2          4.0      2.0      0.1                                  miniters = self.ema(rate, miniters, smoothing)
   1204                                                                       else:
   1205                                                                           # Maximum nb of iterations between 2 prints
   1206                                                                           miniters = max(miniters, delta_it)
   1207                                           
   1208                                                                   # Store old values for next call
-  1209         2          2.0      1.0      0.1                          self.n = self.last_print_n = last_print_n = n
-  1210         2          1.0      0.5      0.0                          self.last_print_t = last_print_t = cur_t
-  1211         2          0.0      0.0      0.0                          self.miniters = miniters
+  1209         3          3.0      1.0      0.1                          self.n = self.last_print_n = last_print_n = n
+  1210         3          3.0      1.0      0.1                          self.last_print_t = last_print_t = cur_t
+  1211         3         20.0      6.7      0.5                          self.miniters = miniters
   1212                                                   finally:
   1213                                                       # Closing the progress bar.
   1214                                                       # Update some internal variables for close().
-  1215         2          1.0      0.5      0.0              self.last_print_n = last_print_n
+  1215         2          2.0      1.0      0.1              self.last_print_n = last_print_n
   1216         2          1.0      0.5      0.0              self.n = n
   1217         2          0.0      0.0      0.0              self.miniters = miniters
-  1218         2       1236.0    618.0     48.6              self.close()
+  1218         2       1603.0    801.5     41.9              self.close()
 
-Total time: 0.00121 s
+Total time: 0.00157 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: close at line 1302
 
@@ -1023,45 +1186,45 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
   1302                                               def close(self):
   1303                                                   """Cleanup and (if leave=False) close the progressbar."""
-  1304         3          3.0      1.0      0.2          if self.disable:
-  1305         1          1.0      1.0      0.1              return
+  1304         3          2.0      0.7      0.1          if self.disable:
+  1305         1          0.0      0.0      0.0              return
   1306                                           
   1307                                                   # Prevent multiple closures
-  1308         2          1.0      0.5      0.1          self.disable = True
+  1308         2          0.0      0.0      0.0          self.disable = True
   1309                                           
   1310                                                   # decrement instance pos and remove from internal set
-  1311         2          2.0      1.0      0.2          pos = abs(self.pos)
-  1312         2         81.0     40.5      6.7          self._decr_instances(self)
+  1311         2          2.0      1.0      0.1          pos = abs(self.pos)
+  1312         2         85.0     42.5      5.4          self._decr_instances(self)
   1313                                           
   1314                                                   # GUI mode
-  1315         2          2.0      1.0      0.2          if not hasattr(self, "sp"):
+  1315         2          2.0      1.0      0.1          if not hasattr(self, "sp"):
   1316                                                       return
   1317                                           
   1318                                                   # annoyingly, _supports_unicode isn't good enough
-  1319         2          1.0      0.5      0.1          def fp_write(s):
+  1319         2          2.0      1.0      0.1          def fp_write(s):
   1320                                                       self.fp.write(_unicode(s))
   1321                                           
-  1322         2          0.0      0.0      0.0          try:
-  1323         2         80.0     40.0      6.6              fp_write('')
+  1322         2          2.0      1.0      0.1          try:
+  1323         2        120.0     60.0      7.6              fp_write('')
   1324                                                   except ValueError as e:
   1325                                                       if 'closed' in str(e):
   1326                                                           return
   1327                                                       raise  # pragma: no cover
   1328                                           
-  1329         2          2.0      1.0      0.2          leave = pos == 0 if self.leave is None else self.leave
+  1329         2          2.0      1.0      0.1          leave = pos == 0 if self.leave is None else self.leave
   1330                                           
-  1331         2          7.0      3.5      0.6          with self._lock:
-  1332         2          2.0      1.0      0.2              if leave:
+  1331         2          5.0      2.5      0.3          with self._lock:
+  1332         2          2.0      1.0      0.1              if leave:
   1333                                                           # stats for overall rate (no weighted average)
   1334         2          1.0      0.5      0.1                  self.avg_time = None
-  1335         2        957.0    478.5     79.1                  self.display(pos=0)
-  1336         2         70.0     35.0      5.8                  fp_write('\n')
+  1335         2       1260.0    630.0     80.3                  self.display(pos=0)
+  1336         2         85.0     42.5      5.4                  fp_write('\n')
   1337                                                       else:
   1338                                                           # clear previous display
   1339                                                           if self.display(msg='', pos=pos) and not pos:
   1340                                                               fp_write('\r')
 
-Total time: 0.002749 s
+Total time: 0.00572 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: refresh at line 1358
 
@@ -1080,21 +1243,21 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
   1368                                                       Passed to internal lock's `acquire()`.
   1369                                                       If specified, will only `display()` if `acquire()` returns `True`.
   1370                                                   """
-  1371         4          2.0      0.5      0.1          if self.disable:
+  1371         5          2.0      0.4      0.0          if self.disable:
   1372                                                       return
   1373                                           
-  1374         4          1.0      0.2      0.0          if not nolock:
-  1375         4          2.0      0.5      0.1              if lock_args:
+  1374         5          2.0      0.4      0.0          if not nolock:
+  1375         5          3.0      0.6      0.1              if lock_args:
   1376                                                           if not self._lock.acquire(*lock_args):
   1377                                                               return False
   1378                                                       else:
-  1379         4         14.0      3.5      0.5                  self._lock.acquire()
-  1380         4       2707.0    676.8     98.5          self.display()
-  1381         4          3.0      0.8      0.1          if not nolock:
-  1382         4         19.0      4.8      0.7              self._lock.release()
-  1383         4          1.0      0.2      0.0          return True
+  1379         5         27.0      5.4      0.5                  self._lock.acquire()
+  1380         5       5628.0   1125.6     98.4          self.display()
+  1381         5         21.0      4.2      0.4          if not nolock:
+  1382         5         35.0      7.0      0.6              self._lock.release()
+  1383         5          2.0      0.4      0.0          return True
 
-Total time: 0.00361 s
+Total time: 0.006801 s
 File: /home/ryan/github/lltk/venv/lib/python3.7/site-packages/tqdm/std.py
 Function: display at line 1489
 
@@ -1113,25 +1276,25 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
   1499                                                   pos  : int, optional. Position to `moveto`
   1500                                                     (default: `abs(self.pos)`).
   1501                                                   """
-  1502         6          4.0      0.7      0.1          if pos is None:
-  1503         4          2.0      0.5      0.1              pos = abs(self.pos)
+  1502         7          5.0      0.7      0.1          if pos is None:
+  1503         5          4.0      0.8      0.1              pos = abs(self.pos)
   1504                                           
-  1505         6          2.0      0.3      0.1          nrows = self.nrows or 20
-  1506         6          0.0      0.0      0.0          if pos >= nrows - 1:
+  1505         7          3.0      0.4      0.0          nrows = self.nrows or 20
+  1506         7          5.0      0.7      0.1          if pos >= nrows - 1:
   1507                                                       if pos >= nrows:
   1508                                                           return False
   1509                                                       if msg or msg is None:  # override at `nrows - 1`
   1510                                                           msg = " ... (more hidden) ..."
   1511                                           
-  1512         6          2.0      0.3      0.1          if pos:
+  1512         7          5.0      0.7      0.1          if pos:
   1513                                                       self.moveto(pos)
-  1514         6       3593.0    598.8     99.5          self.sp(self.__repr__() if msg is None else msg)
-  1515         6          6.0      1.0      0.2          if pos:
+  1514         7       6764.0    966.3     99.5          self.sp(self.__repr__() if msg is None else msg)
+  1515         7         12.0      1.7      0.2          if pos:
   1516                                                       self.moveto(-pos)
-  1517         6          1.0      0.2      0.0          return True
+  1517         7          3.0      0.4      0.0          return True
 
-Total time: 2.65233 s
-File: <ipython-input-5-9c059484226e>
+Total time: 20.7342 s
+File: <ipython-input-4-fc4a57ca9774>
 Function: go at line 1
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents

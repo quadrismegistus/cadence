@@ -2,17 +2,27 @@ from ..imports import *
 
 SBY=csby=['combo_i','word_i','syll_i']
 LINEKEY=[
-    'stanza_i',
-    'line_i',
-    'combo_i',
-    'window_i',
-    'parse_i',
-    'mpos_parse',
-    'window_ii',
-    'syll_parse',
+    'stanza_i','line_i',
+    'combo_i','parse_i','combo_parse_i',
+    
     'word_i','word_str','word_ipa_i','word_ipa',
     'syll_i','syll_str','syll_ipa',
+    
+    'syll_parse','window_ii','mpos_parse',
+    
+    'window_key','window_i','window_ii',
 ]
+
+PARSELINEKEY=[
+'stanza_i','line_i',
+'combo_parse_i',
+'line_str',
+'line_ipa',
+'meter',
+'stress'
+]
+
+
 
 
 def parse_lines(df_phon,num_proc=1,keep_best=KEEP_BEST,**y):
@@ -56,154 +66,262 @@ def line2combos(line_df,**y):
         ]
         combodf = pd.DataFrame(combo_rows).sort_values(['word_i','syll_i'])
         combodf['combo_i']=ci
-        # combodf['window_key']=list(get_window_keys(combodf.syll_ipa))
-        # combodf['window_key_str']=[wk.lower() for wk in get_window_keys(combodf.syll_str)]
+        # combodf['window_key']=get_window_keys(combodf)
         o+=[combodf]
     odf=pd.concat(o)
     odf=setindex(odf,LINEKEY)
     return odf
 
-def get_window_keys(sylls_ipa,window_len=3):
-    window_key=['','','']
-    for x in sylls_ipa:
-        window_key.append(x)
-        while len(window_key)>window_len: window_key.pop(0)
-        wk='_'.join(window_key)
-        yield wk
-    
-def get_unique_windows(df_combos,window_len=3):
-    window=[]
-    allwindows=[]
-    for i,row in df_combos.reset_index().iterrows():
-        # print(i,row)
-        window.append(row)
-        if len(window)>window_len: window.pop(0)
-        if len(window)<window_len: continue
 
-        windowdf=pd.DataFrame(window)
-        windowdf['window_i']=len(allwindows)
-        windowdf['window_ii']=list(range(len(windowdf)))
-        allwindows.append(windowdf)
-    dfo=pd.concat(allwindows).drop('combo_i',1)
-    return setindex(dfo,LINEKEY)
+def get_unique_windows(df_combos,window_len=3,rolling=True):
+    allwindows={}
 
-
-
+    for ci,dfcombo in df_combos.reset_index().groupby('combo_i'):
+        combo_windows = get_windows_in_combo(dfcombo, window_len=window_len, rolling=rolling)
+        for window_key,windowdf in combo_windows:
+            #print(window_key)
+            #display(windowdf)
+            #print()
+            if not window_key in allwindows:
+                allwindows[window_key]=windowdf
+    dfo=pd.concat(allwindows.values()).drop('combo_i',1).drop('stanza_i',1).drop('line_i',1).drop_duplicates()
+    return setindex(dfo,['window_key','window_ii'] + LINEKEY)
 
 def possible_parses(window_len,maxS=2,maxW=2):
     poss = list(product(*[('w','s') for n in range(window_len)]))
     poss = [''.join(x) for x in poss]
     poss = [x for x in poss if is_ok_parse(x,maxS=maxS,maxW=maxW)]
     poss = [x for x in poss if len(x)==window_len]
+    poss = list(set(poss))
     return poss
 
-def add_metrical_possibilities(window, window_len=3,maxS=2,maxW=2):
-    # loop metrical possibilities
-    poss=possible_parses(len(window),maxS=maxS,maxW=maxW)
-
-    for parse_i,posx in enumerate(sorted(poss)):    
-        windowdf=pd.DataFrame(window)
-        windowdf['syll_parse']=[x for x in posx]
-        windowdf['is_w']=(windowdf['syll_parse']=='w').apply(np.int32)
-        windowdf['is_s']=(windowdf['syll_parse']=='s').apply(np.int32)
-        windowdf['mpos_parse']=posx
-        windowdf['mpos_parse_i']=parse_i
-        yield windowdf
 
 def setindex(df,key):
-    key2=[]
+    cols=[]
     for x in key:
-        if not x in set(key2):
-            key2.append(x)
-    key=key2
-    return df.set_index([x for x in key if x in set(df.columns)]).sort_index()
+        if not x in set(cols) and x in set(df.columns):
+            cols.append(x)
+    return df.sort_values(cols).set_index(cols).sort_index()
 
 
 def get_metrical_possibilities(df_uniq_windows,maxS=2,maxW=2):
     df=pd.DataFrame()
-    for window_i,wdf in df_uniq_windows.reset_index().groupby('window_i'):
+    dfuq=df_uniq_windows.reset_index()
+    for window_i,wdf in dfuq[~dfuq.syll_i.isna()].groupby('window_key'):
         wdf=wdf.sort_values('window_ii')
+        # display(wdf)
+        # print(len(wdf))
+        # stop
         posnum=len(wdf)
         for pi,poss_parse in enumerate(possible_parses(posnum, maxS=maxS,maxW=maxW)):
             wdf2=pd.DataFrame(wdf)
-            wdf2['parse_i']=pi
+            # wdf2['parse_i']=pi
             wdf2['mpos_parse']=str(poss_parse)
-            wdf2['parse_ii']=list(range(len(wdf2)))
+            wdf2['window_ii']=list(range(len(wdf2)))
             wdf2['syll_parse']=list(poss_parse)
             wdf2['is_w']=(wdf2['syll_parse']=='w').apply(np.int32)
             wdf2['is_s']=(wdf2['syll_parse']=='s').apply(np.int32)
             df=df.append(wdf2)
-    return setindex(df, ['window_i','parse_i','mpos_parse','parse_ii','syll_parse'] + LINEKEY)
+    return setindex(df,['window_key','mpos_parse','window_ii','syll_parse'] + LINEKEY)
 
 def join(x,y,on=['id'],how='outer'):
     # x=x.reset_index()
     # y=y.reset_index()
+    if type(on)==str: on=[on]
     xkeys=on + [c for c in x.columns if c not in set(on) and c not in set(y.columns)]
     return x[xkeys].set_index(on).join(y.set_index(on),how=how)
+
+def merge(x,y,on=[],left_on=[],right_on=[],how='outer'):
+    if type(on)==str: on=[on]
+    if on: left_on,right_on=on,on
+    if not (left_on and right_on): return 
+    
+    xcols = set(x.columns)
+    ycols = set(y.columns)
+    
+    return x[xcols | set(left_on)].merge(
+        y[(ycols - xcols) | set(right_on)],
+        left_on=left_on,
+        right_on=right_on,
+        how=how
+    )
 
 def parse_windows(df_metrical_poss,num_proc=1,progress=False,**y):
     df_metrical_poss=df_metrical_poss.reset_index()
     # parse
     out = pmap_groups(
         do_parse_window,
-        df_metrical_poss.groupby(['window_i','parse_i']),
+        df_metrical_poss.groupby(['window_key','mpos_parse']),
         num_proc=num_proc,
-        progress=progress,#num_proc==1,
+        progress=progress,
         desc='Parsing all combinations for line',
         **y
     )
     df_parsed_windows=pd.concat(out)#.sort_values(['window_i','mpos_parse','word_i','syll_i'])
-    return setindex(df_parsed_windows,LINEKEY)
+    df_parsed_windows=setindex(df_parsed_windows,LINEKEY)
+    # mean by window type
+    dfm = df_parsed_windows.groupby(['window_key','mpos_parse','window_ii','syll_parse']).mean()
+    return dfm
 
 
-def rejoin_windows_and_combos(df_combos, df_parsed_windows):
-    df = join(
-        df_combos.reset_index(),
-        df_parsed_windows.reset_index(),
-        on=['word_i','word_ipa_i','word_ipa','syll_i','syll_ipa'],
-        how='outer'
-    )
-    return setindex(df.reset_index(),LINEKEY)
+def get_window_keys(dfcombo,window_len=3):
+    return [x[0] for x in get_windows_in_combo(dfcombo,window_len=3)]
+    
+def get_window_key_from_slice(windowdf):
+    return "|".join(
+        f'{x.lower()}_{y}_{z}' if type(x)==str else ''
+        for x,y,z in zip(windowdf.word_str, windowdf.syll_i, windowdf.syll_ipa))
+
+
+def get_windows_in_combo(dfcombo,window_len=3,rolling=True):
+    allwindows=[]
+    for slicedf in rolling_slices(dfcombo,window_len=3):
+        windowdf=pd.DataFrame(slicedf)
+        window_key = get_window_key_from_slice(windowdf)
+        windowdf['window_key']=str(window_key)
+        # windowdf['window_i']=len(allwindows)
+        windowdf['window_ii']=list(range(len(windowdf)))
+        allwindows.append((window_key,windowdf))
+    return allwindows
+
+def avg_out_sylls(poss_parse_rows):
+    return pd.DataFrame(poss_parse_rows).mean()
+
+def rejoin_windows_and_combos(df_combos, df_parsed_windows, window_len=3, by_parse=True):
+    df_combos=df_combos.reset_index()
+    dfpw=df_parsed_windows.reset_index().set_index(['window_key','mpos_parse'])
+    o=[]
+    for ci,dfcombo in df_combos.groupby('combo_i'):
+
+        for poss_i,poss_parse in enumerate(possible_parses(len(dfcombo))):
+            dfparse=pd.DataFrame(dfcombo)
+            dfparse['combo_i']=ci
+            dfparse['parse_i']=poss_i
+            dfparse['combo_parse_i']=len(o)
+            dfparse['syll_parse']=list(poss_parse)
+
+            poss_parse_rows = []
+
+            for window_key,window_df in get_windows_in_combo(dfparse):
+                mpos_key=''.join(window_df.syll_parse.dropna())
+                mstatdf=dfpw.loc[(window_key,mpos_key)].reset_index()
+                windowstatdf = merge(
+                    window_df,
+                    mstatdf,
+                    left_on=['window_key','window_ii'],
+                    right_on=['window_key','window_ii'],
+                    how='outer'
+                )
+                correct_row=windowstatdf.iloc[1]
+                poss_parse_rows+=[correct_row]
+            
+            # add back
+            if by_parse:
+                avg_row = avg_for_parse(poss_parse_rows)
+                o+=[avg_row]
+            else:
+                o+=poss_parse_rows
+
+    odf=pd.DataFrame(o)
+    # for col in odf.columns:
+        # if col.endswith('_i') or col.endswith('_ii'):
+            # odf[col]=odf[col].apply(int)
+    odf=odf.sort_values('*total')
+    return setindex(odf,LINEKEY) if not by_parse else setindex(odf,PARSELINEKEY)
+
+
+def avg_for_parse(rows):
+    dfparse=pd.DataFrame(rows)
+    
+    linestr = ' '.join(dfparse.drop_duplicates('word_i').word_str)
+    ipastr = ' '.join(dfparse.drop_duplicates('word_i').word_ipa)
+    stressstr = ''.join(dfparse.prom_stress.apply(stressint2str))
+    meterstr = ''.join(dfparse.syll_parse)
+
+    statrow=dict(dfparse.mean())
+    statrow=dict((k,v) for k,v in statrow.items() if not k in set(LINEKEY))
+    for k in PARSELINEKEY:
+        if k in dfparse.columns:
+            statrow[k]=dfparse[k].iloc[0]
+    statrow['line_str']=linestr
+    statrow['line_ipa']=ipastr
+    statrow['stress']=stressstr
+    statrow['meter']=meterstr
+    return statrow
+
+
+
 
 def parse_line(line_df,num_proc=1,window_len=3,by_line=True,keep_best=KEEP_BEST,addback_str=False,**y):
+    """
+    Parse Line
+    """
     pd.options.display.max_columns=None
-    pd.options.display.max_rows=25
+    pd.options.display.max_rows=100
 
-    line_df=line_df[[c for c in line_df.columns if not c in {'stanza_i','line_i'}]]
+    # line_df=line_df[[c for c in line_df.columns if not c in {'stanza_i','line_i'}]]
     line_df=setindex(line_df,LINEKEY)
     
-    printm('## line df')
-    display(line_df)
+    # printm('## line df')
+    # display(line_df)
 
     # get all combos and window types
     csby=['combo_i','word_i','word_ipa_i','syll_i']
     df_combos = line2combos(line_df)
-    printm('## df combos')
-    display(df_combos)
+    # printm('## df combos')
+    # display(df_combos)
+
+    # # metrical pss for combos?
+    # all_combo_all_poss = get_metrical_possibilities(df_combos)
+    # printm('## all combo all poss')
+    # display(all_combo_all_poss)
+    # stop
     
     # get just the unique 3-syll windows
     df_uniq_windows = get_unique_windows(df_combos,window_len=window_len)
-    printm('## df_uniq_windows')
-    display(df_uniq_windows)
+    # printm('## df_uniq_windows')
+    # display(df_uniq_windows)
 
     # add metrical pos
-    printm('## df metrical poss')
+    # printm('## df metrical poss')
     df_metrical_poss = get_metrical_possibilities(df_uniq_windows)
-    display(df_metrical_poss)
+    # display(df_metrical_poss)
 
-    printm('## df_parsed_windows')
+    # printm('## df_parsed_windows')
     df_parsed_windows=parse_windows(df_metrical_poss)
-    display(df_parsed_windows)
+    # display(df_parsed_windows.head(10))
 
     # connect back to original line df?
+    # printm('## df_rejoined')
     df_rejoined = rejoin_windows_and_combos(df_combos, df_parsed_windows)
-    printm('## df_rejoined')
-    display(df_rejoined)
+    # display(df_rejoined)
+    # display(df_rejoined.head(100))
+    yield df_rejoined
 
-    odf=agg_by_line(df_rejoined) if by_line else df_rejoined
-    printm('## OUTPUT DF')
-    display(odf)
-    yield odf
+# def avg_for_line(dfcombo):
+#     # produce avg
+#     lineavg = dfcombo.groupby(['combo_i','parse_i','word_i','syll_i','word_str','word_ipa','syll_str','syll_ipa','syll_parse']).mean()
+#     display(lineavg)
+#     stop
+
+#     linestr = ' '.join(dfcombo.drop_duplicates('word_i').word_str)
+#     stressstr = ''.join(dfcombo.drop_duplicates(['word_i','syll_i']).prom_stress.apply(stressint2str))
+#     meterstr = ''.join(dfcombo.drop_duplicates(['word_i','syll_i']).syll_parse)
+
+#     dfmc=pd.DataFrame([dict(dfcombo.mean())])
+#     dfmc['line']=linestr
+#     dfmc['stress']=stressstr
+#     dfmc['meter']=meterstr
+
+#     pcols = [
+#         'line',
+#         'stress',
+#         'meter'
+#     ] + [c for c in dfmc.columns if c.startswith('*')]
+#     other=[c for c in dfmc.columns if not c in set(pcols)]
+#     yield dfmc[pcols + other]
+
+
 
 
 def stressint2str(x):
@@ -214,33 +332,15 @@ def stressint2str(x):
 def agg_by_line(df_rejoined):
     df=pd.concat(pmap_groups(
         do_agg_by_line,
-        df_rejoined.reset_index().groupby('combo_i'),
+        df_rejoined.reset_index().groupby(['combo_i','parse_i']),
         progress=False,
         num_proc=1            
     ))
     return setindex(df,LINEKEY)
+    # return windows2lines(df_rejoined.reset_index())
 
 
-def do_agg_by_line(dfcombo):
-    display(dfcombo)
-    dfcombo=dfcombo.sort_values(['word_i','syll_i'])
 
-    linestr = ' '.join(dfcombo.drop_duplicates('word_i').word_str)
-    stressstr = ''.join(dfcombo.drop_duplicates(['word_i','syll_i']).prom_stress.apply(stressint2str))
-    meterstr = ''.join(dfcombo.drop_duplicates(['word_i','syll_i']).syll_parse)
-
-    dfmc=pd.DataFrame([dict(dfcombo.mean())])
-    dfmc['line']=linestr
-    dfmc['stress']=stressstr
-    dfmc['meter']=meterstr
-
-    pcols = [
-        'line',
-        'stress',
-        'meter'
-    ] + [c for c in dfmc.columns if c.startswith('*')]
-    other=[c for c in dfmc.columns if not c in set(pcols)]
-    yield dfmc[pcols + other]
 
 
 
@@ -252,80 +352,5 @@ def do_parse_window(windowdf):
     dfc = apply_constraints(windowdf)
     yield windowdf[list(set(windowdf.columns) - set(dfc.columns))].join(dfc)
 
-def windows2lines(df):
-    combos = [
-        [pdf for parse_i,pdf in sorted(cdf.groupby('window_key'))]
-        for ci,cdf in sorted(df.groupby('combo_i'))
-    ]
-    # combos = [
-    #     [y for x,y in df.groupby('mpos_parse_i')]
-    # ]
-    all_combos = list(product(*combos))
-    # print(len(all_combos))
-    printm('## all combos')
-    display(pd.concat(all_combos[0]).set_index('combo_i').sort_values(['word_i','syll_i']).loc[0])#.drop_duplicates().head(20))
-
-    df['meter_parse']=parse=''.join(df.syll_parse)
-    dfm=df.groupby([
-        'stanza_i','line_i','line_combo_i','parse_i','meter_parse','stress_parse'
-    ]).mean()
-    return dfm
 
 
-def parses_by_line(df_parses, keep_best=1, maxS=2, maxW=2, dupkeys=['stanza_i','line_i','line_combo_i','word_i','word_ipa_i','syll_i']):
-    df=df_parses.sort_values(['combo_i','word_i','syll_i'])
-
-
-    # combos = [
-    #     [pdf for parse_i,pdf in sorted(wdf.groupby('parse_i'))]
-    #     for window_i,wdf in sorted(df.groupby('window_i'))
-    # ]
-    # all_combos = list(product(*combos))
-    # alldf=pd.concat([df for ldf in combos for df in ldf])
-    # #display(alldf.iloc[0])
-    # alldfm=windows2lines(alldf)
-    # display(alldfm)
-    # alldf
-
-    # newrows=[]
-    # for combo_i,combo in enumerate(tqdm(all_combos)):
-    #     combodf=pd.concat(combo)
-    #     combodf_meta=combodf.drop_duplicates(dupkeys)
-    #     parse=''.join(combodf_meta.syll_parse)
-    #     if not is_ok_parse(parse,maxS=maxS,maxW=maxW): continue 
-    #     #combodf_avg = dict(combodf.drop(dupkeys,1).fillna(0).mean())
-    #     newrows+=[combodf_meta]
-    
-
-    #     # newrow = dict(combodf[['stanza_i','line_i','line_combo_i']].iloc[0])
-    #     # newrow['parse']=parse
-    #     # for k,v in combodf_avg.items(): newrow[k]=v
-    #     # newrows.append(newrow)
-    # newdf=pd.concat(newrows)
-    # display(newdf)
-    # stop
-    
-
-
-    
-
-
-
-def _all_possible_metrical_combos(df_combo):
-    wordsylls=sorted(list(set(zip(df_combo.word_i,df_combo.syll_i))))
-
-    wordsyllsmeter = [
-        [tuple(list(wsyll)+['w']), tuple(list(wsyll)+['s'])]
-        for wsyll in wordsylls
-    ]
-
-    wordsyllsmeter_combos = list(product(*wordsyllsmeter))
-    
-    # disallow stretches of 3
-    wordsyllsmeter_combos = [
-        combo
-        for combo in wordsyllsmeter_combos
-        if ''.join([x[-1] for x in combo]).count('www')==0
-        and ''.join([x[-1] for x in combo]).count('sss')==0
-    ]
-    return wordsyllsmeter_combos

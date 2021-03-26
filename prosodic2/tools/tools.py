@@ -9,6 +9,26 @@ def occurrences(string, sub):
 		else:
 			return count
 
+import numpy as np
+def rolling_slices(df,window_len=3,incl_empty=True):
+	empty_row=pd.Series(dict((k,np.nan) for k in df.columns))
+	nrad=(window_len - 1)//2
+	for i in range(len(df)):
+		mini = i-nrad
+		maxi = i+nrad
+
+		irows=[]
+		inames=[]
+		for ii in range(mini,maxi+1):
+			inames+=[ii]
+			if ii<0 or ii>=len(df):
+				if incl_empty:
+					irows+=[empty_row]
+			else:
+				irows+=[df.iloc[ii]]
+		yield pd.DataFrame(irows,index=inames)
+
+
 def product(*args):
 	if not args:
 		return iter(((),)) # yield tuple()
