@@ -1,5 +1,31 @@
 from ..imports import *
 
+
+DTOK_TREEBANK=None
+def detokenize_treebank(x):
+	global DTOK_TREEBANK
+	if DTOK_TREEBANK is None:
+		from nltk.tokenize.treebank import TreebankWordDetokenizer
+		DTOK_TREEBANK = TreebankWordDetokenizer()
+	return DTOK_TREEBANK.detokenize(x)
+
+def detokenize(x):
+	x=detokenize_treebank(x)
+	return x
+
+def setindex(df,key=LINEKEY):
+	df = df[set(df.columns) - set(df.index.names)]
+	df = df.reset_index()
+		
+	cols=[]
+	for x in key:
+		if not x in set(cols) and x in set(df.columns):
+			cols.append(x)
+	odf=df.set_index(cols).sort_index()
+	if 'index' in set(odf.columns): odf=odf.drop('index',1)
+	return odf
+
+
 def occurrences(string, sub):
 	count = start = 0
 	while True:
@@ -10,24 +36,28 @@ def occurrences(string, sub):
 			return count
 
 import numpy as np
-def rolling_slices(df,window_len=3,incl_empty=True):
-	empty_row=pd.Series(dict((k,np.nan) for k in df.columns))
+def rolling_slices(df,window_len=3,incl_empty=True,keep_last_keys=[]):
 	nrad=(window_len - 1)//2
 	for i in range(len(df)):
 		mini = i-nrad
 		maxi = i+nrad
-
+		empty_row=pd.Series(dict((k,np.nan) for k in df.columns))
+		for xx in keep_last_keys: empty_row[xx]=df.iloc[0][xx]
 		irows=[]
 		inames=[]
 		for ii in range(mini,maxi+1):
 			inames+=[ii]
 			if ii<0 or ii>=len(df):
 				if incl_empty:
+
 					irows+=[empty_row]
 			else:
 				irows+=[df.iloc[ii]]
 		yield pd.DataFrame(irows,index=inames)
-
+def chunks(lst, n):
+	"""Yield successive n-sized chunks from lst."""
+	for i in range(0, len(lst), n):
+		yield lst[i:i + n]
 
 def product(*args):
 	if not args:
@@ -101,15 +131,43 @@ def do_pmap_group(obj,*args,**kwargs):
 	
 	if type(group_name) not in {list,tuple}:group_name=[group_name]
 	if type(group_df)==str: group_df=pd.read_pickle(group_df)
+	out=func(group_df,*args,**kwargs)
+	if isinstance(out, types.GeneratorType):
+		out=[x for x in out]
+	if type(out)==list:
+		try:
+			out=[x for x in out if type(x) in {pd.DataFrame, pd.Series}]
+			out=pd.concat(out)
+		except ValueError:
+			return out
+	if type(out)==pd.DataFrame:
+		for x,y in zip(group_key,group_name): out[x]=y
+	return out
+	
+def joindfs(a,b):
+    bcols = set(b.columns) - set(a.columns)
+    return a.join(b[bcols])
 
-	outgen=func(group_df,*args,**kwargs)
-	# outdf=pd.concat(out) if isinstance(out, types.GeneratorType) else out
-	for outdf in outgen:
-		for x,y in zip(group_key,group_name): outdf[x]=y
-		yield outdf
 
 
-def pmap_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
+def slices(l,n,strict=True):
+    o=[]
+    for x in l:
+        o.append(x)
+        if len(o)>n: o.pop(0)
+        if not strict or len(o)==n:
+            yield list(o)
+def apply_combos(df,group1,group2,combo_key='combo_i'):
+    # combo of indices?
+    combo_opts = [
+        [x for ii,x in grp.groupby(group2)]
+        for i,grp in df.groupby(group1)
+    ]
+    
+    # poss
+    for combo in product(*combo_opts):
+        yield pd.concat(combo)
+def pmap_iter_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
 	import os,tempfile,pandas as pd
 	from tqdm import tqdm
 	
@@ -138,13 +196,26 @@ def pmap_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=Fa
 
 	#iterfunc = pmap if not iter else pmap_iter
 	#return pd.concat(iterfunc) if not iter else
-	for group_iter in pmap_iter(
+	return pmap_iter(
 		do_pmap_group,
 		objs,
 		num_proc=num_proc,
 		**attrs
-	):
-		yield from group_iter
+	)
+def pmap_groups(*x,**y):
+	res = list(pmap_iter_groups(*x,**y))
+	# print([type(x) for x in res])
+	# for y in res[-1]:
+		# print(type(y), y)
+	resl = []
+	for x in res:
+		if type(x)==list:
+			for y in x:
+				resl.append(y)
+		else:
+			resl.append(x)
+	return pd.concat(resl)
+
 
 
 

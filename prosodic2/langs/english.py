@@ -255,7 +255,7 @@ def add_elisions(_ipa):
 
 
 def espeak2ipa(token):
-	CMD='espeak -q -x '+token.replace("'","\\'").replace('"','\\"')
+	CMD='espeak -q -x '+token.replace("'","").replace('"','')
 	#CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
 	#print CMD
 	try:

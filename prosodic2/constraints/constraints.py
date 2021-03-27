@@ -12,6 +12,8 @@ def no_unstressed_strongs(df_mcombo):
     
 def no_weak_peaks(df_mcombo):
     return np.multiply(df_mcombo.is_w, df_mcombo.is_peak)
+def no_strong_troughs(df_mcombo):
+    return np.multiply(df_mcombo.is_s, df_mcombo.is_trough)
 
 def w_resolution(df_mcombo): pass
 def f_resolution(df_mcombo): pass
@@ -35,11 +37,12 @@ def no_lapse(df_mcombo):
 
 # default constraints
 DEFAULT_CONSTRAINTS = {
-    # 'w/stressed':no_stressed_weaks,
-    # 's/unstressed':no_unstressed_strongs,
+    'w/stressed':no_stressed_weaks,
+    's/unstressed':no_unstressed_strongs,
     'w/peak':no_weak_peaks,
-    # 'clash':no_clash,
-    # 'lapse':no_lapse,
+    's/trough':no_strong_troughs,
+    'clash':no_clash,
+    'lapse':no_lapse,
 }
 
 

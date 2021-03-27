@@ -40,8 +40,9 @@ def do_parse_phon(obj):
     cols=list(df.columns)
     df['stanza_i']=stanza_i
     df['line_i']=line_i
-    prefix=['stanza_i','line_i','word_i','word_ipa_i','syll_i']
-    df=df[prefix + [c for c in cols if c not in set(prefix)]]
+    df['line_ii']=list(range(len(df)))
+    # prefix=['stanza_i','line_i','word_i','word_ipa_i','syll_i']
+    # df=df[prefix + [c for c in cols if c not in set(prefix)]]
     return df
 
 def parse_phon(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
@@ -70,7 +71,7 @@ def parse_phon(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_p
 
     # assign proms
     assign_proms(df)
-    return df
+    return setindex(df,LINEKEY)
     
 
 def assign_proms(df):
