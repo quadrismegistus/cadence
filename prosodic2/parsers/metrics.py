@@ -1,86 +1,10 @@
 from ..imports import *
-
-
-
-#####
-# Loading texts
-#####
-from ..imports import *
-
-# loading txt/strings
-def to_txt(txt_or_fn):
-    # load txt
-    if not txt_or_fn: return
-    if os.path.exists(txt_or_fn):
-        with open(txt_or_fn) as f:
-            txt=f.read()
-    else:
-        txt=txt_or_fn
-    return txt
-
-# tokenizers
-
-# txt -> stanzas
-def to_stanzas(full_txt):
-    return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
-
-# stanza -> line 
-def to_lines(stanza_txt):
-    return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
-
-# line -> words
-def to_words(line_txt,lang_code=DEFAULT_LANG):
-    lang = to_lang(lang_code)
-    return lang.tokenize(line_txt)
-
-# word -> sylls
-def to_syllables(word_txt,lang_code=DEFAULT_LANG):
-    return lang.syllabify(word_txt)
-
-
-
-def load(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
-    full_txt=to_txt(txt_or_fn)
-    if not full_txt: return
-
-    df=pd.DataFrame()
-    objs=[]
-
-    for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt)):
-        for line_i,line_txt in enumerate(to_lines(stanza_txt)):
-            df=line2df(line_txt,lang=lang,incl_alt=incl_alt,**kwargs)
-            df['stanza_i']=stanza_i
-            df['line_i']=line_i
-            df['line_str']=line_txt
-            df['line_ipa']=' '.join(df.query('word_ipa!="" & word_ipa_i==0 & syll_i==0').word_ipa)
-            df['line_ii']=list(range(len(df)))
-            df['num_syll']=len(df.query('word_ipa!="" & word_ipa_i==0'))
-            objs+=[df]
-    odf=pd.concat(objs)
-    assign_proms(odf)
-    
-    # add other info
-    return setindex(odf)
-    
-def assign_proms(df):
-    # set proms
-    df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
-    df['prom_strength']=[
-        x
-        for i,df_word in df.groupby(['word_i','word_ipa_i'])
-        for x in getstrength(df_word)
-    ]
-    df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
-    df['is_unstressed']=1-df['is_stressed']
-    df['is_peak']=(df['prom_strength']==True).apply(np.int32)
-    df['is_trough']=(df['prom_strength']==False).apply(np.int32)
-
+from .txtparsing import *
 
 
 """
 ITER LINES
 """
-
 
 def iter_lines(txtdf):
     for stanza_i,stanzadf in txtdf.groupby('stanza_i'):
@@ -88,18 +12,20 @@ def iter_lines(txtdf):
         for line_,linedf in lines:
             yield linedf
 
-
-def iter_windows(df,window_len=3):
-    for linedf in iter_lines(df):
-        ldf=linedf.reset_index()
+def iter_combos(dfline):
+    for dfline in iter_lines(dfline):
+        ldf=dfline.reset_index()
         linedf_nopunc = ldf[ldf.word_ipa!=""]
-        linewords=[y for x,y in sorted(linedf_nopunc.groupby('word_i'))]        
-        for lwi,lineword_slice in enumerate(slices(linewords,window_len)):
-            for wi,word_combo in enumerate(apply_combos(pd.concat(lineword_slice), 'word_i', 'word_ipa_i', combo_key='word_combo_i')):
-                word_combo['word_window_i']=lwi
-                yield word_combo
-
-
+        for dfi,dfcombo in enumerate(apply_combos(linedf_nopunc, 'word_i', 'word_ipa_i')):
+            dfcombo['combo_i']=dfi
+            dfcombo['line_stress']=''.join(dfcombo.syll_stress)
+            dfcombo['combo_syll_i']=list(index_by_truth(dfcombo.is_syll))
+            dfcombo['combo_num_syll']=dfcombo['combo_syll_i'].max()+1
+            dfcombo['line_ipa']=' '.join(
+                '.'.join(wdf.syll_ipa)
+                for wi,wdf in sorted(dfcombo.groupby('word_i'))
+            )
+            yield setindex(dfcombo)
 
 """
 ITER PARSES
@@ -118,10 +44,202 @@ def possible_parses(window_len,maxS=2,maxW=2):
     poss = [x for x in poss if len(x)==window_len]
     return poss
 
+def possible_parses_recursive(window_len,starter=[],maxS=2,maxW=2,allow_overshooting=False,as_you_go=False):
+    wtypes = [tuple(['w']*n) for n in range(1,maxW+1)]
+    stypes = [tuple(['s']*n) for n in range(1,maxS+1)]
+    if as_you_go and starter: yield starter
+    if not starter:
+        for typ in wtypes + stypes:
+            yield from possible_parses_recursive(window_len,starter=[typ])
+    else:
+        lenn=sum(len(x) for x in starter)
+        if lenn>window_len:
+            if allow_overshooting:  # does not match syll count but overshoots it
+                yield starter 
+        elif lenn==window_len:  # exact match
+            yield starter #tuple([tuple(x) for x in starter])
+        else:
+            if starter[-1][-1]=='s':
+                for wtype in wtypes:
+                    yield from possible_parses_recursive(window_len,starter=starter+[wtype])
+            else:
+                for stype in stypes:
+                    yield from possible_parses_recursive(window_len,starter=starter+[stype])
+
+def possible_metrical_positions(window_len,**y):
+    return possible_parses_recursive(window_len,**y)
+
+
+### Data by foot
+def possible_metrical_feet(num_sylls,maxS=2,maxW=2):
+    """
+    Creates a hierarchical index of possible metrical parses
+    """
+
+    l = list(possible_parses_recursive(num_sylls,maxS=maxS,maxW=maxW))
+    # return as data
+    ld=[]
+    for parse_i,parse in enumerate(l):
+        tlen=sum(len(x) for x in parse)
+        parse_str = ''.join([''.join(pos) for pos in parse])
+        d={
+            'parse':parse_str,
+#             'pos':''.join(pos),
+            'num_pos':len(parse),
+            'num_syll':tlen
+        }
+        
+        for pos_i,pos in enumerate(parse):
+            d[f'mpos_{pos_i}']=''.join(pos)
+        ld.append(d)
+    df=pd.DataFrame(ld).fillna('')
+    indices = [c for c in df.columns if c.startswith('mpos_')]
+    return df.set_index(indices)
+
+
+
+### Data by syllable
+def possible_metrical_feet_bysyll(num_sylls,maxS=2,maxW=2):
+    l = possible_parses_recursive(num_sylls,maxS=maxS,maxW=maxW)
+    ld=[]
+    for parse_i,parse in enumerate(l):
+        num_syll=sum(len(x) for x in parse)
+        num_pos=len(parse)
+        parse_str = ''.join([''.join(pos) for pos in parse])
+        parse_sofar=''
+        parse_sofar_bysyll=''
+
+        si=0
+        for pos_i,pos in enumerate(parse):
+            pos_str=''.join(pos)
+            parse_sofar+=pos_str
+            for syll_i,syll in enumerate(pos):
+                parse_sofar_bysyll+=syll
+                d={
+                    'parse_i':parse_i,
+                    'parse':parse_str,
+                    # 'parse_sofar_bypos':parse_sofar,
+                    # 'parse_sofar_bysyll':parse_sofar_bysyll,
+                    'parse_num_pos':num_pos,
+                    'parse_num_syll':num_syll,
+                    'parse_pos_i':pos_i,
+                    'parse_pos':pos_str,
+                    'parse_syll_i':si,
+                    'parse_syll':syll
+                }
+                si+=1
+                ld.append(d)
+    df=pd.DataFrame(ld)
+    return df
+### Data by foot
+def possible_metrical_feet_bypos(num_sylls,maxS=2,maxW=2):
+    """
+    Creates a hierarchical index of possible metrical parses
+    """
+
+    l = possible_parses_recursive(num_sylls,maxS=maxS,maxW=maxW)
+    ld=[]
+    for parse_i,parse in enumerate(l):
+        tlen=sum(len(x) for x in parse)
+        parse_str = ''.join([''.join(pos) for pos in parse])
+        for pos_i,pos in enumerate(parse):
+            d={
+                'parse_i':parse_i,
+                'parse':parse_str,
+                'num_pos':len(parse),
+                'num_syll':tlen,
+                'pos_i':pos_i,
+                'pos_parse':''.join(pos)
+            }
+            ld.append(d)
+    df=pd.DataFrame(ld)
+    return df
+
+
+POSSD={}
+def get_poss_df(nsyll):
+    global POSSD
+    if not nsyll in POSSD: POSSD[nsyll]=possible_metrical_feet_bysyll(nsyll)
+    return POSSD[nsyll]
+
+
+
+
+
+
+"""
+Metrical positions
+"""
+
+def iter_unique_metrical_positions(linecombodf):
+    lcdf=linecombodf.reset_index()
+    numsyll=len(lcdf)
+    poss=[]
+    poss_parses=possible_metrical_positions(numsyll)
+    for parse in poss_parses:
+        posi=0
+        for i,pos in enumerate(parse):
+            o=( (posi,posi+len(pos)), pos, i)
+            poss+=[o]
+            posi+=len(pos)
+    
+    for unique_mpos in sorted(list(set(poss))):
+        indices,pos,posi = unique_mpos
+        posdf = lcdf.iloc[indices[0] : indices[1]]
+        posdf = pd.DataFrame(posdf)
+        posdf['syll_parse'] = pos
+        posdf['pos_parse'] = ''.join(pos)
+        posdf['pos_i'] = posi
+        yield posdf
+
+
+def iter_parsed_metrical_positions(linecombodf):
+    for posdf in iter_unique_metrical_positions(linecombodf):
+        yield parse_group(posdf)
+
+
+def get_parsed_metrical_positions(linecombodf):
+    return setindex(pd.concat(iter_parsed_metrical_positions(combodf)
+
+
+def is_valid_combo(dfcombo,numsyll=None):
+    dfnodup=dfcombo.reset_index().drop_duplicates(['syll_i','pos_i'])
+    if len(dfnodup)!=len(dfcombo): return False
+    return True
+def is_valid_parse(parse,parsedf,numsyll):
+    if not is_ok_parse(parse): return False
+    if len(set(parsedf.combo_syll_i))!=numsyll: return False
+    return True
+
+
+def parse_combo(linecombodf):
+    lfpc=linecombodf.reset_index()
+    # setup
+    numsyll=len(lfpc)
+    done=set()
+    
+    # parse just the positions
+    dfpm = get_parsed_metrical_positions(lfpc)
+    dfpmr=dfpm.reset_index()
+    dfposs=get_poss_df(numsyll)
+
+    # join with parsed positions
+    dfjoin=setindex(dfpmr.merge(dfposs, left_on=['combo_syll_i','pos_i','syll_parse','pos_parse'], right_on=['parse_syll_i','parse_pos_i','parse_syll','parse_pos']))
+    
+    # concat on way out
+    o=[]
+    for parse,parsedf in dfjoin.groupby(level='parse'):
+        pdf=parsedf.drop_duplicates(['parse_syll_i','parse_syll','parse_pos_i','parse_pos'])
+        if not is_valid_parse(parse,pdf,numsyll): continue
+        o+=[pdf]
+    return pd.concat(o)
+
+
+
 
 def iter_poss_parses(df_window):
     df=df_window
-    num_sylls = len(df.reset_index().query('word_ipa!=""'))    
+    num_sylls = len(df.reset_index().query('word_ipa!=""'))
     for posi,pparse in enumerate(possible_parses(num_sylls)):
         df['parse_i']=posi
         df['parse_ii']=list(range(len(pparse)))
@@ -134,6 +252,9 @@ def iter_poss_parses(df_window):
 
 
 def parse_group(df,constraints=DEFAULT_CONSTRAINTS):
+    dfcols=set(df.columns)
+    if not 'is_w' in dfcols: df['is_w']=[np.int(x=='w') for x in df.syll_parse]
+    if not 'is_s' in dfcols: df['is_s']=[np.int(x=='s') for x in df.syll_parse]
     dfpc=apply_constraints(df)
     lkeys=[c for c in df.columns if c not in set(dfpc.columns)]
     return df[lkeys].join(dfpc)
