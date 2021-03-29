@@ -27,7 +27,7 @@ setup(
 
     packages=find_packages(exclude=('tests',)),
 
-    install_requires=[],
+    install_requires=[x.strip() for x in read('requirements.txt').split('\n') if x.strip()],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
