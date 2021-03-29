@@ -26,7 +26,11 @@ def get_special_cases():
 		if os.path.exists(ufn):
 			with open(ufn) as f:
 				SPECIALD['maybestressed']={w.strip().lower() for w in f.read().strip().split()}
-	
+
+		import nltk
+		SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
+		SPECIALD['functionwords']|=SPECIALD['unstressed']
+
 	return SPECIALD
 
 """
@@ -41,6 +45,7 @@ def scan(line,incl_alt=True,**y):
 		} for word_i,word in enumerate(tokenize(line))
 		for word_dx in get(word,incl_alt=incl_alt)
 	]
+
 
 
 def tokenize(txt):
@@ -110,6 +115,7 @@ def get(token,config={},toprint=False,incl_alt=True):
 				'word_ipa':ipa,
 				'syll_ipa':syll_ipa,
 				'syll_str':syll_text,
+				'is_funcword':int(tokenl in sd['functionwords'])
 			})
 	return results_ld
 

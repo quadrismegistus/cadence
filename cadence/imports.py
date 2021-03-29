@@ -33,7 +33,7 @@ LINEKEY=[
     'parse_i','parse','parse_str',
     'parse_pos_i','parse_pos',
     'word_i','word_str','word_ipa_i','word_ipa',
-    'syll_i','combo_syll_i','syll_str','syll_ipa','syll_stress',
+    'syll_i','combo_syll_i','syll_str','syll_ipa','syll_stress','syll_weight',
     'parse_syll_i','parse_syll',
 ]
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]

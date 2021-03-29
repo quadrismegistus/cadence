@@ -34,7 +34,6 @@ def scan(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DE
             df['line_i']=line_i+1
             df['line_str']=line_txt
             df['is_syll']=[int(x) for x in df['syll_ipa']!='']
-            df['syll_stress']=df.syll_ipa.apply(getstress_str)
             objs+=[df]
     odf=pd.concat(objs)
     assign_proms(odf)
@@ -45,15 +44,21 @@ def scan(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DE
 def assign_proms(df):
     # set proms
     df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
+    df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
+    df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
+    df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
+    
     df['prom_strength']=[
         x
         for i,df_word in df.groupby(['word_i','word_ipa_i'])
         for x in getstrength(df_word)
     ]
     df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
-    df['is_unstressed']=1-df['is_stressed']
-    df['is_peak']=(df['prom_strength']==True).apply(np.int32)
-    df['is_trough']=(df['prom_strength']==False).apply(np.int32)
+    df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
+    df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
+    df['is_light']=(df['prom_weight']==0).apply(np.int32)
+    df['is_peak']=(df['prom_strength']==1).apply(np.int32)
+    df['is_trough']=(df['prom_strength']==0).apply(np.int32)
 
 
 def get_info_byline(txtdf):

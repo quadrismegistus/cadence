@@ -11,6 +11,7 @@ def to_lang(lang_code=None):
 
 DF_IPA=None
 def get_df_ipa(fn=PATH_IPA_FEATS):
+    global DF_IPA
     if DF_IPA is None: DF_IPA=pd.read_csv(fn).set_index('ipa')
     return DF_IPA
 
@@ -28,26 +29,6 @@ def line2df(line_txt,lang=DEFAULT_LANG,sby=['word_i','word_ipa_i','syll_i'],incl
         return df.sort_values(sby)[sby + [col for col in df.columns if col not in set(sby)]]
     except KeyError:
         return df
-
-    
-
-# def anno_proms(df):
-#     # annotate all features
-#     df=pd.DataFrame(df)
-#     df['prom_stress']=df['syll_ipa'].apply(getstress)
-#     # # df['syll_weight']=[
-#     # #     weight
-#     # #     for i,df_syll in df.groupby(['word_i','word_ipa_i','syll_i'])
-#     # #     for weight in self.lang.getweight(df_syll)
-#     # # ]f
-#     df['prom_strength']=[
-#         weight
-#         for i,df_word in df.groupby(['word_i','word_ipa_i'])
-#         for weight in getstrength(df_word)
-#     ]
-#     return df
-#     # # df['']
-
 
 
 
@@ -69,6 +50,21 @@ def getstress_str(sylipa):
     if x==1.0: return 'P'
     if x==0.5: return 'S'
     if x==0.0: return 'U'
+    return ''
+
+def getweight(sylipa):
+    dfipa=get_df_ipa()
+    phondata = dfipa.loc[[ipastr for ipastr in sylipa if ipastr in set(dfipa.index)]]
+    if not len(phondata): return np.nan
+    ends_with_cons=phondata['cons'].iloc[-1]==True
+    has_long_vowel=any(x==True for x in phondata['long'])
+    is_dipthong=None #@TODO
+    weight=1 if ends_with_cons or has_long_vowel or is_dipthong else 0
+    return weight
+
+def getweight_str(sylipa):
+    if x==1: return 'H'
+    if x==0: return 'L'
     return ''
 
 # def getweight(self,df_syll):
