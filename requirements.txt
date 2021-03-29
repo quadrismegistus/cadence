@@ -2,3 +2,4 @@ tqdm
 pandas
 numpy
 nltk
+wget

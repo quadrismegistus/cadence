@@ -12,6 +12,7 @@ def to_lang(lang_code=None):
 DF_IPA=None
 def get_df_ipa(fn=PATH_IPA_FEATS):
     global DF_IPA
+    print(fn,'??')
     if DF_IPA is None: DF_IPA=pd.read_csv(fn).set_index('ipa')
     return DF_IPA
 

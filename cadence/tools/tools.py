@@ -248,7 +248,14 @@ def pmap_groups(*x,**y):
 	return pd.concat(resl)
 
 
-
+def check_basic_config():
+	# check basic config
+	if not os.path.exists(PATH_HOME): os.makedirs(PATH_HOME)
+	if not os.path.exists(PATH_DATA): os.makedirs(PATH_DATA)
+	if not os.path.exists(os.path.join(PATH_DATA,'en')):
+		zipfn=os.path.join(PATH_HOME,'data_cadence.zip')
+		download(DATA_URL, zipfn)
+		unzip(zipfn, PATH_HOME)
 
 
 
@@ -257,3 +264,71 @@ def pmap_groups(*x,**y):
 def printm(x):
 	from IPython.display import display,Markdown
 	display(Markdown(x))
+
+
+
+def download_wget(url, save_to, **attrs):
+	import wget
+	save_to_dir,save_to_fn=os.path.split(save_to)
+	if save_to_dir:
+		if not os.path.exists(save_to_dir): os.makedirs(save_to_dir)
+		os.chdir(save_to_dir)
+	fn=wget.download(url,bar=wget.bar_adaptive)
+	os.rename(fn,save_to_fn)
+	# print('\n>> saved:',save_to)
+
+def download(url,save_to,force=False,desc=''):
+	here=os.getcwd()
+	download_wget(url,save_to,desc=desc)
+	os.chdir(here)
+
+
+
+
+def unzip(zipfn, dest='.', flatten=False, overwrite=False, replace_in_filenames={},desc='',progress=True):
+	from zipfile import ZipFile
+	from tqdm import tqdm
+
+	# Open your .zip file
+	if not desc: desc=f'Extracting {os.path.basename(zipfn)}'
+	with ZipFile(zipfn) as zip_file:
+		namelist=zip_file.namelist()
+
+		# Loop over each file
+		iterr=tqdm(iterable=namelist, total=len(namelist),desc=desc) if progress else namelist
+		for member in iterr:
+			# Extract each file to another directory
+			# If you want to extract to current working directory, don't specify path
+			filename = os.path.basename(member)
+			if not filename: continue
+			target_fnfn = os.path.join(dest,member) if not flatten else os.path.join(dest,filename)
+			for k,v in replace_in_filenames.items(): target_fnfn = target_fnfn.replace(k,v)
+			if not overwrite and os.path.exists(target_fnfn): continue
+			target_dir = os.path.dirname(target_fnfn)
+			try:
+				if not os.path.exists(target_dir): os.makedirs(target_dir)
+			except FileExistsError:
+				pass
+			except FileNotFoundError:
+				continue
+			
+			with zip_file.open(member) as source, open(target_fnfn,'wb') as target:
+				shutil.copyfileobj(source, target)
+
+
+
+
+def get_num_lines(filename):
+	from smart_open import open
+
+	def blocks(files, size=65536):
+		while True:
+			b = files.read(size)
+			if not b: break
+			yield b
+
+	with open(filename, 'r', errors='ignore') as f:
+		numlines=sum(bl.count("\n") for bl in blocks(f))
+
+	return numlines
+
