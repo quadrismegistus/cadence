@@ -6,6 +6,13 @@ A minimalist rhythm analyzer. So far, it's a simplified version of [Prosodic](ht
 
 ### Setup
 
+Install:
+
+```
+pip install -U git+https://github.com/quadrismegistus/cadence
+```
+
+Import in python:
 
 ```python
 # Import
