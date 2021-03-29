@@ -15,14 +15,14 @@ def read(filename):
 
 setup(
     name="cadence",
-    version="0.1.2",
+    version="0.1.3",
     url="https://github.com/quadrismegistus/cadence",
     license='MIT',
 
     author="Ryan Heuser",
     author_email="rj416@am.ac.uk",
 
-    description="Minimalist rhythm processor",
+    description="Minimalist rhythm processor (beta)",
     long_description=read("README.md"),
 
     packages=find_packages(exclude=('tests',)),
