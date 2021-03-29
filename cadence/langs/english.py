@@ -36,7 +36,7 @@ The only necessary functions
 def scan(line,incl_alt=True,**y):
 	return [
 		{
-			'word_i':word_i,
+			'word_i':word_i+1,
 			**word_dx
 		} for word_i,word in enumerate(tokenize(line))
 		for word_dx in get(word,incl_alt=incl_alt)
@@ -81,11 +81,11 @@ def get(token,config={},toprint=False,incl_alt=True):
 
 	ipas = ipas[:1] if not incl_alt else ipas
 	sd=get_special_cases()
-	if token in sd['unstressed']:
+	if tokenl in sd['unstressed']:
 		ipa=ipas[0]
 		ipax=ipa if ipa[0].isalpha() else ipa[1:]
 		ipas=[ipax]
-	elif token in sd['maybestressed']:
+	elif tokenl in sd['maybestressed']:
 		if len(ipas)<2:
 			ipa=ipas[0]
 			ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
@@ -104,8 +104,8 @@ def get(token,config={},toprint=False,incl_alt=True):
 
 		for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
 			results_ld.append({
-				'word_ipa_i':ipa_i,
-				'syll_i':si,
+				'word_ipa_i':ipa_i+1,
+				'syll_i':si+1,
 				'word_str':token,
 				'word_ipa':ipa,
 				'syll_ipa':syll_ipa,
@@ -394,10 +394,10 @@ def syllabify_orth_with_pyphen(token,num_sylls=None):
 	sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
 	return sylls
 
-def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_pyphen):
+def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
 	key=(token,num_sylls)
 	if not key in ORTH_CACHE:
-		l=func(token,num_sylls=num_sylls)
+		l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]
 		if num_sylls and len(l)!=num_sylls:
 			l2=[]
 			for i in range(num_sylls):

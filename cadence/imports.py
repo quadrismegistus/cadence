@@ -23,9 +23,12 @@ INCL_ALT=True
 DEFAULT_NUM_PROC=mp.cpu_count() - 1
 KEEP_BEST=1
 SBY=csby=['combo_i','word_i','syll_i']
+PARSERANKCOL='parse_rank'
+
 LINEKEY=[
     'stanza_i',
     'line_i','line_str',
+    PARSERANKCOL,
     'combo_i','combo_stress','combo_ipa',
     'parse_i','parse','parse_str',
     'parse_pos_i','parse_pos',
@@ -36,7 +39,6 @@ LINEKEY=[
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
-PARSERANKCOL='parse_rank'
 
 
 

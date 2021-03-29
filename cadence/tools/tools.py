@@ -198,7 +198,7 @@ def apply_combos(df,group1,group2,combo_key='combo_i'):
     # poss
     for combo in product(*combo_opts):
         yield pd.concat(combo)
-def pmap_iter_groups(func,df_grouped,use_cache=True,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
+def pmap_iter_groups(func,df_grouped,use_cache=False,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
 	import os,tempfile,pandas as pd
 	from tqdm import tqdm
 	

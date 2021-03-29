@@ -20,7 +20,7 @@ def to_words(line_txt,lang_code=DEFAULT_LANG):
 def to_syllables(word_txt,lang_code=DEFAULT_LANG):
     return lang.syllabify(word_txt)
 
-def load(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
+def scan(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
     full_txt=to_txt(txt_or_fn)
     if not full_txt: return
 
@@ -30,8 +30,8 @@ def load(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DE
     for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt)):
         for line_i,line_txt in enumerate(to_lines(stanza_txt)):
             df=line2df(line_txt,lang=lang,incl_alt=incl_alt,**kwargs)            
-            df['stanza_i']=stanza_i
-            df['line_i']=line_i
+            df['stanza_i']=stanza_i+1
+            df['line_i']=line_i+1
             df['line_str']=line_txt
             df['is_syll']=[int(x) for x in df['syll_ipa']!='']
             df['syll_stress']=df.syll_ipa.apply(getstress_str)
