@@ -9,6 +9,12 @@ import subprocess,multiprocessing as mp
 from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
+import nltk
+try:
+	nltk.word_tokenize('testing')
+except LookupError:
+	nltk.download('punkt')
+
 
 # constants
 MIN_WORDS_IN_PHRASE=2
@@ -39,7 +45,6 @@ LINEKEY=[
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
-
 
 
 # local imports

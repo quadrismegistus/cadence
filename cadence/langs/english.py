@@ -1,5 +1,11 @@
 from ..imports import *
 from .lexconvert import convert as lexconvert
+import nltk
+try:
+	nltk.word_tokenize('testing')
+except LookupError:
+	nltk.download('punkt')
+
 
 Pyphen = None
 
