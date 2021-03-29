@@ -2,13 +2,18 @@
 
 A minimalist rhythm analyzer. So far, it's a simplified version of [Prosodic](https://github.com/quadrismegistus/prosodic) for English and Finnish poetic scansion. It's more thorough (returns all parses, not just the non-harmonically bounded ones) but slower.
 
+## Quickstart
+
+### Setup
+
 
 ```python
 # Import
 import cadence as cd
 ```
 
-## Load text
+
+### Load text
 
 
 ```python
@@ -1006,7 +1011,7 @@ txtdf
 
 
 
-## Metrical parsing
+### Metrical parsing
 
 
 ```python
@@ -2041,7 +2046,7 @@ parses_byline
 
 
 
-## Metrical analysis
+### Metrical analysis
 
 
 ```python
