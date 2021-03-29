@@ -1,0 +1,11 @@
+include requirements.txt
+include README.md
+include LICENSE
+include *.txt
+include *.tsv
+include *.csv
+
+graft data
+
+global-exclude .DS_Store
+global-exclude *.py[cod]
