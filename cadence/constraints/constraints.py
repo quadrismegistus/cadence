@@ -27,7 +27,7 @@ def w_resolution(df_mpos,weight=1):
 
 def f_resolution(df_mpos,weight=1):
     if len(set(df_mpos.word_i))<2: return np.nan # only applies to word-boundaries
-    if df_mpos.parse_syll.iloc[0]=='s': return weight # cannot apply to strong positions
+    if df_mpos.parse_pos.iloc[0]=='ss': return weight # cannot apply to strong positions
     if sum(df_mpos.is_funcword)!=len(df_mpos): return weight
     return 0
 
