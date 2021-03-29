@@ -14,8 +14,8 @@ def read(filename):
 
 
 setup(
-    name="cadence",
-    version="0.1.6",
+    name="cadences",
+    version="0.1.7",
     url="https://github.com/quadrismegistus/cadence",
     license='MIT',
 
@@ -24,6 +24,7 @@ setup(
 
     description="Minimalist rhythm processor (beta)",
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
 
     packages=find_packages(exclude=('tests',)),
 
