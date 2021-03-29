@@ -4,7 +4,7 @@ A minimalist rhythm analyzer. So far, it's a simplified version of [Prosodic](ht
 
 ## Quickstart
 
-You can run this quickstart as an interactive notebook (on [Google Colab](https://colab.research.google.com/github/quadrismegistus/cadence/blob/main/README.ipynb) or on [Binder](https://mybinder.org/v2/gh/quadrismegistus/cadence/HEAD?urlpath=https%3A%2F%2Fgithub.com%2Fquadrismegistus%2Fcadence%2Fblob%2Fmain%2FREADME.ipynb)).
+You can also run this quickstart as an [interactive notebook on Colab](https://colab.research.google.com/github/quadrismegistus/cadence/blob/main/README.ipynb).
 
 ### Setup
 
