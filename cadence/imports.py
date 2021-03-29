@@ -44,5 +44,5 @@ from .tools import *
 from .langs import *
 from .constraints import *
 from .parsers import *
-from .prosodic2 import *
+from .cadence import *
 
