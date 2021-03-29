@@ -127,7 +127,7 @@ def get(token,config={},toprint=False,incl_alt=True):
 def get_cache(source_paths=[CMU_DICT_FN]):
 	if not CACHE:
 		for sfn in source_paths:
-			with open(sfn) as f:
+			with open(sfn, encoding='utf-8') as f:
 				for ln in f:
 					ln=ln.strip()
 					if not ln: continue
