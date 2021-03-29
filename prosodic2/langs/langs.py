@@ -68,7 +68,8 @@ def getstress_str(sylipa):
     x=getstress(sylipa)
     if x==1.0: return 'P'
     if x==0.5: return 'S'
-    return 'U'
+    if x==0.0: return 'U'
+    return ''
 
 # def getweight(self,df_syll):
 #     ends_with_cons=df_syll.sort_values('phon_i')['phon_cons'].iloc[-1]==True

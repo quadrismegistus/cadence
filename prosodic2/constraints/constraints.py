@@ -40,7 +40,7 @@ DEFAULT_CONSTRAINTS = {
     'w/stressed':no_stressed_weaks,
     's/unstressed':no_unstressed_strongs,
     'w/peak':no_weak_peaks,
-    's/trough':no_strong_troughs,
+    # 's/trough':no_strong_troughs,
     'clash':no_clash,
     'lapse':no_lapse,
 }

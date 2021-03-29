@@ -1,5 +1,10 @@
 from ..imports import *
-
+def subfinder(mylist, pattern):
+    matches = []
+    for i in range(len(mylist)):
+        if mylist[i] == pattern[0] and mylist[i:i+len(pattern)] == pattern:
+            matches.append(pattern)
+    return matches
 
 DTOK_TREEBANK=None
 def detokenize_treebank(x):
@@ -13,7 +18,7 @@ def detokenize(x):
 	x=detokenize_treebank(x)
 	return x
 
-def setindex(df,key=LINEKEY):
+def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
 	df = df[set(df.columns) - set(df.index.names)]
 	df = df.reset_index()
 		
@@ -21,9 +26,27 @@ def setindex(df,key=LINEKEY):
 	for x in key:
 		if not x in set(cols) and x in set(df.columns):
 			cols.append(x)
-	odf=df.set_index(cols).sort_index()
-	if 'index' in set(odf.columns): odf=odf.drop('index',1)
-	return odf
+		
+	odf=df.set_index(cols)
+	if sort: odf=odf.sort_index()
+	odf=odf[[col for col in odf.columns if not col in badcols and col not in key]]
+	
+	constraints = [c for c in odf.columns if c.startswith('*')]
+	resortcols = ['*total'] + [c for c in constraints if c!='*total']
+	resortcols+= list(sorted([c for c in odf.columns if c not in set(constraints)]))
+	return odf[[c for c in resortcols if c in odf.columns]]
+
+def resetindex(df,**y):
+	cols=set(df.columns)
+	inds=set(df.index.names)
+	both=cols&inds
+	# print(cols)
+	# print(inds)
+	# print(both)
+	newdf=df[cols - both].reset_index(**y)
+	# print(newdf.columns)
+	# print()
+	return newdf
 
 
 def occurrences(string, sub):
@@ -59,11 +82,11 @@ def chunks(lst, n):
 	for i in range(0, len(lst), n):
 		yield lst[i:i + n]
 
-def product(*args):
-	if not args:
-		return iter(((),)) # yield tuple()
-	return (items + (item,)
-		for items in product(*args[:-1]) for item in args[-1])
+# def product(*args):
+# 	if not args:
+# 		return iter(((),)) # yield tuple()
+# 	return (items + (item,)
+# 		for items in product(*args[:-1]) for item in args[-1])
 
 
 def hashstr(*x):
@@ -122,6 +145,14 @@ def pmap(*x,**y):
 	# return as list
 	return list(pmap_iter(*x,**y))
 
+def index_by_truth(x):
+    i=0
+    for y in x:
+        if y:
+            yield i
+            i+=1
+        else:
+            yield np.nan
 
 
 def do_pmap_group(obj,*args,**kwargs):
