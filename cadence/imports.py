@@ -35,7 +35,8 @@ LINEKEY=[
 ]
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
-
+TOTALCOL='*total'
+PARSERANKCOL='parse_rank'
 
 
 

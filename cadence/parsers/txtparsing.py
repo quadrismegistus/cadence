@@ -33,7 +33,7 @@ def load(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DE
             df['stanza_i']=stanza_i
             df['line_i']=line_i
             df['line_str']=line_txt
-            df['is_syll']=df['syll_ipa']!=''
+            df['is_syll']=[int(x) for x in df['syll_ipa']!='']
             df['syll_stress']=df.syll_ipa.apply(getstress_str)
             objs+=[df]
     odf=pd.concat(objs)

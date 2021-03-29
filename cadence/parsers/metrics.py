@@ -12,10 +12,12 @@ def iter_lines(txtdf):
         for line_,linedf in lines:
             yield linedf
 
-def iter_combos(dfline):
-    for dfline in iter_lines(dfline):
+def iter_combos(txtdf):
+    for dfline in iter_lines(txtdf):
+        # ldf=resetindex(dfline)
         ldf=dfline.reset_index()
-        linedf_nopunc = ldf[ldf.word_ipa!=""]
+        print(ldf.columns,'word_i' in ldf.columns)
+        linedf_nopunc = ldf[ldf.is_syll!=0]
         for dfi,dfcombo in enumerate(apply_combos(linedf_nopunc, 'word_i', 'word_ipa_i')):
             dfcombo['combo_i']=dfi
             dfcombo['combo_stress']=''.join(dfcombo.syll_stress)
@@ -27,7 +29,8 @@ def iter_combos(dfline):
             )
             yield setindex(dfcombo)
 
-def get_all_combos(txtdf): return pd.concat(iter_combos(txtdf))
+def get_all_combos(txtdf):
+    return resetindex(pd.concat(iter_combos(txtdf)))
 
 """
 ITER PARSES
@@ -242,7 +245,7 @@ def is_valid_mpos_combo(parsedf,numsyll):
 def iter_parsed_combos(txtdf,num_proc=DEFAULT_NUM_PROC,progress=True):
     yield from pmap_iter_groups(
         parse_combo,
-        get_all_combos(txtdf).groupby(level=['stanza_i','line_i','combo_i']),
+        get_all_combos(txtdf).groupby(['stanza_i','line_i','combo_i']),
         num_proc=num_proc,
         progress=progress,
         desc='Metrically parsing lines (+word IPA combinations)'
@@ -254,6 +257,8 @@ def parse_line(linedf):
     Line DF -> Combos -> Parsed -> Concat
     """
     return pd.concat(parse_combo(combo) for combo in iter_combos(linedf))
+
+
 def iter_parsed_lines(txtdf,num_proc=DEFAULT_NUM_PROC,progress=True,data_by_line=False):
     yield from iter_combos_as_lines(
         iter_parsed_combos(
@@ -264,27 +269,9 @@ def iter_parsed_lines(txtdf,num_proc=DEFAULT_NUM_PROC,progress=True,data_by_line
         data_by_line=data_by_line
     )        
 
-def sort_by_total_and_syll(dfline,key=LINEKEY,sortcol='sort_parse_viols'):
-    dfline=resetindex(dfline)
-    gcols=[
-        'stanza_i',
-        'line_i',
-        'parse_i',
-        'parse_syll_i'
-    ]
-    dflnsum = dfline.groupby(gcols).sum().sort_values('*total')
-    indices = [
-        tuple(int(row.get(gc)) for gc in gcols)
-        for i,row in dflnsum.reset_index().iterrows()
-    ]
-    dfline[sortcol] = dfline.reset_index().apply(
-        lambda row: indices.index(tuple(int(row.get(gc)) for gc in gcols)),
-        axis=1
-    )
-    odf=setindex(dfline,sort=False).sort_values(sortcol)
-    return odf
 
 def iter_combos_as_lines(iter_combo,data_by_line=False):
+    print(data_by_line,'!?!?!')
     lineinow=None
     combos=[]
     for dfcombo in iter_combo:
@@ -301,12 +288,45 @@ def iter_combos_as_lines(iter_combo,data_by_line=False):
         
 
 
+
+def sort_by_total_and_syll(dfline,key=LINEKEY,sortcol='sort_parse_viols',totalcol='*total'):
+    dfline=resetindex(dfline)
+    gcols=[
+        'stanza_i',
+        'line_i',
+        'combo_i',
+        'parse_i',
+    ]
+    dflnsum = dfline.groupby(gcols).sum().sort_values(totalcol)
+    ranks = dlfnsum[totalcol].rank()
+    indices = [
+        tuple(int(row.get(gc)) for gc in gcols)
+        for i,row in dflnsum.reset_index().iterrows()
+    ]
+    dfline['parse_rank']=dfline.reset_index().apply(
+        lambda row: ranks.iloc[
+            indices.index(tuple(int(row.get(gc)) for gc in gcols))
+        ],
+        axis=1
+    )
+    dfline[sortcol] = list(zip(dfline.parse_rank, dfline.parse_syll_i))
+    odf=dfline.sort_values(sortcol)
+    display(odf)
+    stop
+    # odf=setindex(odf,sort=False)
+    # odf['parse_rank']=dfline['parse_rank']
+    # odf[sortcol]=dfline[sortcol]
+    return odf
+
+
 def parse_iter(txtdf,
         data_by_line=True,data_by_syll=False,
         num_proc=DEFAULT_NUM_PROC,progress=True):
     """
     Return parses as iter
     """
+    if data_by_syll: data_by_line=False
+    print(data_by_line)
     yield from iter_parsed_lines(txtdf,num_proc=num_proc,progress=progress,data_by_line=data_by_line)
 
 def parse(txtdf,*x,**y):
@@ -336,8 +356,9 @@ def parse_group(df,constraints=DEFAULT_CONSTRAINTS):
 Summarizing by line
 """
 
-def summarize_parses_by_line(parses):
+def summarize_parses_by_line(parses,totalcol=TOTALCOL,rankcol=PARSERANKCOL):
     # parses
+    parses=pd.DataFrame(parses)
     rparses=resetindex(parses)
     pkcols = [c for c in PARSELINEKEY if c in set(rparses.columns)]
     # sum by actual data lines
@@ -352,7 +373,10 @@ def summarize_parses_by_line(parses):
     aggfunc['parse_num_syll']=np.median
     aggfunc['parse_num_pos']=np.median
     
-    linesums = setindex(rparses.groupby(pkcols).agg(aggfunc))
-    linesums = linesums[['*total'] + [c for c in sorted(linesums.columns) if c!='*total']]
-    odf=setindex(linesums, key=PARSELINEKEY, sort=False)
-    return odf.sort_values('*total')
+    linesums = resetindex(rparses.groupby(pkcols).agg(aggfunc))
+    linesums[rankcol] = linesums.groupby(['stanza_i','line_i'])[totalcol].rank("dense", ascending=True).apply(int)
+    linesums=linesums.sort_values(['stanza_i','line_i',rankcol])
+    linesums = setindex(linesums,key=PARSELINEKEY,sort=False)
+    prefix=[rankcol,totalcol]
+    linesums = linesums[prefix + [c for c in sorted(linesums.columns) if c not in set(prefix)]]
+    return linesums

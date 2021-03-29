@@ -20,7 +20,7 @@ def detokenize(x):
 
 def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
 	df = df[set(df.columns) - set(df.index.names)]
-	df = df.reset_index()
+	df = resetindex(df)
 		
 	cols=[]
 	for x in key:
@@ -36,14 +36,14 @@ def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
 	resortcols+= list(sorted([c for c in odf.columns if c not in set(constraints)]))
 	return odf[[c for c in resortcols if c in odf.columns]]
 
-def resetindex(df,**y):
+def resetindex(df,badcols={'level_0','index'},**y):
 	cols=set(df.columns)
 	inds=set(df.index.names)
 	both=cols&inds
 	# print(cols)
 	# print(inds)
 	# print(both)
-	newdf=df[cols - both].reset_index(**y)
+	newdf=df[cols - both - badcols].reset_index(**y)
 	# print(newdf.columns)
 	# print()
 	return newdf

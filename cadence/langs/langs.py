@@ -1,7 +1,7 @@
 from ..imports import *
-from .english import parse as en_parse
+from .english import scan as en_scan
 CODE2LANG = {
-    'en':en_parse
+    'en':en_scan
 }
 
 def to_lang(lang_code=None):

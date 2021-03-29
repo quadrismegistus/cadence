@@ -33,7 +33,7 @@ def get_special_cases():
 The only necessary functions
 """
 
-def parse(line,incl_alt=True,**y):
+def scan(line,incl_alt=True,**y):
 	return [
 		{
 			'word_i':word_i,
