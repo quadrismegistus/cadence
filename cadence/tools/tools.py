@@ -256,6 +256,14 @@ def check_basic_config():
 		zipfn=os.path.join(PATH_HOME,'data_cadence.zip')
 		download(DATA_URL, zipfn)
 		unzip(zipfn, PATH_HOME)
+	try:
+		nltk.word_tokenize('testing')
+	except LookupError:
+		nltk.download('punkt')
+	try:
+		nltk.corpus.stopwords.words('english')
+	except LookupError:
+		nltk.download('stopwords')
 
 
 
