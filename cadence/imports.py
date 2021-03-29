@@ -27,7 +27,8 @@ DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
 PATH_NOTEBOOKS=os.path.join(PATH_REPO,'notebooks')
 PATH_IPA_FEATS=os.path.join(PATH_DATA,'data.feats.ipa.csv')
 INCL_ALT=True
-DEFAULT_NUM_PROC=mp.cpu_count() - 1
+DEFAULT_NUM_PROC=mp.cpu_count()# - 1
+
 KEEP_BEST=1
 SBY=csby=['combo_i','word_i','syll_i']
 PARSERANKCOL='parse_rank'
