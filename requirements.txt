@@ -1,5 +1,5 @@
 tqdm
 pandas
 numpy
-nltk
+nltk==3.5
 wget

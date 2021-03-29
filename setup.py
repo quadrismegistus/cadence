@@ -15,12 +15,12 @@ def read(filename):
 
 setup(
     name="cadence",
-    version="0.1.3",
+    version="0.1.4",
     url="https://github.com/quadrismegistus/cadence",
     license='MIT',
 
     author="Ryan Heuser",
-    author_email="rj416@am.ac.uk",
+    author_email="rj416@cam.ac.uk",
 
     description="Minimalist rhythm processor (beta)",
     long_description=read("README.md"),
