@@ -15,7 +15,7 @@ def read(filename):
 
 setup(
     name="cadences",
-    version="0.1.8",
+    version="0.1.9",
     url="https://github.com/quadrismegistus/cadence",
     license='MIT',
 
