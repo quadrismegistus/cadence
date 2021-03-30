@@ -63,7 +63,7 @@ def tokenize(txt):
 	return l2
 
 
-def get(token,config={},toprint=False,incl_alt=True):
+def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
 	# not real?
 	if not token or not token[0].isalpha():
 		return [{
@@ -85,6 +85,10 @@ def get(token,config={},toprint=False,incl_alt=True):
 		ipas=cache[tokenl]
 	else:
 		ipas=tts(token)
+		if ipas:
+			cache[tokenl]=ipas
+			if cache_new:
+				write_to_cache(token,ipas[0])
 
 
 	ipas = ipas[:1] if not incl_alt else ipas
@@ -123,8 +127,8 @@ def get(token,config={},toprint=False,incl_alt=True):
 	return results_ld
 
 
-# def get_cache(source_paths=[CMU_DICT_FN,CACHE_DICT_FN]):
-def get_cache(source_paths=[CMU_DICT_FN]):
+def get_cache(source_paths=[CMU_DICT_FN,CACHE_DICT_FN]):
+# def get_cache(source_paths=[CMU_DICT_FN]):
 	if not CACHE:
 		for sfn in source_paths:
 			with open(sfn, encoding='utf-8') as f:
