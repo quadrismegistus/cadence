@@ -8,7 +8,7 @@ You can also run this quickstart as an [interactive notebook on Colab](https://c
 
 ### Setup
 
-Install:
+(1) Install:
 
 ```
 pip install -U cadences    # 'cadence' was taken :-/
@@ -17,18 +17,14 @@ pip install -U cadences    # 'cadence' was taken :-/
 #pip install -U git+https://github.com/quadrismegistus/cadence
 ```
 
-Install espeak TTS (optional):
+(2) Install espeak TTS: _optional_, but allows scansion of unknown words. See [here for all downloads](http://espeak.sourceforge.net/download.html), including a windows exe, or if on linux or mac:
 
 ```
-# install espeak (optional, but allows scansion of unknown words)
-# see http://espeak.sourceforge.net/download.html for all downloads
-# or run:
-
 apt-get install espeak    # if on linux
 #brew install espeak      # if on mac
 ```
 
-Import in python:
+(3) Import in python:
 
 ```python
 # Import
