@@ -11,7 +11,21 @@ You can also run this quickstart as an [interactive notebook on Colab](https://c
 Install:
 
 ```
-pip install -U git+https://github.com/quadrismegistus/cadence
+pip install -U cadences    # 'cadence' was taken :-/
+
+# or for very latest version:
+#pip install -U git+https://github.com/quadrismegistus/cadence
+```
+
+Install espeak TTS (optional):
+
+```
+# install espeak (optional, but allows scansion of unknown words)
+# see http://espeak.sourceforge.net/download.html for all downloads
+# or run:
+
+apt-get install espeak    # if on linux
+#brew install espeak      # if on mac
 ```
 
 Import in python:
@@ -26,7 +40,7 @@ import cadence as cd
 
 
 ```python
-# grab a string of a poem or text
+# Grab a string of a poem or text
 
 milton="""
 OF Mans First Disobedience, and the Fruit
