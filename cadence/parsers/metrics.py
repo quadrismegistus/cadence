@@ -326,6 +326,7 @@ def parse(txtdf,*x,**y):
     """
     Return parses
     """
+    if type(txtdf)==str: txtdf=scan(txtdf)
     return pd.concat(parse_iter(txtdf,*x, **y))
 
 

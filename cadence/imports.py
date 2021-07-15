@@ -48,6 +48,27 @@ PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
 
+constraint_names_in_prosodic = {
+    '*f-res':'footmin-f-resolution',
+    '*s/unstressed':'stress.s=>-u',
+    '*w-res':'footmin-f-resolution',
+    '*w/peak':'strength.w=>-p',
+    '*w/stressed':'stress.w=>-p',
+    '*s/trough':'strength.s=>-u',
+#     'is_s',
+#     'is_w',
+#     'parse',
+#     'parse_i',
+#     'parse_num_pos',
+#     'parse_num_syll',
+#     'parse_pos',
+#     'parse_pos_i',
+#     'parse_rank',
+#     'parse_str',
+#     'parse_syll',
+#     'parse_syll_i'
+}
+
 
 # local imports
 from .tools import *
