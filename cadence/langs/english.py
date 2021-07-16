@@ -18,414 +18,420 @@ CONTRACTIONS={"n't","'ve","'ll","'m","'d","'s","'m","'re"}
 SPECIALD={}
 
 def get_special_cases():
-	if not SPECIALD:
-		
-		ufn=os.path.join(PATH_LANG_DATA,'unstressed.txt')
-		if os.path.exists(ufn):
-			with open(ufn) as f:
-				SPECIALD['unstressed']={w.strip().lower() for w in f.read().strip().split()}
-		
-		ufn=os.path.join(PATH_LANG_DATA,'maybestressed.txt')
-		if os.path.exists(ufn):
-			with open(ufn) as f:
-				SPECIALD['maybestressed']={w.strip().lower() for w in f.read().strip().split()}
+    if not SPECIALD:
 
-		import nltk
-		SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
-		SPECIALD['functionwords']|=SPECIALD['unstressed']
+        ufn=os.path.join(PATH_LANG_DATA,'unstressed.txt')
+        if os.path.exists(ufn):
+            with open(ufn) as f:
+                SPECIALD['unstressed']={w.strip().lower() for w in f.read().strip().split()}
 
-	return SPECIALD
+        ufn=os.path.join(PATH_LANG_DATA,'maybestressed.txt')
+        if os.path.exists(ufn):
+            with open(ufn) as f:
+                SPECIALD['maybestressed']={w.strip().lower() for w in f.read().strip().split()}
+
+        import nltk
+        SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
+        SPECIALD['functionwords']|=SPECIALD['unstressed']
+
+    return SPECIALD
+
+
 
 """
 The only necessary functions
 """
 
+
+
 def scan(line,incl_alt=True,**y):
-	return [
-		{
-			'word_i':word_i+1,
-			**word_dx
-		} for word_i,word in enumerate(tokenize(line))
-		for word_dx in get(word,incl_alt=incl_alt)
-	]
+    o=[
+        {
+            'word_i':word_i+1,
+            **word_dx
+        } for word_i,word in enumerate(tokenize(line))
+        for word_dx in get(word,incl_alt=incl_alt)
+    ]
+    return pd.DataFrame(o)
+
+def tokenize(txt,**y): return tokenize_fast(txt,**y)
 
 
-
-def tokenize(txt):
-	import nltk
-	l=nltk.word_tokenize(txt,language="english")
-	l2=[]
-	for w in l:
-		if l2 and (w.startswith("'") or w.lower() in CONTRACTIONS):
-			l2[-1]+=w
-		else:
-			l2+=[w]
-	return l2
+# def tokenize(txt):
+# 	import nltk
+# 	l=nltk.word_tokenize(txt,language="english")
+# 	l2=[]
+# 	for w in l:
+# 		if l2 and (w.startswith("'") or w.lower() in CONTRACTIONS):
+# 			l2[-1]+=w
+# 		else:
+# 			l2+=[w]
+# 	return l2
 
 
 def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
-	# not real?
-	if not token or not token[0].isalpha():
-		return [{
-			'word_ipa_i':0,
-			'syll_i':0,
-			'word_str':token,
-			'word_ipa':'',
-			'syll_ipa':'',
-			'syll_str':token,
-		}]
+    # not real?
+    if not token or not token[0].isalpha():
+        return [{
+            'word_ipa_i':0,
+            'syll_i':0,
+            'word_str':token,
+            'word_ipa':'',
+            'syll_ipa':'',
+            'syll_str':token,
+        }]
 
 
-	# get ipas
-	cache = get_cache()
-	tokenl=token.lower()
-	if token in cache:
-		ipas=cache[token]
-	elif tokenl in cache:
-		ipas=cache[tokenl]
-	else:
-		ipas=tts(token)
-		if ipas:
-			cache[tokenl]=ipas
-			if cache_new:
-				write_to_cache(token,ipas[0])
+    # get ipas
+    cache = get_cache()
+    tokenl=token.lower()
+    if token in cache:
+        ipas=cache[token]
+    elif tokenl in cache:
+        ipas=cache[tokenl]
+    else:
+        ipas=tts(token)
+        if ipas:
+            cache[tokenl]=ipas
+            if cache_new:
+                write_to_cache(token,ipas[0])
 
 
-	ipas = ipas[:1] if not incl_alt else ipas
-	sd=get_special_cases()
-	if tokenl in sd['unstressed']:
-		ipa=ipas[0]
-		ipax=ipa if ipa[0].isalpha() else ipa[1:]
-		ipas=[ipax]
-	elif tokenl in sd['maybestressed']:
-		if len(ipas)<2:
-			ipa=ipas[0]
-			ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
-			ipas.append(ipax)
-	
-	# get orths
-	results = set()
-	results_ld=[]
-	for ipa_i,ipa in enumerate(ipas):
-		num_sylls=ipa.count('.')+1
-		sylls_ipa = ipa.split('.')
-		sylls_text = syllabify_orth(token,num_sylls=num_sylls)
-		maxlen=max([len(sylls_ipa), len(sylls_text)])
-		sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
-		sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
+    ipas = ipas[:1] if not incl_alt else ipas
+    sd=get_special_cases()
+    if tokenl in sd['unstressed']:
+        ipa=ipas[0]
+        ipax=ipa if ipa[0].isalpha() else ipa[1:]
+        ipas=[ipax]
+    elif tokenl in sd['maybestressed']:
+        if len(ipas)<2:
+            ipa=ipas[0]
+            ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
+            ipas.append(ipax)
 
-		for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
-			results_ld.append({
-				'word_ipa_i':ipa_i+1,
-				'syll_i':si+1,
-				'word_str':token,
-				'word_ipa':ipa,
-				'syll_ipa':syll_ipa,
-				'syll_str':syll_text,
-				'is_funcword':int(tokenl in sd['functionwords'])
-			})
-	return results_ld
+    # get orths
+    results = set()
+    results_ld=[]
+    for ipa_i,ipa in enumerate(ipas):
+        num_sylls=ipa.count('.')+1
+        sylls_ipa = ipa.split('.')
+        sylls_text = syllabify_orth(token,num_sylls=num_sylls)
+        maxlen=max([len(sylls_ipa), len(sylls_text)])
+        sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
+        sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
+
+        for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
+            results_ld.append({
+                'word_ipa_i':ipa_i+1,
+                'syll_i':si+1,
+                'word_str':token,
+                'word_ipa':ipa,
+                'syll_ipa':syll_ipa,
+                'syll_str':syll_text,
+                'is_funcword':int(tokenl in sd['functionwords'])
+            })
+    return results_ld
 
 
 def get_cache(source_paths=[CMU_DICT_FN,CACHE_DICT_FN]):
 # def get_cache(source_paths=[CMU_DICT_FN]):
-	if not CACHE:
-		for sfn in source_paths:
-			with open(sfn, encoding='utf-8') as f:
-				for ln in f:
-					ln=ln.strip()
-					if not ln: continue
-					if ln.startswith('#'): continue
-					if not '\t' in ln: continue
-					word,ipa=[x.strip() for x in ln.strip().split('\t',1)]
-					if ipa not in set(CACHE[word]):
-						CACHE[word].append(ipa)
-	return CACHE
+    if not CACHE:
+        for sfn in source_paths:
+            with open(sfn, encoding='utf-8') as f:
+                for ln in f:
+                    ln=ln.strip()
+                    if not ln: continue
+                    if ln.startswith('#'): continue
+                    if not '\t' in ln: continue
+                    word,ipa=[x.strip() for x in ln.strip().split('\t',1)]
+                    if ipa not in set(CACHE[word]):
+                        CACHE[word].append(ipa)
+    return CACHE
 
 
 
 def tts(token):
-	espeak_ipa=espeak2ipa(token)
-	cmu=espeak2cmu(espeak_ipa)
-	cmu_sylls = syllabify_cmu(cmu)
-	ipa = cmusylls2ipa(cmu_sylls)
-	return [ipa] if ipa else []
+    espeak_ipa=espeak2ipa(token)
+    cmu=espeak2cmu(espeak_ipa)
+    cmu_sylls = syllabify_cmu(cmu)
+    ipa = cmusylls2ipa(cmu_sylls)
+    return [ipa] if ipa else []
 
 
 # loading dicts
 def load_cmu(fn=CMU_DICT_FN,config={}):
-	global CMU_DICT
-	fns=[fn]
-	if config.get('en_TTS_cache',False):
-		fns+=[CACHE_DICT_FN]
+    global CMU_DICT
+    fns=[fn]
+    if config.get('en_TTS_cache',False):
+        fns+=[CACHE_DICT_FN]
 
-	for fn in fns:
-		#print '>> loading words from:',fn
-		if os.path.exists(fn):
-			with open(fn,encoding='utf-8') as f:
-				for ln in f:
-					ln=ln.strip()
-					if not ln or ln.count('\t')!=1: continue
-					word,ipa=ln.split('\t')[:2]
-					word=word.strip()
-					ipa=ipa.strip().split()[0]
-					if not word in CMU_DICT: CMU_DICT[word]=[]
-					CMU_DICT[word]+=[ipa]
-	return CMU_DICT
+    for fn in fns:
+        #print '>> loading words from:',fn
+        if os.path.exists(fn):
+            with open(fn,encoding='utf-8') as f:
+                for ln in f:
+                    ln=ln.strip()
+                    if not ln or ln.count('\t')!=1: continue
+                    word,ipa=ln.split('\t')[:2]
+                    word=word.strip()
+                    ipa=ipa.strip().split()[0]
+                    if not word in CMU_DICT: CMU_DICT[word]=[]
+                    CMU_DICT[word]+=[ipa]
+    return CMU_DICT
 
 def write_to_cache(token,ipa):
-	tokenl=token.lower()
-	global CACHE_DICT_F
-	if not CACHE_DICT_F:
-		CACHE_DICT_F=open(CACHE_DICT_FN,'a',encoding='utf-8')
+    tokenl=token.lower()
+    global CACHE_DICT_F
+    if not CACHE_DICT_F:
+        CACHE_DICT_F=open(CACHE_DICT_FN,'a',encoding='utf-8')
 
-	CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
-	if not tokenl in CMU_DICT:
-		CMU_DICT[tokenl]=[]
-	CMU_DICT[tokenl]+=[ipa]
-	return CMU_DICT
+    CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
+    if not tokenl in CMU_DICT:
+        CMU_DICT[tokenl]=[]
+    CMU_DICT[tokenl]+=[ipa]
+    return CMU_DICT
 
 
 def add_elisions(_ipa):
-	"""
-	Add alternative pronunciations: those that have elided syllables
-	"""
-	replace={}
+    """
+    Add alternative pronunciations: those that have elided syllables
+    """
+    replace={}
 
-	# -OWER
-	# e.g. tower, hour, bower, etc
-	replace['aʊ.ɛː']='aʊr'
-
-
-	# -INOUS
-	# e.g. ominous, etc
-	replace['ə.nəs']='nəs'
-
-	# -EROUS
-	# e.g. ponderous, adventurous
-	replace['ɛː.əs']='rəs'
-
-	# -IA-
-	# e.g. plutonian, indian, assyrian, idea, etc
-	replace['iː.ə']='jə'
-	# -IOUS
-	# e.g. studious, tedious, etc
-	#replace[u'iː.əs']=u'iːəs'
+    # -OWER
+    # e.g. tower, hour, bower, etc
+    replace['aʊ.ɛː']='aʊr'
 
 
-	# -IER
-	# e.g. happier
-	replace['iː.ɛː']='ɪr'
+    # -INOUS
+    # e.g. ominous, etc
+    replace['ə.nəs']='nəs'
 
-	# -ERING
-	# e.g. scattering, wondering, watering
-	replace['ɛː.ɪŋ']='rɪŋ'
+    # -EROUS
+    # e.g. ponderous, adventurous
+    replace['ɛː.əs']='rəs'
 
-	# -ERY
-	# e.g. memory
-	# QUESTIONABLE
-	#replace[u'ɛː.iː']=u'riː'
+    # -IA-
+    # e.g. plutonian, indian, assyrian, idea, etc
+    replace['iː.ə']='jə'
+    # -IOUS
+    # e.g. studious, tedious, etc
+    #replace[u'iː.əs']=u'iːəs'
 
-	# -ENING
-	# e.g. opening
-	replace['ə.nɪŋ']='nɪŋ'
 
-	# -ENER
-	# e.g. gardener
-	replace['ə.nɛː']='nɛː'
+    # -IER
+    # e.g. happier
+    replace['iː.ɛː']='ɪr'
 
-	# -EL- (-ELLER, -ELLING, -ELLY)
-	# e.g. traveller, dangling, gravelly
-	# QUESTIONABLE
-	#replace[u'ə.l']=u'l'
+    # -ERING
+    # e.g. scattering, wondering, watering
+    replace['ɛː.ɪŋ']='rɪŋ'
 
-	# -IRE-
-	# e.g. fire, fiery, attire, hired
-	replace['ɪ.ɛː']='ɪr'
+    # -ERY
+    # e.g. memory
+    # QUESTIONABLE
+    #replace[u'ɛː.iː']=u'riː'
 
-	# -EL, -UAL
-	# e.g. jewel
-	replace['uː.əl']='uːl'
+    # -ENING
+    # e.g. opening
+    replace['ə.nɪŋ']='nɪŋ'
 
-	# -EVN
-	# e.g. heaven, seven
-	replace['ɛ.vən']='ɛvn'
+    # -ENER
+    # e.g. gardener
+    replace['ə.nɛː']='nɛː'
 
-	# -IOUS, -EER
-	# e.g. sincerest, dear, incommodiously
-	# QUESTIONABLE
-	#replace[u'.ʌ.']=u'ʌ.'
-	replace['eɪ.ʌ']='eɪʌ'
+    # -EL- (-ELLER, -ELLING, -ELLY)
+    # e.g. traveller, dangling, gravelly
+    # QUESTIONABLE
+    #replace[u'ə.l']=u'l'
 
-	new=[_ipa]
-	for k,v in list(replace.items()):
-		if k in _ipa:
-			new+=[_ipa.replace(k,v)]
-	return new
+    # -IRE-
+    # e.g. fire, fiery, attire, hired
+    replace['ɪ.ɛː']='ɪr'
+
+    # -EL, -UAL
+    # e.g. jewel
+    replace['uː.əl']='uːl'
+
+    # -EVN
+    # e.g. heaven, seven
+    replace['ɛ.vən']='ɛvn'
+
+    # -IOUS, -EER
+    # e.g. sincerest, dear, incommodiously
+    # QUESTIONABLE
+    #replace[u'.ʌ.']=u'ʌ.'
+    replace['eɪ.ʌ']='eɪʌ'
+
+    new=[_ipa]
+    for k,v in list(replace.items()):
+        if k in _ipa:
+            new+=[_ipa.replace(k,v)]
+    return new
 
 
 
 
 
 def espeak2ipa(token):
-	CMD='espeak -q -x '+token.replace("'","").replace('"','')
-	#CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
-	#print CMD
-	try:
-		# @HACK FOR MPI
-		#for k in os.environ.keys():
-		#	if k.startswith('OMPI_') or k.startswith('PMIX_'):
-		#		del os.environ[k]
-		##
+    CMD='espeak -q -x '+token.replace("'","").replace('"','')
+    #CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
+    #print CMD
+    try:
+        # @HACK FOR MPI
+        #for k in os.environ.keys():
+        #	if k.startswith('OMPI_') or k.startswith('PMIX_'):
+        #		del os.environ[k]
+        ##
 
-		res=subprocess.check_output(CMD.split()).strip()
-		#print '>> espeak = ',[res]
-		return res.decode("utf-8")
-	except (OSError,subprocess.CalledProcessError) as e:
-		#print "!!",e
-		return None
+        res=subprocess.check_output(CMD.split()).strip()
+        #print '>> espeak = ',[res]
+        return res.decode("utf-8")
+    except (OSError,subprocess.CalledProcessError) as e:
+        #print "!!",e
+        return None
 
 def tts2ipa(token,TTS_ENGINE=None):
-	if TTS_ENGINE=='espeak':
-		return espeak2ipa(token)
-	elif TTS_ENGINE=='openmary':
-		return openmary2ipa(token)
-	else:
-		#raise Exception("No TTS engine specified. Please select 'espeak' or 'openmary' in config.txt.")
-		return None
+    if TTS_ENGINE=='espeak':
+        return espeak2ipa(token)
+    elif TTS_ENGINE=='openmary':
+        return openmary2ipa(token)
+    else:
+        #raise Exception("No TTS engine specified. Please select 'espeak' or 'openmary' in config.txt.")
+        return None
 
 def espeak2cmu(tok):
-	return lexconvert(str(tok),'espeak','cmu')
+    return lexconvert(str(tok),'espeak','cmu')
 
 def ipa2cmu(tok):
-	return lexconvert(str(tok),'unicode-ipa','cmu')
+    return lexconvert(str(tok),'unicode-ipa','cmu')
 
 def cmu2ipa(tok):
-	res=lexconvert(str(tok),'cmu','unicode-ipa')
+    res=lexconvert(str(tok),'cmu','unicode-ipa')
 
-	## BUG FIXES
-	if tok.endswith(' T') and not res.endswith('t'): res=res+'t'
-	return res
+    ## BUG FIXES
+    if tok.endswith(' T') and not res.endswith('t'): res=res+'t'
+    return res
 
 def syllabify_cmu(cmu_token):
-	cmu_token=cmu_token.replace(' 2','2').replace(' 1','1') # fix prim/sec stress markings for syllabify
-	sylls = syllabify(English, cmu_token)
-	return sylls
+    cmu_token=cmu_token.replace(' 2','2').replace(' 1','1') # fix prim/sec stress markings for syllabify
+    sylls = syllabify(English, cmu_token)
+    return sylls
 
 
 
 def cmusylls2ipa1(sylls):
-	new_cmu=[]
-	for syl in sylls:
-		stress, onset, nucleus, coda = syl
-		"""if not stress:
-			stress_str=""
-		elif stress==1:
-			stress_str="'"
-			stress_str=str(stress)
-		else:
-			stress_str="`"
-			stress_str=str(stress)
-		"""
-		if stress:
-			nucleus = [nucleus[0]+" "+str(stress)] + nucleus[1:]
+    new_cmu=[]
+    for syl in sylls:
+        stress, onset, nucleus, coda = syl
+        """if not stress:
+            stress_str=""
+        elif stress==1:
+            stress_str="'"
+            stress_str=str(stress)
+        else:
+            stress_str="`"
+            stress_str=str(stress)
+        """
+        if stress:
+            nucleus = [nucleus[0]+" "+str(stress)] + nucleus[1:]
 
-		_newcmu = " ".join(onset+nucleus+coda).strip().replace("  "," ")
-		new_cmu+=[_newcmu]
-	new_cmu =" 0 ".join(new_cmu)
-	#print new_cmu
-	print(new_cmu)
+        _newcmu = " ".join(onset+nucleus+coda).strip().replace("  "," ")
+        new_cmu+=[_newcmu]
+    new_cmu =" 0 ".join(new_cmu)
+    #print new_cmu
+    print(new_cmu)
 
-	## ipa
-	ipa=cmu2ipa(new_cmu)
-	print(ipa)
-	#print ipa
-	# clean
-	ipa_sylls = ipa.split('.')
-	for i,syl in enumerate(ipa_sylls):
-		if "ˈ" in syl:
-			syl="'"+syl.replace("ˈ","")
-		if "ˌ" in syl:
-			syl="`"+syl.replace("ˌ","")
-		ipa_sylls[i]=syl
-	ipa=".".join(ipa_sylls)
-	print(ipa)
-	return ipa
+    ## ipa
+    ipa=cmu2ipa(new_cmu)
+    print(ipa)
+    #print ipa
+    # clean
+    ipa_sylls = ipa.split('.')
+    for i,syl in enumerate(ipa_sylls):
+        if "ˈ" in syl:
+            syl="'"+syl.replace("ˈ","")
+        if "ˌ" in syl:
+            syl="`"+syl.replace("ˌ","")
+        ipa_sylls[i]=syl
+    ipa=".".join(ipa_sylls)
+    print(ipa)
+    return ipa
 
 def cmusylls2ipa(sylls):
-	new_cmu=[]
-	new_ipa=[]
-	for syl in sylls:
-		stress, onset, nucleus, coda = syl
-		if stress:
-			nucleus = [nucleus[0]+" "+str(stress)] + nucleus[1:]
+    new_cmu=[]
+    new_ipa=[]
+    for syl in sylls:
+        stress, onset, nucleus, coda = syl
+        if stress:
+            nucleus = [nucleus[0]+" "+str(stress)] + nucleus[1:]
 
-		_newcmu = " ".join(onset+nucleus+coda).strip().replace("  "," ")
-		_newipa=cmu2ipa(_newcmu)
-		new_ipa+=[_newipa]
-		new_cmu+=[_newcmu]
-	new_cmu =" 0 ".join(new_cmu)
-	#print new_cmu
-	#print(new_cmu)
+        _newcmu = " ".join(onset+nucleus+coda).strip().replace("  "," ")
+        _newipa=cmu2ipa(_newcmu)
+        new_ipa+=[_newipa]
+        new_cmu+=[_newcmu]
+    new_cmu =" 0 ".join(new_cmu)
+    #print new_cmu
+    #print(new_cmu)
 
-	## ipa
-	ipa=cmu2ipa(new_cmu)
-	#print(ipa)
-	#print ipa
-	# clean
-	#ipa_sylls = ipa.split('.')
-	ipa_sylls = new_ipa
-	for i,syl in enumerate(ipa_sylls):
-		if "ˈ" in syl:
-			syl="'"+syl.replace("ˈ","")
-		if "ˌ" in syl:
-			syl="`"+syl.replace("ˌ","")
-		ipa_sylls[i]=syl
-	ipa=".".join(ipa_sylls)
-	#print(ipa)
-	return ipa
+    ## ipa
+    ipa=cmu2ipa(new_cmu)
+    #print(ipa)
+    #print ipa
+    # clean
+    #ipa_sylls = ipa.split('.')
+    ipa_sylls = new_ipa
+    for i,syl in enumerate(ipa_sylls):
+        if "ˈ" in syl:
+            syl="'"+syl.replace("ˈ","")
+        if "ˌ" in syl:
+            syl="`"+syl.replace("ˌ","")
+        ipa_sylls[i]=syl
+    ipa=".".join(ipa_sylls)
+    #print(ipa)
+    return ipa
 
 
 def syllabify_orth_with_hyphenate(token,num_sylls=None):
-	from hyphenate import hyphenate_word
-	return hyphenate_word(token)
-	return l
+    from hyphenate import hyphenate_word
+    return hyphenate_word(token)
+    return l
 nltk_ssp=None
 def syllabify_orth_with_nltk(token,num_sylls=None):
-	global nltk_ssp
-	if not nltk_ssp:
-		from nltk.tokenize import SyllableTokenizer
-		nltk_ssp = SyllableTokenizer()
-	l = nltk_ssp.tokenize(token)
-	return l
+    global nltk_ssp
+    if not nltk_ssp:
+        from nltk.tokenize import SyllableTokenizer
+        nltk_ssp = SyllableTokenizer()
+    l = nltk_ssp.tokenize(token)
+    return l
 
 def syllabify_orth_with_pyphen(token,num_sylls=None):
-	global Pyphen
-	if not Pyphen:
-		import pyphen
-		Pyphen=pyphen.Pyphen(lang='en_US')
-	sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
-	return sylls
+    global Pyphen
+    if not Pyphen:
+        import pyphen
+        Pyphen=pyphen.Pyphen(lang='en_US')
+    sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
+    return sylls
 
 def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
-	key=(token,num_sylls)
-	if not key in ORTH_CACHE:
-		l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]
-		if num_sylls and len(l)!=num_sylls:
-			l2=[]
-			for i in range(num_sylls):
-				if i<len(l):
-					l2.append(l[i])
-				else:
-					# split last
-					last = l[-1]
-					last1=last[:len(last)//2]
-					last2=last[(len(last)//2):]
-					l2[-1]=last1
-					l2.append(last2)
-			l=l2
-		ORTH_CACHE[key]=l
-	return ORTH_CACHE[key]
+    key=(token,num_sylls)
+    if not key in ORTH_CACHE:
+        l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]
+        if num_sylls and len(l)!=num_sylls:
+            l2=[]
+            for i in range(num_sylls):
+                if i<len(l):
+                    l2.append(l[i])
+                else:
+                    # split last
+                    last = l[-1]
+                    last1=last[:len(last)//2]
+                    last2=last[(len(last)//2):]
+                    l2[-1]=last1
+                    l2.append(last2)
+            l=l2
+        ORTH_CACHE[key]=l
+    return ORTH_CACHE[key]
 
 
 
@@ -488,144 +494,144 @@ def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
 #########################################################################
 
 English = {
-	'consonants': ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 
-	'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH'],
-	'vowels': [ 'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'],
-	'onsets': ['P', 'T', 'K', 'B', 'D', 'G', 'F', 'V', 'TH', 'DH', 'S', 'Z', 'SH', 'CH', 'JH', 'M',
-	'N', 'R', 'L', 'HH', 'W', 'Y', 'P R', 'T R', 'K R', 'B R', 'D R', 'G R', 'F R',
-	'TH R', 'SH R', 'P L', 'K L', 'B L', 'G L', 'F L', 'S L', 'T W', 'K W', 'D W', 
-	'S W', 'S P', 'S T', 'S K', 'S F', 'S M', 'S N', 'G W', 'SH W', 'S P R', 'S P L',
-	'S T R', 'S K R', 'S K W', 'S K L', 'TH W', 'ZH', 'P Y', 'K Y', 'B Y', 'F Y', 
-	'HH Y', 'V Y', 'TH Y', 'M Y', 'S P Y', 'S K Y', 'G Y', 'HH W', '']
-	}
+    'consonants': ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 
+    'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH'],
+    'vowels': [ 'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'],
+    'onsets': ['P', 'T', 'K', 'B', 'D', 'G', 'F', 'V', 'TH', 'DH', 'S', 'Z', 'SH', 'CH', 'JH', 'M',
+    'N', 'R', 'L', 'HH', 'W', 'Y', 'P R', 'T R', 'K R', 'B R', 'D R', 'G R', 'F R',
+    'TH R', 'SH R', 'P L', 'K L', 'B L', 'G L', 'F L', 'S L', 'T W', 'K W', 'D W', 
+    'S W', 'S P', 'S T', 'S K', 'S F', 'S M', 'S N', 'G W', 'SH W', 'S P R', 'S P L',
+    'S T R', 'S K R', 'S K W', 'S K L', 'TH W', 'ZH', 'P Y', 'K Y', 'B Y', 'F Y', 
+    'HH Y', 'V Y', 'TH Y', 'M Y', 'S P Y', 'S K Y', 'G Y', 'HH W', '']
+    }
 
 def loadLanguage(filename) :
-	'''This function loads up a language configuration file and returns
-	the configuration to be passed to the syllabify function.'''
+    '''This function loads up a language configuration file and returns
+    the configuration to be passed to the syllabify function.'''
 
-	L = { "consonants" : [], "vowels" : [], "onsets" : [] }
-	
-	f = open(filename, "r")
-	section = None
-	for line in f :
-		line = line.strip()
-		if line in ("[consonants]", "[vowels]", "[onsets]") :
-			section = line[1:-1]
-		elif section == None :
-			raise ValueError("File must start with a section header such as [consonants].")
-		elif not section in L :
-			raise ValueError("Invalid section: " + section)
-		else :
-			L[section].append(line)
-			
-	for section in "consonants", "vowels", "onsets" :
-		if len(L[section]) == 0 :
-			raise ValueError("File does not contain any consonants, vowels, or onsets.")
-			
-	return L
+    L = { "consonants" : [], "vowels" : [], "onsets" : [] }
+
+    f = open(filename, "r")
+    section = None
+    for line in f :
+        line = line.strip()
+        if line in ("[consonants]", "[vowels]", "[onsets]") :
+            section = line[1:-1]
+        elif section == None :
+            raise ValueError("File must start with a section header such as [consonants].")
+        elif not section in L :
+            raise ValueError("Invalid section: " + section)
+        else :
+            L[section].append(line)
+
+    for section in "consonants", "vowels", "onsets" :
+        if len(L[section]) == 0 :
+            raise ValueError("File does not contain any consonants, vowels, or onsets.")
+
+    return L
 
 def syllabify(language, word) :
-	'''Syllabifies the word, given a language configuration loaded with loadLanguage.
-	   word is either a string of phonemes from the CMU pronouncing dictionary set
-	   (with optional stress numbers after vowels), or a Python list of phonemes,
-	   e.g. "B AE1 T" or ["B", "AE1", "T"]'''
-	   
-	if type(word) == str :
-		word = word.split()
-		
-	syllables = [] # This is the returned data structure.
+    '''Syllabifies the word, given a language configuration loaded with loadLanguage.
+       word is either a string of phonemes from the CMU pronouncing dictionary set
+       (with optional stress numbers after vowels), or a Python list of phonemes,
+       e.g. "B AE1 T" or ["B", "AE1", "T"]'''
 
-	internuclei = [] # This maintains a list of phonemes between nuclei.
-	
-	for phoneme in word :
-	
-		phoneme = phoneme.strip()
-		if phoneme == "" :
-			continue
-		stress = None
-		if phoneme[-1].isdigit() :
-			stress = int(phoneme[-1])
-			phoneme = phoneme[0:-1]
-		
-		if phoneme in language["vowels"] :
-			# Split the consonants seen since the last nucleus into coda and onset.
-			
-			coda = None
-			onset = None
-			
-			# If there is a period in the input, split there.
-			if "." in internuclei :
-				period = internuclei.index(".")
-				coda = internuclei[:period]
-				onset = internuclei[period+1:]
-			
-			else :
-				# Make the largest onset we can. The 'split' variable marks the break point.
-				for split in range(0, len(internuclei)+1) :
-					coda = internuclei[:split]
-					onset = internuclei[split:]
-					
-					# If we are looking at a valid onset, or if we're at the start of the word
-					# (in which case an invalid onset is better than a coda that doesn't follow
-					# a nucleus), or if we've gone through all of the onsets and we didn't find
-					# any that are valid, then split the nonvowels we've seen at this location.
-					if " ".join(onset) in language["onsets"] \
-					   or len(syllables) == 0 \
-					   or len(onset) == 0 :
-					   break
-			   
-			# Tack the coda onto the coda of the last syllable. Can't do it if this
-			# is the first syllable.
-			if len(syllables) > 0 :
-				syllables[-1][3].extend(coda)
-			
-			# Make a new syllable out of the onset and nucleus.
-			syllables.append( (stress, onset, [phoneme], []) )
-				
-			# At this point we've processed the internuclei list.
-			internuclei = []
+    if type(word) == str :
+        word = word.split()
 
-		elif not phoneme in language["consonants"] and phoneme != "." :
-			raise ValueError("Invalid phoneme: " + phoneme)
-			
-		else : # a consonant
-			internuclei.append(phoneme)
-	
-	# Done looping through phonemes. We may have consonants left at the end.
-	# We may have even not found a nucleus.
-	if len(internuclei) > 0 :
-		if len(syllables) == 0 :
-			syllables.append( (None, internuclei, [], []) )
-		else :
-			syllables[-1][3].extend(internuclei)
+    syllables = [] # This is the returned data structure.
 
-	return syllables
+    internuclei = [] # This maintains a list of phonemes between nuclei.
+
+    for phoneme in word :
+
+        phoneme = phoneme.strip()
+        if phoneme == "" :
+            continue
+        stress = None
+        if phoneme[-1].isdigit() :
+            stress = int(phoneme[-1])
+            phoneme = phoneme[0:-1]
+
+        if phoneme in language["vowels"] :
+            # Split the consonants seen since the last nucleus into coda and onset.
+
+            coda = None
+            onset = None
+
+            # If there is a period in the input, split there.
+            if "." in internuclei :
+                period = internuclei.index(".")
+                coda = internuclei[:period]
+                onset = internuclei[period+1:]
+
+            else :
+                # Make the largest onset we can. The 'split' variable marks the break point.
+                for split in range(0, len(internuclei)+1) :
+                    coda = internuclei[:split]
+                    onset = internuclei[split:]
+
+                    # If we are looking at a valid onset, or if we're at the start of the word
+                    # (in which case an invalid onset is better than a coda that doesn't follow
+                    # a nucleus), or if we've gone through all of the onsets and we didn't find
+                    # any that are valid, then split the nonvowels we've seen at this location.
+                    if " ".join(onset) in language["onsets"] \
+                       or len(syllables) == 0 \
+                       or len(onset) == 0 :
+                       break
+
+            # Tack the coda onto the coda of the last syllable. Can't do it if this
+            # is the first syllable.
+            if len(syllables) > 0 :
+                syllables[-1][3].extend(coda)
+
+            # Make a new syllable out of the onset and nucleus.
+            syllables.append( (stress, onset, [phoneme], []) )
+
+            # At this point we've processed the internuclei list.
+            internuclei = []
+
+        elif not phoneme in language["consonants"] and phoneme != "." :
+            raise ValueError("Invalid phoneme: " + phoneme)
+
+        else : # a consonant
+            internuclei.append(phoneme)
+
+    # Done looping through phonemes. We may have consonants left at the end.
+    # We may have even not found a nucleus.
+    if len(internuclei) > 0 :
+        if len(syllables) == 0 :
+            syllables.append( (None, internuclei, [], []) )
+        else :
+            syllables[-1][3].extend(internuclei)
+
+    return syllables
 
 def stringify(syllables) :
-	'''This function takes a syllabification returned by syllabify and
-	   turns it into a string, with phonemes spearated by spaces and
-	   syllables spearated by periods.'''
-	ret = []
-	for syl in syllables :
-		stress, onset, nucleus, coda = syl
-		if stress != None and len(nucleus) != 0 :
-			nucleus[0] += str(stress)
-		ret.append(" ".join(onset + nucleus + coda))
-	return " . ".join(ret)
+    '''This function takes a syllabification returned by syllabify and
+       turns it into a string, with phonemes spearated by spaces and
+       syllables spearated by periods.'''
+    ret = []
+    for syl in syllables :
+        stress, onset, nucleus, coda = syl
+        if stress != None and len(nucleus) != 0 :
+            nucleus[0] += str(stress)
+        ret.append(" ".join(onset + nucleus + coda))
+    return " . ".join(ret)
 
 
 # If this module was run directly, syllabify the words on standard input
 # into standard output. Hashed lines are printed back untouched.
 if __name__ == "__main__" :
-	import sys
-	if len(sys.argv) != 2 :
-		print("Usage: python syllabifier.py english.cfg < textfile.txt > outfile.txt")
-	else :
-		L = loadLanguage(sys.argv[1])
-		for line in sys.stdin :
-			if line[0] == "#" :
-				sys.stdout.write(line)
-				continue
-			line = line.strip()
-			s = stringify(syllabify(L, line))
-			sys.stdout.write(s + "\n")
+    import sys
+    if len(sys.argv) != 2 :
+        print("Usage: python syllabifier.py english.cfg < textfile.txt > outfile.txt")
+    else :
+        L = loadLanguage(sys.argv[1])
+        for line in sys.stdin :
+            if line[0] == "#" :
+                sys.stdout.write(line)
+                continue
+            line = line.strip()
+            s = stringify(syllabify(L, line))
+            sys.stdout.write(s + "\n")

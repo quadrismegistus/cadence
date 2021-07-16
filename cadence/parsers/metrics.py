@@ -6,14 +6,19 @@ from .txtparsing import *
 ITER LINES
 """
 
-def iter_lines(txtdf):
-    for stanza_i,stanzadf in txtdf.groupby('stanza_i'):
-        lines=stanzadf.groupby('line_i')
-        for line_,linedf in lines:
-            yield linedf
+def iter_lines(txt_or_txtdf,num_proc=1,**kwargs):
+    if type(txt_or_txtdf) == str:
+        yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
+    else:
+        for i,g in txt_or_txtdf.groupby(['stanza_i','line_i','linepart_i']):
+            yield g
+#         for stanza_i,stanzadf in txt_or_txtdf.groupby('stanza_i'):
+#             lines=stanzadf.groupby('line_i')
+#             for line_,linedf in lines:
+#                 yield linedf
 
-def iter_combos(txtdf):
-    for dfline in iter_lines(txtdf):
+def iter_combos(txtdf,num_proc=1):
+    for dfline in iter_lines(txtdf,num_proc=num_proc):
         # ldf=resetindex(dfline)
         ldf=dfline.reset_index()
         linedf_nopunc = ldf[ldf.is_syll!=0]
@@ -26,7 +31,8 @@ def iter_combos(txtdf):
                 '.'.join(wdf.syll_ipa)
                 for wi,wdf in sorted(dfcombo.groupby('word_i'))
             )
-            yield setindex(dfcombo)
+            yield dfcombo
+            #yield setindex(dfcombo)
 
 def get_all_combos(txtdf):
     return resetindex(pd.concat(iter_combos(txtdf)))
@@ -198,7 +204,7 @@ def iter_unique_metrical_positions(linecombodf):
 
 
 def iter_parsed_metrical_positions(linecombodf):
-    for posdf in iter_unique_metrical_positions(linecombodf):
+    for posdf in iter_unique_metrical_positions(linedf):
         yield parse_group(posdf)
 
 
@@ -210,7 +216,14 @@ def get_parsed_metrical_positions(linecombodf):
 Positions -> Parses
 """
 
-def parse_combo(linecombodf):
+def parse_combo(linecombodf,engine=ENGINE):
+    if engine==ENGINE_PROSODIC:
+        odf=parse_prosodic(linecombodf)
+    else:
+        odf=parse_combo_cadence(linecombodf)
+    return odf
+    
+def parse_combo_cadence(linecombodf):
     lfpc=linecombodf.reset_index()
     # setup
     numsyll=len(lfpc)
@@ -241,48 +254,143 @@ def is_valid_mpos_combo(parsedf,numsyll):
     if len(set(parsedf.combo_syll_i))!=numsyll: return False
     return True
 
-def iter_parsed_combos(txtdf,num_proc=DEFAULT_NUM_PROC,progress=True):
-    yield from pmap_iter_groups(
-        parse_combo,
-        get_all_combos(txtdf).groupby(['stanza_i','line_i','combo_i']),
-        num_proc=num_proc,
-        progress=progress,
-        desc='Metrically parsing lines (+word IPA combinations)'
+def get_num_lines(txt_or_txtdf):
+    if type(txt_or_txtdf)==str:
+        return len([x for x in txt_or_txtdf.split('\n') if x.strip()])
+    return len(txt_or_txtdf)
+
+
+
+def iter_parsed_combos(txtdf,num_proc=DEFAULT_NUM_PROC,progress=False,**kwargs):    
+    iter1=tqdm(
+        iter_lines(txtdf,**kwargs),
+        total=get_num_lines(txtdf),
+        disable=(not progress)
     )
+    for linedf in iter1:
+        try:
+            gdf=get_all_combos(linedf)
+            yield from pmap_iter_groups(
+                parse_combo,
+                gdf.groupby(['stanza_i','line_i','combo_i']),
+                num_proc=num_proc,
+                #progress=progress,
+                progress=True,
+                desc='Metrically parsing lines (+word IPA combinations)'
+            )
+        except ValueError:
+            yield linedf
 
 
 def parse_line(linedf):
     """
     Line DF -> Combos -> Parsed -> Concat
     """
-    return pd.concat(parse_combo(combo) for combo in iter_combos(linedf))
+    return setindex(pd.concat(parse_combo(combo) for combo in iter_combos(linedf)))
+
+def do_iter_parsed_lines(
+        linedf,
+        num_proc=DEFAULT_NUM_PROC,
+        force=False,
+        **kwargs):
+    
+    key=hashstr(str([
+        x
+        for x in pd.util.hash_pandas_object(
+            linedf.reset_index(),
+            index=False
+        )
+    ]))
+    if not force:        
+        with get_db('parses','r') as db:
+            if key in db: return db[key]
+            
+    print(num_proc)
+    o=list(iter_parsed_combos(
+        linedf,
+        num_proc=num_proc,
+        progress=False,
+        **kwargs
+    ))  
+    if len(o):
+        odf=pd.concat(o)
+        with get_db('parses','w') as db:
+            db[key]=odf
+        return odf
+    return pd.DataFrame()
+    
+
+def iter_parsed_lines(
+        txt_or_txtdf,
+        num_proc=DEFAULT_NUM_PROC,
+        progress=False,
+        by_line=False,
+        only_best=False,
+        **kwargs
+        ):
+    
+    def iterr():
+        for linedf in tqdm(
+                iter_lines(txt_or_txtdf),
+                disable = True, #not progress,
+                total = get_num_lines(txt_or_txtdf)
+            ):
+            yield do_iter_parsed_lines(
+                linedf,
+                num_proc=num_proc,
+                **kwargs
+            )
+    iterr2 = iter_combos_as_lines(
+        iterr(),
+        by_line=by_line
+    )
+    for x in iterr2:
+        if only_best:
+            try:
+                x2=x.reset_index()
+                yield x.query('parse_rank==1')
+            except Exception:
+                yield x
+        else:
+            yield x
+            
+        
 
 
-def iter_parsed_lines(txtdf,num_proc=DEFAULT_NUM_PROC,progress=True,data_by_line=False):
-    yield from iter_combos_as_lines(
-        iter_parsed_combos(
-            txtdf,
-            num_proc=num_proc,
-            progress=progress
-        ),
-        data_by_line=data_by_line
-    )        
+
+#     yield from iter_combos_as_lines(
+#         iter_parsed_combos(
+#             txtdf,
+#             num_proc=num_proc,
+#             progress=progress,
+#             **kwargs
+#         ),
+#         by_line=by_line
+#     )        
 
 
-def iter_combos_as_lines(iter_combo,data_by_line=False):
-    lineinow=None
-    combos=[]
-    for dfcombo in iter_combo:
-        combo_linei=dfcombo.line_i.iloc[0]
-        if lineinow is not None and lineinow!=combo_linei and combos:
-            dfline=pd.concat(combos)
-            yield sort_by_total_and_syll(dfline) if not data_by_line else to_lines(dfline)
-            combos=[]
-        lineinow=combo_linei
-        combos.append(dfcombo)
-    if len(combos):
-        dfline=pd.concat(combos)
-        yield sort_by_total_and_syll(dfline) if not data_by_line else to_lines(dfline)
+def iter_combos_as_lines(parsed_line_iter,by_line=False):
+    for dfline in parsed_line_iter:
+        if by_line:
+            yield to_lines(dfline)
+        else:
+            yield sort_by_total_and_syll(dfline)
+        
+
+#     lineinow=None
+#     combos=[]
+#     for dfcombo in iter_combo:
+#         if not 'line_i' in set(dfcombo.columns):continue
+#         combo_linei=dfcombo.line_i.iloc[0]
+#         if lineinow is not None and lineinow!=combo_linei and combos:
+#             dfline=pd.concat(combos)
+#             yield sort_by_total_and_syll(dfline) if not by_line else to_lines(dfline)
+#             combos=[]
+#         lineinow=combo_linei
+#         combos.append(dfcombo)
+#     if len(combos):
+#         dfline=pd.concat(combos)
+#         yield sort_by_total_and_syll(dfline) if not by_line else to_lines(dfline)
         
 
 
@@ -296,7 +404,7 @@ def sort_by_total_and_syll(dfline,key=LINEKEY,sortcol='sort_parse_viols',rankcol
         'parse_i',
     ]
     dflnsum = dfline.groupby(gcols).sum().sort_values(totalcol)
-    ranks = dflnsum[totalcol].rank(method='min').apply(int)
+    ranks = dflnsum[totalcol].rank(method='dense').apply(int)
     indices = [
         tuple(int(row.get(gc)) for gc in gcols)
         for i,row in dflnsum.reset_index().iterrows()
@@ -307,27 +415,37 @@ def sort_by_total_and_syll(dfline,key=LINEKEY,sortcol='sort_parse_viols',rankcol
         ],
         axis=1
     )
+    #dfline[rankcol]=dfline[rankcol].rank(method='dense')
     # dfline[sortcol] = list(zip(dfline[rankcol], dfline.parse_syll_i))
     odf=setindex(dfline,sort=True)
     # odf=odf.sort_values(sortcol)
     return odf
 
 
-def parse_iter(txtdf,
-        data_by_line=False,data_by_syll=True,
-        num_proc=DEFAULT_NUM_PROC,progress=True):
+def parse_iter(txt_or_txtdf,
+        by_line=False,by_syll=True,only_best=False,
+        num_proc=DEFAULT_NUM_PROC,progress=True,force=False,**kwargs):
     """
     Return parses as iter
     """
-    if data_by_syll: data_by_line=False
-    yield from iter_parsed_lines(txtdf,num_proc=num_proc,progress=progress,data_by_line=data_by_line)
+    if by_line: by_syll=False
+    elif not by_syll: by_line=True
+    yield from iter_parsed_lines(
+        txt_or_txtdf,
+        num_proc=num_proc,
+        progress=progress,
+        by_line=by_line,
+        only_best=only_best,
+        force=force,
+        kwargs=kwargs
+    )
 
-def parse(txtdf,*x,**y):
+def parse(txt_or_txtdf,*x,**y):
     """
     Return parses
     """
-    if type(txtdf)==str: txtdf=scan(txtdf)
-    return pd.concat(parse_iter(txtdf,*x, **y))
+    o=list(parse_iter(txt_or_txtdf,*x, **y))
+    return pd.concat(o) if len(o) else pd.DataFrame()
 
 
 
@@ -366,9 +484,115 @@ def to_lines(parses,totalcol=TOTALCOL,rankcol=PARSERANKCOL, agg=sum):
     aggfunc['combo_num_syll']=np.median
     aggfunc['parse_num_syll']=np.median
     aggfunc['parse_num_pos']=np.median
+    aggfunc['line_num_syll']=np.median
     
-    linesums = resetindex(rparses.groupby(pkcols).agg(aggfunc))
-    linesums[rankcol] = linesums.groupby(['stanza_i','line_i'])[totalcol].rank(method='min').apply(int)
-    # linesums=linesums.sort_values(['stanza_i','line_i',rankcol])
+    lgby=['stanza_i','line_i','linepart_i']
+    try:
+        linesums = resetindex(rparses.groupby(pkcols).agg(aggfunc))
+    except Exception:
+        return pd.DataFrame()
+        
+    o=[]
+    for i,g in linesums.groupby(lgby):
+        g=g.sort_values([totalcol,'combo_i'])
+        g[rankcol]=[i+1 for i in range(len(g))]
+        g[rankcol+'_min']=g[totalcol].rank(method='min').apply(int)
+        g[rankcol+'_dense']=g[totalcol].rank(method='dense').apply(int)
+        o.append(g)
+    linesums=pd.concat(o)
     linesums = setindex(linesums,key=PARSELINEKEY,sort=True)
     return linesums
+    
+def iter_parses(*x,by_line=True,**y):
+    yield from iter_parsed_lines(*x,by_line=by_line,**y)
+    
+    
+    
+    
+"""
+PROSODIC FUNCTIONS
+"""
+
+
+
+def prosodic_line_to_data(line,viols_in_parse_str=True, total_col='*total'):
+    parse_i2=1
+    for parse_i,parse in enumerate(line.allParses()):
+        o=[]
+        parse_str=parse.posString(viols=viols_in_parse_str)
+        parse_mstr=parse.str_meter()
+        for pos_i,pos in enumerate(parse.positions):
+            constraintd=dict(sorted(
+                (constraint_names_from_prosodic.get(k.name,k.name),v)
+                for k,v in pos.constraintScores.items()
+            ))
+            
+            if total_col not in constraintd: constraintd[total_col]=sum(constraintd.values())
+            constraintd['*clash']=np.nan
+            constraintd['*lapse']=np.nan
+            mval=pos.meterVal
+            mval2=''.join(mval for n in range(len(pos.slots)))
+            nsyll=0
+            for slot_i,slot in enumerate(pos.slots):
+                nsyll+=1
+                odx=dict(
+                    parse_i=parse_i2,
+                    parse=parse_mstr,
+                    parse_str=parse_str,
+                    parse_pos_i=pos_i,
+                    parse_pos=mval2,
+                    parse_syll_i=nsyll,
+                    parse_syll=mval,
+                    
+                    **constraintd,
+                    is_w=int(mval=='w'),
+                    is_s=int(mval=='s'),
+                    parse_num_pos=len(parse.positions),
+                    parse_num_syll=len(parse_mstr),
+                )
+                o.append(odx)
+        yield pd.DataFrame(o)
+        parse_i2+=1
+
+def parse_prosodic(txt_or_txtdf, lang='en',
+                   meter='default_english', use_espeak=True,
+                   constraints=None,constraint_weights=None):
+    
+    p.config['resolve_optionality']=0
+    p.config['print_to_screen']=True
+    p.config['en_TTS_ENGINE']='espeak' if use_espeak else 'none'
+    
+    meter_obj=p.config['meters'][meter]
+    config=default_config=meter_obj.config
+    if constraints is not None:
+        constraints_pros=[
+            f'{constraint_names_in_prosodic[c]}/{constraint_weights[i] if constraint_weights is not None else 1}'
+            for c in constraints
+        ]
+        config['constraints']=constraints_pros
+        meter_obj=p.Meter(config)
+    
+    
+    txtdf = scan(txt_or_txtdf) if type(txt_or_txtdf)==str else txt_or_txtdf
+    txtdf = txtdf.sort_index()
+    
+    o=[]
+    for combo_i,combodf in sorted(txtdf.groupby('combo_i')):
+        combodf=combodf.reset_index()
+        words=[]
+        for wi,wdf in combodf.groupby('word_i'):
+            ipa_str='.'.join(wdf.syll_ipa)
+            sylls_text=list(wdf.syll_str)
+            token = wdf.iloc[0].word_str
+            word_obj = p.dict[lang].make((ipa_str,sylls_text), token)
+            wordtoken_obj = p.WordToken([word_obj], token)
+            words.append(wordtoken_obj)
+        
+        l=p.Line()
+        l.children = words
+        
+        l.parse(meter=meter_obj)
+        for parsedf in prosodic_line_to_data(l):
+            yield pd.concat([combodf,parsedf],axis=1)
+        
+

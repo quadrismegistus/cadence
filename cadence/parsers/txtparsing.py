@@ -12,42 +12,143 @@ def to_txt(txt_or_fn):
     return txt
 def to_stanzas(full_txt):
     return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
-def to_lines(stanza_txt):
+def to_lines_str(stanza_txt):
     return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
+def to_sents_str(stanza_txt):
+    return nltk.sent_tokenize(stanza_txt)
+
+def to_lineparts(linetxt,seps=set(',:;––'),min_len=2,max_len=10):
+    o=[]
+    for sent in to_sents_str(linetxt):
+        toks=tokenize_agnostic(sent)
+        ophrase=[]
+        for tok in toks:
+            ophrase+=[tok]
+            ophrase_len=len([x for x in ophrase if x[0].isalpha()])
+            if ophrase_len>=min_len and (tok in seps or ophrase_len>=max_len):
+                o+=[''.join(ophrase)]
+                ophrase=[]
+        if ophrase: o+=[''.join(ophrase)]
+    return o    
+
 def to_words(line_txt,lang_code=DEFAULT_LANG):
     lang = to_lang(lang_code)
     return lang.tokenize(line_txt)
 def to_syllables(word_txt,lang_code=DEFAULT_LANG):
     return lang.syllabify(word_txt)
 
-def scan(txt_or_fn,lang=DEFAULT_LANG,progress=True,incl_alt=INCL_ALT,num_proc=DEFAULT_NUM_PROC,**kwargs):
+def scan(txt_or_fn,**kwargs):
+    return setindex(
+        pd.concat(
+            scan_iter(txt_or_fn,**kwargs)
+        )
+    )
+
+def do_scan_iter(obj,**kwargs):
+    (
+        stanza_i,stanza_txt,
+        line_i,line_txt,
+        linepart_i,linepart_txt,
+        key
+    ) = obj
+#     print(key)
+    with get_db('lines','r') as db:
+        if key in db:
+            return db[key]
+    odf=line2df(linepart_txt, **kwargs)
+    try:
+        assign_proms(odf)
+    except KeyError:
+        pass
+    with get_db('lines',autocommit=True) as db:
+        db[key]=odf
+    return odf
+        
+
+def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
+        progress=True,
+        incl_alt=INCL_ALT,
+        num_proc=DEFAULT_NUM_PROC,
+        linebreaks=True,
+        phrasebreaks=True,
+        verse=True,
+        prose=False,
+        **kwargs):
     full_txt=to_txt(txt_or_fn)
     if not full_txt: return
+    if not verse or prose:
+        linebreaks=False
+        phrasebreaks=True
 
     df=pd.DataFrame()
-    objs=[]
+    dfl=[]
+    to_lines_now = to_lines_str if linebreaks else to_sents_str
+    kwargs['lang']=lang
+    kwargs['incl_alt']=incl_alt
+    
+    def getkey(linepart_txt):
+        return hashstr(str([
+            linepart_txt,
+            sorted(kwargs.items())
+        ]))[:12]
+        
+    objs=[
+        (
+            stanza_i,stanza_txt,
+            line_i,line_txt,
+            linepart_i,linepart_txt,
+            getkey(linepart_txt)
+        )
+        for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt))
+        for line_i,line_txt in enumerate(to_lines_now(stanza_txt))
+        for linepart_i,linepart_txt in enumerate(
+            to_lineparts(line_txt) if phrasebreaks else [line_txt]
+        )
+    ]    
+    
+#     with get_db('lines','r') as db:
+#         objs_done=[]
+#         objs_todo=[]
+#         for obj in objs:
+#             key=obj[-1]
+#             if key in db:
+#                 objs_done[key]=db[key]
+    
+    
+    
 
-    for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt)):
-        for line_i,line_txt in enumerate(to_lines(stanza_txt)):
-            df=line2df(line_txt,lang=lang,incl_alt=incl_alt,**kwargs)            
-            df['stanza_i']=stanza_i+1
-            df['line_i']=line_i+1
-            df['line_str']=line_txt
-            df['is_syll']=[int(x) for x in df['syll_ipa']!='']
-            objs+=[df]
-    odf=pd.concat(objs)
-    assign_proms(odf)
-    
-    # add other info
-    return setindex(odf)
-    
+    iterr=pmap_iter(
+        do_scan_iter,
+        objs,
+        kwargs=kwargs,
+        num_proc=num_proc,
+        desc='Iterating over line scansions'
+    )
+
+#     dfl=[]
+    i=0#
+    #with get_db('lines','c') as db:
+    for dfi,df in enumerate(iterr):
+        (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt,key) = objs[dfi]
+        df['stanza_i']=stanza_i+1
+        df['line_i']=line_i+1
+        df['line_str']=linepart_txt#line_txt
+        df['linepart_i']=linepart_i+1
+        
+
+        #db[key]=df
+        yield df
+        #i+=1
+        #if i>=100: db.commit()
+        #db.commit()
+
 def assign_proms(df):
     # set proms
     df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
     df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
     df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
     df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
-    
+
     df['prom_strength']=[
         x
         for i,df_word in df.groupby(['word_i','word_ipa_i'])

@@ -18,17 +18,24 @@ def get_df_ipa(fn=PATH_IPA_FEATS):
 def to_phons(syll_ipa):
     pass
 
-def line2df(line_txt,lang=DEFAULT_LANG,sby=['word_i','word_ipa_i','syll_i'],incl_alt=INCL_ALT,**y):
+def line2df(line_txt,
+        lang=DEFAULT_LANG,
+        sby=['word_i','word_ipa_i','syll_i'],
+        incl_alt=INCL_ALT,**y):
+    
     func = CODE2LANG.get(lang, CODE2LANG[DEFAULT_LANG] )
-    ld=func(line_txt,incl_alt=incl_alt,**y)
-    if not ld: return pd.DataFrame()
-    df=pd.DataFrame(ld)
-    # annotate proms
-    # df=anno_proms(df)
+    odf=func(line_txt,incl_alt=incl_alt,**y)
     try:
-        return df.sort_values(sby)[sby + [col for col in df.columns if col not in set(sby)]]
-    except KeyError:
-        return df
+        odf=odf.sort_values(sby)[
+            sby + [col for col in odf.columns if col not in set(sby)]
+        ]
+        odf['is_syll']=[int(x) for x in odf['syll_ipa']!='']
+        uniqdf=odf[odf.is_syll==1].drop_duplicates(['word_i','syll_i'])
+        odf['line_num_syll']=len(uniqdf)
+    except KeyError as e:
+        pass
+    return odf
+
 
 
 
