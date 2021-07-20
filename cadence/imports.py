@@ -6,6 +6,7 @@ sys.path.append('/home/ryan/github/prosodic')
 import warnings
 warnings.filterwarnings('ignore')
 import prosodic as p
+
 from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle,shutil
 from collections import defaultdict,Counter
@@ -17,6 +18,10 @@ import re,nltk
 from sqlitedict import SqliteDict
 import logging
 logging.Logger.manager.loggerDict['sqlitedict'].disabled=True
+
+from parmapper import parmap
+from functools import partial
+
 
 # constants
 ENGINE_PROSODIC='prosodic'
@@ -47,8 +52,12 @@ LINEKEY=[
     'line_i',
     'linepart_i',#'linepart_str',
     'line_str',
+    
+    
     PARSERANKCOL,
-    'combo_i','combo_stress','combo_ipa',
+    'parse_is_bounded',
+    'parse_bounded_by',
+   'combo_i','combo_stress','combo_ipa',
     'parse_i','parse','parse_str',
     'parse_pos_i','parse_pos',
     'word_i','word_str','word_ipa_i','word_ipa',
@@ -58,6 +67,8 @@ LINEKEY=[
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
+
+NUM_BOUNDED_TO_STORE = 10
 
 constraint_names_in_prosodic = {
     '*f-res':'footmin-f-resolution',

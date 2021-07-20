@@ -327,7 +327,10 @@ def pmap_groups(*x,**y):
 
 def check_basic_config():
     # check basic config
-    if not os.path.exists(PATH_HOME): os.makedirs(PATH_HOME)
+    try:
+        if not os.path.exists(PATH_HOME): os.makedirs(PATH_HOME)
+    except Exception:
+        pass
     if not os.path.exists(PATH_DATA): os.makedirs(PATH_DATA)
     if not os.path.exists(os.path.join(PATH_DATA,'en')):
         zipfn=os.path.join(PATH_HOME,'data_cadence.zip')
