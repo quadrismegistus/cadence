@@ -10,7 +10,7 @@ Pyphen = None
 PATH_LANG_DATA=os.path.join(PATH_DATA,'en')
 CMU_DICT_FN=os.path.join(PATH_LANG_DATA,'cmudict.txt')
 CMU_DICT={}
-CACHE_DICT_FN=os.path.join(PATH_LANG_DATA,'tts-cache.txt')
+CACHE_DICT_FN=os.path.join(PATH_LANG_DATA,'tts-cache2.txt')
 CACHE_DICT_F=None
 CACHE=defaultdict(list)
 ORTH_CACHE=defaultdict(list)
@@ -18,6 +18,8 @@ CONTRACTIONS={"n't","'ve","'ll","'m","'d","'s","'m","'re"}
 SPECIALD={}
 
 def get_special_cases():
+    global SPECIALD
+    
     if not SPECIALD:
 
         ufn=os.path.join(PATH_LANG_DATA,'unstressed.txt')
@@ -137,6 +139,7 @@ def get_cache(source_paths=[CMU_DICT_FN,CACHE_DICT_FN]):
 # def get_cache(source_paths=[CMU_DICT_FN]):
     if not CACHE:
         for sfn in source_paths:
+            if not os.path.exists(sfn): continue
             with open(sfn, encoding='utf-8') as f:
                 for ln in f:
                     ln=ln.strip()
@@ -180,16 +183,19 @@ def load_cmu(fn=CMU_DICT_FN,config={}):
     return CMU_DICT
 
 def write_to_cache(token,ipa):
-    tokenl=token.lower()
-    global CACHE_DICT_F
-    if not CACHE_DICT_F:
-        CACHE_DICT_F=open(CACHE_DICT_FN,'a',encoding='utf-8')
+    with open(CACHE_DICT_FN,'a+',encoding='utf-8') as of:
+        of.write(f'{token}\t{ipa}\n')
+    #pass
+#     tokenl=token.lower()
+#     global CACHE_DICT_F
+#     if not CACHE_DICT_F:
+#         CACHE_DICT_F=open(CACHE_DICT_FN,'a+',encoding='utf-8')
 
-    CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
-    if not tokenl in CMU_DICT:
-        CMU_DICT[tokenl]=[]
-    CMU_DICT[tokenl]+=[ipa]
-    return CMU_DICT
+#     CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
+#     if not tokenl in CMU_DICT:
+#         CMU_DICT[tokenl]=[]
+#     CMU_DICT[tokenl]+=[ipa]
+#     return CMU_DICT
 
 
 def add_elisions(_ipa):
@@ -274,7 +280,8 @@ def add_elisions(_ipa):
 
 
 def espeak2ipa(token):
-    CMD='espeak -q -x '+token.replace("'","").replace('"','')
+    token=''.join(x for x in token if x.isalnum())
+    CMD=f'espeak -q -x {token}'
     #CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
     #print CMD
     try:
@@ -413,7 +420,7 @@ def syllabify_orth_with_pyphen(token,num_sylls=None):
     sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
     return sylls
 
-def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
+def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_pyphen):
     key=(token,num_sylls)
     if not key in ORTH_CACHE:
         l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]

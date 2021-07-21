@@ -1,23 +1,49 @@
 from ..imports import *
 
+
+
+
+
+
+
+
+
 # loading txt/strings
 def to_txt(txt_or_fn):
     # load txt
     if not txt_or_fn: return
     if os.path.exists(txt_or_fn):
-        with open(txt_or_fn) as f:
+        with open(txt_or_fn,encoding='utf-8',errors='replace') as f:
             txt=f.read()
     else:
         txt=txt_or_fn
     return txt
+
+    
+    
+def to_txt_from_scandf(scandf):
+    return '\n\n'.join(
+        '\n'.join(
+            ''.join(
+                linepartdf.index.get_level_values('line_str')[0]
+                for linepart_i,linepartdf in linedf.groupby('linepart_i')
+            )
+            for line_i,linedf in stanzadf.groupby('line_i')
+        )
+        for stanza_i,stanzadf in scandf.groupby('stanza_i')
+    )
+    
 def to_stanzas(full_txt):
     return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
 def to_lines_str(stanza_txt):
     return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
 def to_sents_str(stanza_txt):
-    return nltk.sent_tokenize(stanza_txt)
+    return [
+        sent.replace('\n',' ').strip()
+        for sent in nltk.sent_tokenize(stanza_txt)
+    ]
 
-def to_lineparts(linetxt,seps=set(',:;––'),min_len=2,max_len=10):
+def to_lineparts(linetxt,seps=set(',:;––'),min_len=1,max_len=25):
     o=[]
     for sent in to_sents_str(linetxt):
         toks=tokenize_agnostic(sent)
@@ -71,12 +97,17 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         num_proc=DEFAULT_NUM_PROC,
         linebreaks=True,
         phrasebreaks=True,
-        verse=True,
-        prose=False,
+        verse=None,
+        prose=None,
+        desc='Iterating over line scansions',
         **kwargs):
     full_txt=to_txt(txt_or_fn)
     if not full_txt: return
-    if not verse or prose:
+    
+    if verse:
+        linebreaks=True
+        phrasebreaks=False
+    elif prose:
         linebreaks=False
         phrasebreaks=True
 
@@ -122,7 +153,8 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         objs,
         kwargs=kwargs,
         num_proc=num_proc,
-        desc='Iterating over line scansions'
+        desc=desc,
+        progress=progress
     )
 
 #     dfl=[]
