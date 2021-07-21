@@ -40,11 +40,6 @@ brew install espeak        # mac
 
 
 ```python
-import sys; sys.path.append('..')  # ignore: just for readme
-```
-
-
-```python
 # Import
 import cadence as cd
 ```
