@@ -10,7 +10,7 @@ def iter_lines(txt_or_txtdf,num_proc=1,**kwargs):
     if type(txt_or_txtdf) == str:
         yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
     else:
-        for i,g in txt_or_txtdf.groupby(['stanza_i','line_i','linepart_i']):
+        for i,g in txt_or_txtdf.groupby(['stanza_i','line_i']):#,'linepart_i']):
             yield g
 #         for stanza_i,stanzadf in txt_or_txtdf.groupby('stanza_i'):
 #             lines=stanzadf.groupby('line_i')
@@ -46,13 +46,21 @@ def parse(txt_or_txtdf,*x,**y):
     Return parses
     """
     o=list(parse_iter(txt_or_txtdf,*x, **y))
-    return pd.concat(o) if len(o) else pd.DataFrame()
+    odf=pd.concat(o) if len(o) else pd.DataFrame()
+    return odf.sort_index()
 
 
-def parse_iter(txt_or_txtdf,
-        by_line=True,by_syll=False,only_best=False,
+def parse_iter(
+        txt_or_txtdf,
+        by_line=True,
+        by_syll=False,
+        only_best=False,
         only_unbounded=False,
-        num_proc=DEFAULT_NUM_PROC,progress=True,force=False,**kwargs):
+        num_proc=DEFAULT_NUM_PROC,
+        progress=True,
+        force=False,
+        verbose=True,
+        **kwargs):
     """
     Return parses as iter
     """
@@ -68,6 +76,7 @@ def parse_iter(txt_or_txtdf,
         only_best=only_best,
         only_unbounded=only_unbounded,
         force=force,
+        verbose=verbose,
         kwargs=kwargs
     )
 
@@ -78,10 +87,16 @@ def iter_parsed_lines(
         by_line=False,
         only_best=False,
         only_unbounded=False,
+        verbose=True,
         **kwargs
         ):
     # preproc
-    preproc_gen = iter_lines(txt_or_txtdf,**kwargs.get('kwargs',{}))
+    preproc_gen = iter_lines(
+        txt_or_txtdf,
+        progress=progress if not verbose else False,
+        desc='Metrically parsing lines',
+        **kwargs.get('kwargs',{})
+    )
     
     # proc
     kwargs['only_unbounded']=only_unbounded
@@ -94,7 +109,13 @@ def iter_parsed_lines(
     )
     
     # postproc
-    postproc_func = partial(postproc_dfline, by_line=by_line,only_best=only_best,only_unbounded=only_unbounded)
+    postproc_func = partial(
+        postproc_dfline,
+        by_line=by_line,
+        only_best=only_best,
+        only_unbounded=only_unbounded,
+        verbose=verbose
+    )
     postproc_gen = map(postproc_func, proc_gen)
     
     # yield from total queue
@@ -105,6 +126,7 @@ def do_iter_parsed_lines(
         num_proc=DEFAULT_NUM_PROC,
         force=True,
         cache=False,
+        verbose=True,
         **kwargs):
     
     if cache:
@@ -119,20 +141,24 @@ def do_iter_parsed_lines(
             with get_db('parses','r') as db:
                 if key in db: return db[key]
 
-    odf=pd.DataFrame()
-    if kwargs.get('engine')==ENGINE_PROSODIC:
-        odf=parse_prosodic_line(
-            linedf,
-            **kwargs
-        )
-    else:
-        o=list(iter_parsed_combos(
-            linedf,
-            num_proc=1,
-            progress=False,
-            **kwargs
-        ))  
-        odf=pd.concat(o) if len(o) else pd.DataFrame()
+#     odf=pd.DataFrame()
+    o=[]
+    for linepart_i,linepartdf in sorted(linedf.groupby('linepart_i')):
+        if kwargs.get('engine')==ENGINE_PROSODIC:
+            odf=parse_prosodic_line(
+                linepartdf,
+                **kwargs
+            )
+        else:
+            o=list(iter_parsed_combos(
+                linepartdf,
+                num_proc=1,
+                progress=False,
+                **kwargs
+            ))  
+            odf=pd.concat(o) if len(o) else pd.DataFrame()
+        o+=[odf]
+    odf=pd.concat(o) if len(o) else pd.DataFrame()
     
     if cache and len(odf):
         with get_db('parses','w') as db: db[key]=odf
@@ -234,6 +260,8 @@ def prosodic_line_to_data(
         only_unbounded=False,
         **kwargs):
     
+    if line is None: return pd.DataFrame()
+    if line.allParses() is None: return pd.DataFrame()
     all_parses = [(parse,True) for parse in line.allParses()]
     if not only_unbounded:
         all_parses+=[(parse,False) for parse in line.boundParses()][:NUM_BOUNDED_TO_STORE]
@@ -336,10 +364,24 @@ def prosodic_line_to_data(
 
 
 
-def postproc_dfline(dfline,by_line=False,only_best=False,only_unbounded=False):
-#     odf=dfline
-    odf=to_lines(dfline) if by_line else sort_by_total_and_syll(dfline)
-    odf=bound_parses(odf,only_unbounded=only_unbounded)
+def postproc_dfline(
+        dfline,
+        by_line=False,
+        verbose=True,
+        only_best=False,
+        only_unbounded=False):
+    #display(dfline)
+    o=[]
+    if verbose: display(show_parse(dfline))
+    
+    for i,dfg in sorted(dfline.groupby('linepart_i')):
+        odf=to_lines(dfg) if by_line else sort_by_total_and_syll(dfg)
+        odf=bound_parses(odf,only_unbounded=only_unbounded)
+        o+=[odf]
+    odf=pd.concat(o) if len(o) else pd.DataFrame()
+#     display(odf)
+    #stop
+    
     if only_best and 'parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns):
         odf=odf.query('parse_rank==1')
     return odf
@@ -780,12 +822,92 @@ def parse_line(linedf):
 
 
 
-#     yield from iter_combos_as_lines(
-#         iter_parsed_combos(
-#             txtdf,
-#             num_proc=num_proc,
-#             progress=progress,
-#             **kwargs
-#         ),
-#         by_line=by_line
-#     )        
+###### SHOWING
+
+
+accentd={
+    'a':'á',
+    'e':'é',
+    'i':'í',
+    'o':'ó',
+    'u':'ú',
+    'y':'ý',
+}
+for k,v in list(accentd.items()): accentd[k.upper()]=v.upper()
+
+def show_parses(parses_bysyll):
+    try:
+        from IPython.display import Markdown
+        return Markdown(show_parses_md(parses_bysyll))
+    except ImportError:
+        return show_parses_txt(parses_bysyll)
+    
+def show_parse_md(dfparse):
+#     print(dfparse.reset_index().line_i.nunique())
+#     print(dfparse.reset_index().linepart_i.nunique())
+    dfp=dfparse.reset_index()
+    mdline=[]
+    for l,dflp in sorted(dfp.groupby('linepart_i')):
+        mdrow=[]
+        #display(dflp)
+        
+        for w,dfword in sorted(dflp.groupby('word_i')):
+            mdword=[]
+            for s,dfsyll in sorted(dfword.groupby('syll_i')):
+                row=dfsyll.iloc[0]
+                wpref,w,wsuf = split_punct(row.syll_str)
+                
+                if row.is_s:
+                    w2=[]
+                    accented=False
+                    numvowels=len([y for y in w if y in accentd])
+                    for x in w:
+                        if not accented and x in accentd:
+                            if numvowels<2 or x!='y':
+                                x=accentd[x]
+                                accented=True
+                        w2+=[x]
+                    w=''.join(w2)
+                    
+                md=w#f'{row.syll_str}'
+                if row.is_s: md=f'**{md}**'
+                #if row.is_s: md=f'<u>{md}</u>'
+                #if row.is_w: md=f'<i>{md}</i>'
+                #if row.is_stressed: md=f'<i>{md}</i>'
+                if row['*total']>0:
+                    md=f'<span style="color:darkred">{md}</span>'
+                md=f'{wpref}{md}{wsuf}'
+                mdword+=[md]
+            mdrow.append(''.join(mdword))
+        mdline.append(' '.join(mdrow))
+    
+    o=' '.join(mdline)#.replace('</u> <u>',' ')
+    #print(o)
+    #return f'<span style="color:darkblue">{o}</span>'
+    return o
+
+def show_parse(dfparse,only_best=True):
+    if only_best:# dfparse=dfparse.query('parse_rank==1')
+        best_idf=dfparse.groupby('parse_i')['*total'].mean().sort_values()
+        best_i=list(best_idf.index)[0]
+        dfparse=dfparse.query(f'parse_i=={best_i}')
+    try:
+        from IPython.display import Markdown
+        return Markdown(show_parse_md(dfparse))
+    except ImportError:
+        return show_parse_txt(dfparse)
+    
+
+def show_parses_md(parses_bysyll):
+    
+    grps=sorted(parses_bysyll.reset_index().groupby(
+        ['stanza_i','line_i']#,'linepart_i','parse_rank']    
+    ))
+    mdl=[show_parse_md(dfparse) for i,dfparse in grps]
+    omd='\n<br/>'.join(mdl)
+    return omd
+    
+    
+
+
+

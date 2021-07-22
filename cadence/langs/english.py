@@ -56,7 +56,9 @@ def scan(line,incl_alt=True,**y):
     ]
     return pd.DataFrame(o)
 
-def tokenize(txt,**y): return tokenize_fast(txt,**y)
+def tokenize(txt,**y): 
+    return txt.split()
+    #return tokenize_agnostic(txt,**y)
 
 
 # def tokenize(txt):
@@ -73,7 +75,9 @@ def tokenize(txt,**y): return tokenize_fast(txt,**y)
 
 def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
     # not real?
-    if not token or not token[0].isalpha():
+    token_nice=token
+    token = ''.join(x for x in token if x.isalpha()).lower()
+    if not token:# or not token_alpha:
         return [{
             'word_ipa_i':0,
             'syll_i':0,
@@ -86,26 +90,25 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
 
     # get ipas
     cache = get_cache()
-    tokenl=token.lower()
+#     tokenl=token.lower()
     if token in cache:
         ipas=cache[token]
-    elif tokenl in cache:
-        ipas=cache[tokenl]
+#     elif tokenl in cache:
+#         ipas=cache[tokenl]
     else:
         ipas=tts(token)
         if ipas:
-            cache[tokenl]=ipas
+            cache[token]=ipas
             if cache_new:
                 write_to_cache(token,ipas[0])
 
-
     ipas = ipas[:1] if not incl_alt else ipas
     sd=get_special_cases()
-    if tokenl in sd['unstressed']:
+    if token in sd['unstressed']:
         ipa=ipas[0]
         ipax=ipa if ipa[0].isalpha() else ipa[1:]
         ipas=[ipax]
-    elif tokenl in sd['maybestressed']:
+    elif token in sd['maybestressed']:
         if len(ipas)<2:
             ipa=ipas[0]
             ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
@@ -117,7 +120,7 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
     for ipa_i,ipa in enumerate(ipas):
         num_sylls=ipa.count('.')+1
         sylls_ipa = ipa.split('.')
-        sylls_text = syllabify_orth(token,num_sylls=num_sylls)
+        sylls_text = syllabify_orth(token_nice,num_sylls=num_sylls)
         maxlen=max([len(sylls_ipa), len(sylls_text)])
         sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
         sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
@@ -126,11 +129,11 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
             results_ld.append({
                 'word_ipa_i':ipa_i+1,
                 'syll_i':si+1,
-                'word_str':token,
+                'word_str':token_nice,
                 'word_ipa':ipa,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
-                'is_funcword':int(tokenl in sd['functionwords'])
+                'is_funcword':int(token in sd['functionwords'])
             })
     return results_ld
 
@@ -280,8 +283,9 @@ def add_elisions(_ipa):
 
 
 def espeak2ipa(token):
-    token=''.join(x for x in token if x.isalnum())
+    token=''.join(x for x in token if x.isalpha())
     CMD=f'espeak -q -x {token}'
+#     print(CMD)
     #CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
     #print CMD
     try:

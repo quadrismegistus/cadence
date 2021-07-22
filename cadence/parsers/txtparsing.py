@@ -59,7 +59,11 @@ def to_lineparts(linetxt,seps=set(',:;––'),min_len=1,max_len=25):
 
 def to_words(line_txt,lang_code=DEFAULT_LANG):
     lang = to_lang(lang_code)
-    return lang.tokenize(line_txt)
+    o=lang.tokenize(line_txt)
+    #print(o)
+    #stop
+    return o
+    
 def to_syllables(word_txt,lang_code=DEFAULT_LANG):
     return lang.syllabify(word_txt)
 
@@ -70,7 +74,7 @@ def scan(txt_or_fn,**kwargs):
         )
     )
 
-def do_scan_iter(obj,**kwargs):
+def do_scan_iter(obj,cache=False,**kwargs):
     (
         stanza_i,stanza_txt,
         line_i,line_txt,
@@ -78,16 +82,18 @@ def do_scan_iter(obj,**kwargs):
         key
     ) = obj
 #     print(key)
-    with get_db('lines','r') as db:
-        if key in db:
-            return db[key]
+    if cache:
+        with get_db('lines','r') as db:
+            if key in db:
+                return db[key]
     odf=line2df(linepart_txt, **kwargs)
     try:
         assign_proms(odf)
     except KeyError:
         pass
-    with get_db('lines',autocommit=True) as db:
-        db[key]=odf
+    if cache:
+        with get_db('lines',autocommit=True) as db:
+            db[key]=odf
     return odf
         
 
@@ -160,16 +166,25 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
 #     dfl=[]
     i=0#
     #with get_db('lines','c') as db:
+    lpi=None
+    ol=[]
     for dfi,df in enumerate(iterr):
         (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt,key) = objs[dfi]
+        lpinow=(stanza_i,line_i)
+        if lpi is not None and lpi!=lpinow and ol:
+            yield pd.concat(ol)
+            ol=[]
+        
         df['stanza_i']=stanza_i+1
         df['line_i']=line_i+1
         df['line_str']=linepart_txt#line_txt
         df['linepart_i']=linepart_i+1
-        
+        ol+=[df]
+        lpi=lpinow
+    if ol: yield pd.concat(ol)
 
         #db[key]=df
-        yield df
+#         yield df
         #i+=1
         #if i>=100: db.commit()
         #db.commit()

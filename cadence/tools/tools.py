@@ -1,5 +1,26 @@
 from ..imports import *
 
+def split_punct(tok):
+    toks=tokenize_agnostic(tok)
+    wordil=[]
+    for i,x in enumerate(toks):
+        if any(y.isalpha() for y in x): wordil+=[i]
+        
+    
+    pref=''.join([
+        x
+        for i,x in enumerate(toks)
+        if i<wordil[-1]
+    ])
+    suf=''.join([
+        x
+        for i,x in enumerate(toks)
+        if i>wordil[-1]
+    ])
+    words=''.join(
+        toks[wordil[0] : wordil[-1]+1]
+    ) if wordil else ''
+    return (pref,words,suf)
 
 def tokenize_agnostic(txt):
     return re.findall(r"[\w']+|[.,!?; -—–\n]", txt)

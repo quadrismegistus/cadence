@@ -2,13 +2,30 @@
 from .imports import *
 
 
-
-
 ### convenient objs
-def kwargs_key(kwargs):
-    return hashstr(str(sorted(kwargs.items())))
+def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
+    return hashstr(str(sorted(
+        (k,v)
+        for k,v in kwargs.items()
+        if k not in bad_keys
+    )))
 
 
+
+
+def Verse(txt,**kwargs):
+    kwargs={**dict(verse=True), **kwargs}
+    return Text(txt,**kwargs)
+def Poem(txt,**kwargs):
+    kwargs={**dict(verse=True), **kwargs}
+    return Text(txt,**kwargs)
+def Prose(txt,**kwargs):
+    kwargs={**dict(prose=True), **kwargs}
+    return Text(txt,**kwargs)
+def FreeVerse(txt,**kwargs):
+    kwargs={**dict(linebreaks=True,phrasebreaks=True), **kwargs}
+    return Text(txt,**kwargs)
+    
 ### texts
 class Text(object):
     def __init__(self,
@@ -87,36 +104,60 @@ class Text(object):
             only_best=False,
             only_unbounded=True,
             **kwargs):
+        kwargs_line={**self.kwargs, **kwargs, **{'by_syll':False}}
+        kwargs_syll={**self.kwargs, **kwargs, **{'by_syll':True}}
+        key_line=kwargs_key(kwargs_line)
+        key_syll=kwargs_key(kwargs_syll)
+        if force or not key_syll in self._parses or not key_line in self._parses:
+            self._parses[key_syll]=parse(self.txt, **kwargs_syll)
+            self._parses[key_line]=to_lines(self._parses[key_syll])
+        elif kwargs.get('verbose',True):
+            for li,linedf in sorted(self._parses[key_syll].reset_index().groupby(['stanza_i','line_i'])):
+                display(show_parse(linedf))
+                
+        
+    def parses(self,
+            force=True,
+            only_best=False,
+            only_unbounded=True,
+            **kwargs):
         kwargs={**self.kwargs, **kwargs}
         kwargs_line={**self.kwargs, **kwargs, **{'by_syll':False}}
         kwargs_syll={**self.kwargs, **kwargs, **{'by_syll':True}}
-        
         key_line=kwargs_key(kwargs_line)
         key_syll=kwargs_key(kwargs_syll)
         key=key_syll if kwargs.get('by_syll') else key_line
-        if force or not key in self._parses:    
-            self._parses[key_syll]=parse(self.txt, **kwargs_syll)
-            self._parses[key_line]=to_lines(self._parses[key_syll])
+        if not key in self._parses:
+            self.parse(force=force, **kwargs)
+        if not key in self._parses: return
+        
         odf=self._parses[key]
-        odfindex=set(odf.index.names)
-        if only_best and 'parse_rank' in odfindex:
-            odf=odf.query('parse_rank==1')
-        if only_unbounded and 'parse_is_bounded' in odfindex:
+        if only_unbounded and ('parse_is_bounded' in set(odf.index.names) or 'parse_is_bounded' in set(odf.columns)):
             odf=odf.query('parse_is_bounded==False')
-       
-        odf=pd.concat(
-            g.sort_values('parse_rank').assign(
-                parse_rank=[i+1 for i in range(len(g))]
-            )
-            for i,g in odf.reset_index().groupby(
-                ['stanza_i','line_i','linepart_i']
-            )
-        )
-        return setindex(odf).sort_index()
+         
+        pi2rank={}
+        odfnoindex=odf.sort_index().reset_index()
+        o=[]
+        gby=['stanza_i','line_i','linepart_i']
+        for i,g in sorted(odfnoindex.groupby(gby)):
+            gdedup=g.drop_duplicates('parse_i').sort_values('parse_rank')
+#             display(i,len(g))
+            #display(gdedup)
+            for ii,pi in enumerate(gdedup.parse_i): pi2rank[pi]=ii+1
+            g.parse_rank=g.parse_i.apply(lambda x: pi2rank.get(x,np.nan))
+            #display(gdedup)
+            o+=[g]
+            #print()
+        odf=setindex(pd.concat(o),sort=True) if len(o) else pd.DataFrame()
+        
+        if only_best and ('parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns)):
+            odf=odf.query('parse_rank==1')
+        
+        return odf #setindex(odf,sort=True)
 
     def best_parses(self, force=False, **kwargs):
-        return self.parse(force=force,only_best=True,**kwargs)
+        return self.parses(force=force,only_best=True,**kwargs)
     def all_parses(self, force=False,**kwargs):
-        return self.parse(force=force,only_best=False,only_unbounded=False,**kwargs)
+        return self.parses(force=force,only_best=False,only_unbounded=False,**kwargs)
     def unbounded_parses(self, force=False,**kwargs):
-        return self.parse(force=force,only_best=False,only_unbounded=True,**kwargs)
+        return self.parses(force=force,only_best=False,only_unbounded=True,**kwargs)
