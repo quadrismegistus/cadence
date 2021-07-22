@@ -811,11 +811,25 @@ Or <b>élse</b> of <i><b>thée</b></i> this <i><b>Í</b></i> <i>prog</i><b>nós<
 
 
 ```python
+# Parse sentences (prose)
+para.parse()
+```
+
+
+<i><b>Ís</b></i> it <b>thát</b> by <i><b>íts</b></i> in<b>déf</b>i<i><b>níte</b></i><i>ness</i> <i>it</i> <b>shád</b><i>ows</i> <b>fórth</b> the <b>héart</b>less <b>vóids</b> <i>and</i> <i>im</i><b>mén</b>si<i><b>tíes</b></i> <i>of</i> <i>the</i> <b>úni</b>ver<b>sé</b>, and <i><b>thús</b></i> <i><b>stábs</b></i> us <i><b>fróm</b></i> be<b>hínd</b> <i>with</i> <i>the</i> <b>thóught</b> <i>of</i> <i>an</i><b>ní</b>hi<b>lá</b>tion, <b>whén</b> be<b>hóld</b>ing <i><b>thé</b></i> <i>white</i> <b>dépths</b> <i>of</i> <i>the</i> <b>mí</b>lky <b>wáy</b>?
+
+
+
+Or <i><b>ís</b></i> it, <b>thát</b> <i>as</i> <i>in</i> <b>éss</b>ence <b>whíte</b><i>ness</i> <i>is</i> <b>nót</b> so <b>múch</b> a <b>cól</b>our <i><b>ás</b></i> the <b>vís</b><i>i</i><i>ble</i> <b>áb</b><i>sence</i> <i>of</i> <b>cól</b>our; and <b>át</b> the <i><b>sáme</b></i> <i><b>tíme</b></i> the <b>cón</b>crete <i><b>óf</b></i> all <b>cólo</b>urs; <i><b>ís</b></i> it <i><b>fór</b></i> these <b>réa</b>sons <b>thát</b> there <i><b>ís</b></i> such <i><b>á</b></i> <i>dumb</i> <b>blánk</b>ness, <b>fúll</b> of <b>méan</b>ing, <b>ín</b> a <b>wíde</b> <i>land</i><b>scápe</b> of <b>snóws</b>: a <b>cólour</b>le<i><b>ss</b></i>, al<b>l</b>-colour <i><b>óf</b></i> athe<b>í</b><i>sm</i> <i>from</i> <b>whích</b> we <b>shrínk</b>?
+
+
+
+```python
 # get parse data as dataframe
 sonnet.parses()                  # plausible (unbounded) parses
 sonnet.unbounded_parses()        # same as above
 sonnet.all_parses()              # all parses, plausible or no
-sonnet.best_parses()             # only top ranking parse
+sonnet.best_parses()             # only top ranking parse per line
 ```
 
 
@@ -2008,18 +2022,9 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 
 
 ```python
-# Parsing prose
-para.parse()
+# Best prose parses
 para.best_parses()
 ```
-
-
-<i><b>Ís</b></i> it <b>thát</b> by <i><b>íts</b></i> in<b>déf</b>i<i><b>níte</b></i><i>ness</i> <i>it</i> <b>shád</b><i>ows</i> <b>fórth</b> the <b>héart</b>less <b>vóids</b> <i>and</i> <i>im</i><b>mén</b>si<i><b>tíes</b></i> <i>of</i> <i>the</i> <b>úni</b>ver<b>sé</b>, and <i><b>thús</b></i> <i><b>stábs</b></i> us <i><b>fróm</b></i> be<b>hínd</b> <i>with</i> <i>the</i> <b>thóught</b> <i>of</i> <i>an</i><b>ní</b>hi<b>lá</b>tion, <b>whén</b> be<b>hóld</b>ing <i><b>thé</b></i> <i>white</i> <b>dépths</b> <i>of</i> <i>the</i> <b>mí</b>lky <b>wáy</b>?
-
-
-
-Or <i><b>ís</b></i> it, <b>thát</b> <i>as</i> <i>in</i> <b>éss</b>ence <b>whíte</b><i>ness</i> <i>is</i> <b>nót</b> so <b>múch</b> a <b>cól</b>our <i><b>ás</b></i> the <b>vís</b><i>i</i><i>ble</i> <b>áb</b><i>sence</i> <i>of</i> <b>cól</b>our; and <b>át</b> the <i><b>sáme</b></i> <i><b>tíme</b></i> the <b>cón</b>crete <i><b>óf</b></i> all <b>cólo</b>urs; <i><b>ís</b></i> it <i><b>fór</b></i> these <b>réa</b>sons <b>thát</b> there <i><b>ís</b></i> such <i><b>á</b></i> <i>dumb</i> <b>blánk</b>ness, <b>fúll</b> of <b>méan</b>ing, <b>ín</b> a <b>wíde</b> <i>land</i><b>scápe</b> of <b>snóws</b>: a <b>cólour</b>le<i><b>ss</b></i>, al<b>l</b>-colour <i><b>óf</b></i> athe<b>í</b><i>sm</i> <i>from</i> <b>whích</b> we <b>shrínk</b>?
-
 
 
 
@@ -2547,10 +2552,3 @@ Or <i><b>ís</b></i> it, <b>thát</b> <i>as</i> <i>in</i> <b>éss</b>ence <b>wh�
 </tbody>
 </table>
 </div>
-
-
-
-
-```python
-
-```
