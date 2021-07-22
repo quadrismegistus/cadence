@@ -870,13 +870,13 @@ def show_parse_md(dfparse):
                     w=''.join(w2)
                     
                 md=w#f'{row.syll_str}'
-                if row.is_s: md=f'**{md}**'
+                if row.is_s: md=f'<b>{md}</b>'
                 #if row.is_s: md=f'<u>{md}</u>'
                 #if row.is_w: md=f'<i>{md}</i>'
                 #if row.is_stressed: md=f'<i>{md}</i>'
                 if row['*total']>0:
                     #md=f'<span style="color:darkred">{md}</span>'
-                    md=f'*{md}*'
+                    md=f'<i>{md}</i>'
                 md=f'{wpref}{md}{wsuf}'
                 mdword+=[md]
             mdrow.append(''.join(mdword))

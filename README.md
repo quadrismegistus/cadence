@@ -76,7 +76,7 @@ sonnet
 sonnet.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 28.01it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 28.51it/s]
 
 
 
@@ -415,59 +415,59 @@ sonnet.parse()
 ```
 
 
-Not <span style="color:darkred">**fróm**</span> the **stárs** do <span style="color:darkred">**Í**</span> my **júdge**ment **plúck**;
+Not <i><b>fróm</b></i> the <b>stárs</b> do <i><b>Í</b></i> my <b>júdge</b>ment <b>plúck</b>;
 
 
 
-And **yét** me**thínks** I **háve** as**trón**o<span style="color:darkred">**mý**</span>,
+And <b>yét</b> me<b>thínks</b> I <b>háve</b> as<b>trón</b>o<i><b>mý</b></i>,
 
 
 
-But **nót** to **téll** of **góod** or **év**il **lúck**,
+But <b>nót</b> to <b>téll</b> of <b>góod</b> or <b>év</b>il <b>lúck</b>,
 
 
 
-Of **plágues**, of **déarths**, or **séa**son **qúal**i<span style="color:darkred">**tý**</span>;
+Of <b>plágues</b>, of <b>déarths</b>, or <b>séa</b>son <b>qúal</b>i<i><b>tý</b></i>;
 
 
 
-Nor <span style="color:darkred">**cán**</span> I **fór**tune <span style="color:darkred">**tó**</span> <span style="color:darkred">brief</span> **mín**utes **téll**,
+Nor <i><b>cán</b></i> I <b>fór</b>tune <i><b>tó</b></i> <i>brief</i> <b>mín</b>utes <b>téll</b>,
 
 
 
-**Póint**<span style="color:darkred">ing</span> <span style="color:darkred">to</span> **éach** his **thún**der, **ráin** and **wínd**,
+<b>Póint</b><i>ing</i> <i>to</i> <b>éach</b> his <b>thún</b>der, <b>ráin</b> and <b>wínd</b>,
 
 
 
-Or **sáy** with **prí**nces <span style="color:darkred">**íf**</span> it **sháll** <span style="color:darkred">go</span> **wéll**
+Or <b>sáy</b> with <b>prí</b>nces <i><b>íf</b></i> it <b>sháll</b> <i>go</i> <b>wéll</b>
 
 
 
-By **óft** pre**díct** that <span style="color:darkred">**Í**</span> in **héav**en **fínd**:
+By <b>óft</b> pre<b>díct</b> that <i><b>Í</b></i> in <b>héav</b>en <b>fínd</b>:
 
 
 
-But <span style="color:darkred">**fróm**</span> thine **éyes** my **knówl**edge <span style="color:darkred">**Í**</span> de**ríve**,
+But <i><b>fróm</b></i> thine <b>éyes</b> my <b>knówl</b>edge <i><b>Í</b></i> de<b>ríve</b>,
 
 
 
-And **cón**stant **stárs** in <span style="color:darkred">**thém**</span> I **réad** such **árt**
+And <b>cón</b>stant <b>stárs</b> in <i><b>thém</b></i> I <b>réad</b> such <b>árt</b>
 
 
 
-As **'trúth** and **béau**ty **sháll** to**géth**er **thríve**,
+As <b>'trúth</b> and <b>béau</b>ty <b>sháll</b> to<b>géth</b>er <b>thríve</b>,
 
 
 
-If <span style="color:darkred">**fróm**</span> thy**sélf**, to **stóre** thou **wóuldst** con**vért'**;
+If <i><b>fróm</b></i> thy<b>sélf</b>, to <b>stóre</b> thou <b>wóuldst</b> con<b>vért'</b>;
 
 
 
-Or **élse** of <span style="color:darkred">**thée**</span> this <span style="color:darkred">**Í**</span> <span style="color:darkred">prog</span>**nós**ti**cáte**:
+Or <b>élse</b> of <i><b>thée</b></i> this <i><b>Í</b></i> <i>prog</i><b>nós</b>ti<b>cáte</b>:
 
 
 
-'Thy **énd** is **trúth's** and **béau**ty's **dóom** and **dáte**.'
+'Thy <b>énd</b> is <b>trúth's</b> and <b>béau</b>ty's <b>dóom</b> and <b>dáte</b>.'
 
 
 
@@ -501,13 +501,13 @@ sonnet.best_parses()             # only top ranking parse
 <th></th>
 <th></th>
 <th>*total</th>
-<th>*f-res</th>
 <th>*s/unstressed</th>
-<th>*lapse</th>
-<th>*w/peak</th>
-<th>*w/stressed</th>
 <th>*w-res</th>
+<th>*w/stressed</th>
 <th>*clash</th>
+<th>*f-res</th>
+<th>*w/peak</th>
+<th>*lapse</th>
 <th>is_funcword</th>
 <th>is_heavy</th>
 <th>is_light</th>
@@ -585,8 +585,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>2.0</td>
-<td>0.0</td>
 <td>2.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -625,8 +625,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -705,8 +705,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -745,11 +745,11 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>3.0</td>
-<td>0.0</td>
 <td>2.0</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>4</td>
@@ -785,11 +785,11 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>2.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>2.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>4</td>
@@ -825,11 +825,11 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>2.0</td>
+<td>1.0</td>
 <td>0.0</td>
 <td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>4</td>
@@ -865,8 +865,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -905,8 +905,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>2.0</td>
-<td>0.0</td>
 <td>2.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -945,8 +945,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -1025,8 +1025,8 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -1065,11 +1065,11 @@ sonnet.best_parses()             # only top ranking parse
 <th>False</th>
 <th></th>
 <td>3.0</td>
-<td>0.0</td>
 <td>2.0</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>5</td>
@@ -1180,13 +1180,13 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <th></th>
 <th></th>
 <th>*total</th>
-<th>*f-res</th>
 <th>*s/unstressed</th>
-<th>*lapse</th>
-<th>*w/peak</th>
-<th>*w/stressed</th>
 <th>*w-res</th>
+<th>*w/stressed</th>
 <th>*clash</th>
+<th>*f-res</th>
+<th>*w/peak</th>
+<th>*lapse</th>
 <th>is_funcword</th>
 <th>is_heavy</th>
 <th>is_light</th>
@@ -1288,8 +1288,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1325,10 +1325,10 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <th>1</th>
 <th>s</th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1366,8 +1366,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1405,8 +1405,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1444,8 +1444,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1481,10 +1481,10 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <th>1</th>
 <th>s</th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1522,8 +1522,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1561,8 +1561,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1600,8 +1600,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1639,8 +1639,8 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>NaN</td>
 <td>0.0</td>
+<td>NaN</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>NaN</td>
@@ -1685,7 +1685,7 @@ para = cd.Prose(melville)
 para.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 56.87it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 57.19it/s]
 
 
 
@@ -2024,11 +2024,11 @@ para.parse()
 ```
 
 
-<span style="color:darkred">**Ís**</span> it **thát** by <span style="color:darkred">**íts**</span> in**déf**i<span style="color:darkred">**níte**</span><span style="color:darkred">ness</span> <span style="color:darkred">it</span> **shád**<span style="color:darkred">ows</span> **fórth** the **héart**less **vóids** <span style="color:darkred">and</span> <span style="color:darkred">im</span>**mén**si<span style="color:darkred">**tíes**</span> <span style="color:darkred">of</span> <span style="color:darkred">the</span> **úni**ver**sé**, and <span style="color:darkred">**thús**</span> <span style="color:darkred">**stábs**</span> us <span style="color:darkred">**fróm**</span> be**hínd** <span style="color:darkred">with</span> <span style="color:darkred">the</span> **thóught** <span style="color:darkred">of</span> <span style="color:darkred">an</span>**ní**hi**lá**tion, **whén** be**hóld**ing <span style="color:darkred">**thé**</span> <span style="color:darkred">white</span> **dépths** <span style="color:darkred">of</span> <span style="color:darkred">the</span> **mí**lky **wáy**?
+<i><b>Ís</b></i> it <b>thát</b> by <i><b>íts</b></i> in<b>déf</b>i<i><b>níte</b></i><i>ness</i> <i>it</i> <b>shád</b><i>ows</i> <b>fórth</b> the <b>héart</b>less <b>vóids</b> <i>and</i> <i>im</i><b>mén</b>si<i><b>tíes</b></i> <i>of</i> <i>the</i> <b>úni</b>ver<b>sé</b>, and <i><b>thús</b></i> <i><b>stábs</b></i> us <i><b>fróm</b></i> be<b>hínd</b> <i>with</i> <i>the</i> <b>thóught</b> <i>of</i> <i>an</i><b>ní</b>hi<b>lá</b>tion, <b>whén</b> be<b>hóld</b>ing <i><b>thé</b></i> <i>white</i> <b>dépths</b> <i>of</i> <i>the</i> <b>mí</b>lky <b>wáy</b>?
 
 
 
-Or <span style="color:darkred">**ís**</span> it, **thát** <span style="color:darkred">as</span> <span style="color:darkred">in</span> **éss**ence **whíte**<span style="color:darkred">ness</span> <span style="color:darkred">is</span> **nót** so **múch** a **cól**our <span style="color:darkred">**ás**</span> the **vís**<span style="color:darkred">i</span><span style="color:darkred">ble</span> **áb**<span style="color:darkred">sence</span> <span style="color:darkred">of</span> **cól**our; and **át** the <span style="color:darkred">**sáme**</span> <span style="color:darkred">**tíme**</span> the **cón**crete <span style="color:darkred">**óf**</span> all **cólo**urs; <span style="color:darkred">**ís**</span> it <span style="color:darkred">**fór**</span> these **réa**sons **thát** there <span style="color:darkred">**ís**</span> such <span style="color:darkred">**á**</span> <span style="color:darkred">dumb</span> **blánk**ness, **fúll** of **méan**ing, **ín** a **wíde** <span style="color:darkred">land</span>**scápe** of **snóws**: a **cólour**le<span style="color:darkred">**ss**</span>, al**l**-colour <span style="color:darkred">**óf**</span> athe**í**<span style="color:darkred">sm</span> <span style="color:darkred">from</span> **whích** we **shrínk**?
+Or <i><b>ís</b></i> it, <b>thát</b> <i>as</i> <i>in</i> <b>éss</b>ence <b>whíte</b><i>ness</i> <i>is</i> <b>nót</b> so <b>múch</b> a <b>cól</b>our <i><b>ás</b></i> the <b>vís</b><i>i</i><i>ble</i> <b>áb</b><i>sence</i> <i>of</i> <b>cól</b>our; and <b>át</b> the <i><b>sáme</b></i> <i><b>tíme</b></i> the <b>cón</b>crete <i><b>óf</b></i> all <b>cólo</b>urs; <i><b>ís</b></i> it <i><b>fór</b></i> these <b>réa</b>sons <b>thát</b> there <i><b>ís</b></i> such <i><b>á</b></i> <i>dumb</i> <b>blánk</b>ness, <b>fúll</b> of <b>méan</b>ing, <b>ín</b> a <b>wíde</b> <i>land</i><b>scápe</b> of <b>snóws</b>: a <b>cólour</b>le<i><b>ss</b></i>, al<b>l</b>-colour <i><b>óf</b></i> athe<b>í</b><i>sm</i> <i>from</i> <b>whích</b> we <b>shrínk</b>?
 
 
 
@@ -2059,13 +2059,13 @@ para.best_parses()
 <th></th>
 <th></th>
 <th>*total</th>
-<th>*f-res</th>
 <th>*s/unstressed</th>
-<th>*lapse</th>
-<th>*w/peak</th>
-<th>*w/stressed</th>
 <th>*w-res</th>
+<th>*w/stressed</th>
 <th>*clash</th>
+<th>*f-res</th>
+<th>*w/peak</th>
+<th>*lapse</th>
 <th>is_funcword</th>
 <th>is_heavy</th>
 <th>is_light</th>
@@ -2143,12 +2143,12 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>16.0</td>
-<td>4.0</td>
 <td>7.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>1.0</td>
 <td>4.0</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>4.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>10</td>
 <td>18</td>
@@ -2182,11 +2182,11 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>6.0</td>
-<td>0.0</td>
 <td>4.0</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>2.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>6</td>
@@ -2221,11 +2221,11 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>4.0</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
 <td>2.0</td>
-<td>1.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>4</td>
@@ -2261,8 +2261,8 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -2300,12 +2300,12 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>8.0</td>
-<td>2.0</td>
 <td>4.0</td>
 <td>0.0</td>
 <td>1.0</td>
-<td>1.0</td>
 <td>0.0</td>
+<td>2.0</td>
+<td>1.0</td>
 <td>0.0</td>
 <td>10</td>
 <td>14</td>
@@ -2339,11 +2339,11 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>3.0</td>
-<td>2.0</td>
 <td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
+<td>2.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>7</td>
@@ -2378,11 +2378,11 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>5.0</td>
-<td>0.0</td>
 <td>4.0</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>9</td>
@@ -2458,10 +2458,10 @@ para.best_parses()
 <td>2.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.0</td>
-<td>1.0</td>
 <td>1.0</td>
 <td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
 <td>0.0</td>
 <td>3</td>
 <td>6</td>
@@ -2495,8 +2495,8 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>1.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
@@ -2534,11 +2534,11 @@ para.best_parses()
 <th>False</th>
 <th></th>
 <td>3.0</td>
-<td>2.0</td>
 <td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
+<td>2.0</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>4</td>
