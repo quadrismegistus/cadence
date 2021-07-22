@@ -25,12 +25,6 @@ apt-get install espeak     # linux
 brew install espeak        # mac
 ```
 
-
-```python
-# this should now work
-import cadence as cd
-```
-
 ### Load texts
 
 
@@ -56,10 +50,16 @@ melville="""Is it that by its indefiniteness it shadows forth the heartless void
 
 
 ```python
+# this should work following installation
+import cadence as cd
+```
+
+
+```python
 # These are identical
 sonnet = cd.Text(sonnetXIV, verse=True)
 sonnet = cd.Text(sonnetXIV, linebreaks=True, phrasebreaks=False)
-sonnet = cd.Poem(sonnetXIV,phrasebreaks=True)
+sonnet = cd.Poem(sonnetXIV)
 ```
 
 
