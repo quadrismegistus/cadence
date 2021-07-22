@@ -31,7 +31,7 @@ brew install espeak        # mac
 import cadence as cd
 ```
 
-### Load text
+### Load texts
 
 
 ```python
@@ -50,6 +50,8 @@ If from thyself, to store thou wouldst convert';
     Or else of thee this I prognosticate:
     'Thy end is truth's and beauty's doom and date.'
 """
+
+melville="""Is it that by its indefiniteness it shadows forth the heartless voids and immensities of the universe, and thus stabs us from behind with the thought of annihilation, when beholding the white depths of the milky way? Or is it, that as in essence whiteness is not so much a colour as the visible absence of colour; and at the same time the concrete of all colours; is it for these reasons that there is such a dumb blankness, full of meaning, in a wide landscape of snows: a colourless, all-colour of atheism from which we shrink?"""
 ```
 
 
@@ -58,17 +60,17 @@ If from thyself, to store thou wouldst convert';
 sonnet = cd.Text(sonnetXIV, verse=True)
 sonnet = cd.Text(sonnetXIV, linebreaks=True, phrasebreaks=False)
 sonnet = cd.Poem(sonnetXIV,phrasebreaks=True)
-sonnet
 ```
 
 
+```python
+# So are these
+para = cd.Text(melville, prose=True)
+para = cd.Text(melville, linebreaks=False, phrasebreaks=True)
+para = cd.Prose(melville)
+```
 
-
-    <cadence.text: do="" from="" i="" judgement="" lines="" my="" not="" pluck="" stanza="" stars="" the="">
-
-
-
-### Preprocess text (scan, syllabify, etc)
+### Syllabify
 
 
 ```python
@@ -76,13 +78,13 @@ sonnet
 sonnet.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 57.78it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 56.28it/s]
 
 
 
 
 
-<div>
+</p><div>
 
 <table border="1" class="dataframe">
 <thead>
@@ -406,11 +408,348 @@ sonnet.scan()
 
 
 
+
+```python
+para.scan()
+```
+
+    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 54.91it/s]
+
+
+
+
+
+<div>
+
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th>is_funcword</th>
+<th>is_heavy</th>
+<th>is_light</th>
+<th>is_peak</th>
+<th>is_stressed</th>
+<th>is_syll</th>
+<th>is_trough</th>
+<th>is_unstressed</th>
+<th>line_num_syll</th>
+<th>prom_strength</th>
+<th>prom_stress</th>
+<th>prom_weight</th>
+</tr>
+<tr>
+<th>stanza_i</th>
+<th>line_i</th>
+<th>linepart_i</th>
+<th>line_str</th>
+<th>word_i</th>
+<th>word_str</th>
+<th>word_ipa_i</th>
+<th>word_ipa</th>
+<th>syll_i</th>
+<th>syll_str</th>
+<th>syll_ipa</th>
+<th>syll_stress</th>
+<th>syll_weight</th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th rowspan="11" valign="top">1</th>
+<th rowspan="5" valign="top">1</th>
+<th rowspan="5" valign="top">1</th>
+<th rowspan="5" valign="top">Is it that by its indefiniteness it shadows forth the heartless voids and immensities of the universe,</th>
+<th>1</th>
+<th>Is</th>
+<th>1</th>
+<th>ɪz</th>
+<th>1</th>
+<th>Is</th>
+<th>ɪz</th>
+<th>U</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>28</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>2</th>
+<th>it</th>
+<th>1</th>
+<th>ɪt</th>
+<th>1</th>
+<th>it</th>
+<th>ɪt</th>
+<th>U</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>28</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">3</th>
+<th rowspan="2" valign="top">that</th>
+<th>1</th>
+<th>'ðæt</th>
+<th>1</th>
+<th>that</th>
+<th>'ðæt</th>
+<th>P</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>28</td>
+<td>NaN</td>
+<td>1.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>2</th>
+<th>ðət</th>
+<th>1</th>
+<th>that</th>
+<th>ðət</th>
+<th>U</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>28</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>4</th>
+<th>by</th>
+<th>1</th>
+<th>baɪ</th>
+<th>1</th>
+<th>by</th>
+<th>baɪ</th>
+<th>U</th>
+<th>L</th>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>28</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>0</td>
+</tr>
+<tr>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th rowspan="5" valign="top">2</th>
+<th rowspan="5" valign="top">8</th>
+<th rowspan="5" valign="top">all-colour of atheism from which we shrink?</th>
+<th>4</th>
+<th>from</th>
+<th>1</th>
+<th>frʌm</th>
+<th>1</th>
+<th>from</th>
+<th>frʌm</th>
+<th>U</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>12</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th rowspan="2" valign="top">5</th>
+<th rowspan="2" valign="top">which</th>
+<th>1</th>
+<th>'wɪʧ</th>
+<th>1</th>
+<th>which</th>
+<th>'wɪʧ</th>
+<th>P</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>12</td>
+<td>NaN</td>
+<td>1.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>2</th>
+<th>wɪʧ</th>
+<th>1</th>
+<th>which</th>
+<th>wɪʧ</th>
+<th>U</th>
+<th>H</th>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>12</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>1</td>
+</tr>
+<tr>
+<th>6</th>
+<th>we</th>
+<th>1</th>
+<th>wiː</th>
+<th>1</th>
+<th>we</th>
+<th>wiː</th>
+<th>U</th>
+<th>L</th>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>12</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>0</td>
+</tr>
+<tr>
+<th>7</th>
+<th>shrink?</th>
+<th>1</th>
+<th>'ʃrɪŋk</th>
+<th>1</th>
+<th>shrink?</th>
+<th>'ʃrɪŋk</th>
+<th>P</th>
+<th>H</th>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>12</td>
+<td>NaN</td>
+<td>1.0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>152 rows × 12 columns</p>
+</div>
+
+
+
 ### Parse text
 
 
 ```python
-# Default options
+# Parse lines (verse)
 sonnet.parse()
 ```
 
@@ -1667,362 +2006,11 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 
 
 
-## Advanced
-
-### Prose
-
 
 ```python
-melville="""Is it that by its indefiniteness it shadows forth the heartless voids and immensities of the universe, and thus stabs us from behind with the thought of annihilation, when beholding the white depths of the milky way? Or is it, that as in essence whiteness is not so much a colour as the visible absence of colour; and at the same time the concrete of all colours; is it for these reasons that there is such a dumb blankness, full of meaning, in a wide landscape of snows: a colourless, all-colour of atheism from which we shrink?"""
-
-# these are identical
-para = cd.Text(melville, prose=True)
-para = cd.Text(melville, linebreaks=False, phrasebreaks=True)
-para = cd.Prose(melville)
-```
-
-
-```python
-# Phonology
-para.scan()
-```
-
-    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 56.25it/s]
-
-
-
-
-
-<div>
-
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th>is_funcword</th>
-<th>is_heavy</th>
-<th>is_light</th>
-<th>is_peak</th>
-<th>is_stressed</th>
-<th>is_syll</th>
-<th>is_trough</th>
-<th>is_unstressed</th>
-<th>line_num_syll</th>
-<th>prom_strength</th>
-<th>prom_stress</th>
-<th>prom_weight</th>
-</tr>
-<tr>
-<th>stanza_i</th>
-<th>line_i</th>
-<th>linepart_i</th>
-<th>line_str</th>
-<th>word_i</th>
-<th>word_str</th>
-<th>word_ipa_i</th>
-<th>word_ipa</th>
-<th>syll_i</th>
-<th>syll_str</th>
-<th>syll_ipa</th>
-<th>syll_stress</th>
-<th>syll_weight</th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th rowspan="11" valign="top">1</th>
-<th rowspan="5" valign="top">1</th>
-<th rowspan="5" valign="top">1</th>
-<th rowspan="5" valign="top">Is it that by its indefiniteness it shadows forth the heartless voids and immensities of the universe,</th>
-<th>1</th>
-<th>Is</th>
-<th>1</th>
-<th>ɪz</th>
-<th>1</th>
-<th>Is</th>
-<th>ɪz</th>
-<th>U</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>28</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th>2</th>
-<th>it</th>
-<th>1</th>
-<th>ɪt</th>
-<th>1</th>
-<th>it</th>
-<th>ɪt</th>
-<th>U</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>28</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th rowspan="2" valign="top">3</th>
-<th rowspan="2" valign="top">that</th>
-<th>1</th>
-<th>'ðæt</th>
-<th>1</th>
-<th>that</th>
-<th>'ðæt</th>
-<th>P</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>28</td>
-<td>NaN</td>
-<td>1.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th>2</th>
-<th>ðət</th>
-<th>1</th>
-<th>that</th>
-<th>ðət</th>
-<th>U</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>28</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th>4</th>
-<th>by</th>
-<th>1</th>
-<th>baɪ</th>
-<th>1</th>
-<th>by</th>
-<th>baɪ</th>
-<th>U</th>
-<th>L</th>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>28</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>0</td>
-</tr>
-<tr>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<th>...</th>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-</tr>
-<tr>
-<th rowspan="5" valign="top">2</th>
-<th rowspan="5" valign="top">8</th>
-<th rowspan="5" valign="top">all-colour of atheism from which we shrink?</th>
-<th>4</th>
-<th>from</th>
-<th>1</th>
-<th>frʌm</th>
-<th>1</th>
-<th>from</th>
-<th>frʌm</th>
-<th>U</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>12</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th rowspan="2" valign="top">5</th>
-<th rowspan="2" valign="top">which</th>
-<th>1</th>
-<th>'wɪʧ</th>
-<th>1</th>
-<th>which</th>
-<th>'wɪʧ</th>
-<th>P</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>12</td>
-<td>NaN</td>
-<td>1.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th>2</th>
-<th>wɪʧ</th>
-<th>1</th>
-<th>which</th>
-<th>wɪʧ</th>
-<th>U</th>
-<th>H</th>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>12</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>1</td>
-</tr>
-<tr>
-<th>6</th>
-<th>we</th>
-<th>1</th>
-<th>wiː</th>
-<th>1</th>
-<th>we</th>
-<th>wiː</th>
-<th>U</th>
-<th>L</th>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>12</td>
-<td>NaN</td>
-<td>0.0</td>
-<td>0</td>
-</tr>
-<tr>
-<th>7</th>
-<th>shrink?</th>
-<th>1</th>
-<th>'ʃrɪŋk</th>
-<th>1</th>
-<th>shrink?</th>
-<th>'ʃrɪŋk</th>
-<th>P</th>
-<th>H</th>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>12</td>
-<td>NaN</td>
-<td>1.0</td>
-<td>1</td>
-</tr>
-</tbody>
-</table>
-<p>152 rows × 12 columns</p>
-</div>
-
-
-
-
-```python
-# Meter/rhythmic parsing (by sentence)
+# Parsing prose
 para.parse()
+para.best_parses()
 ```
 
 
@@ -2032,12 +2020,6 @@ para.parse()
 
 Or <i><b>ís</b></i> it, <b>thát</b> <i>as</i> <i>in</i> <b>éss</b>ence <b>whíte</b><i>ness</i> <i>is</i> <b>nót</b> so <b>múch</b> a <b>cól</b>our <i><b>ás</b></i> the <b>vís</b><i>i</i><i>ble</i> <b>áb</b><i>sence</i> <i>of</i> <b>cól</b>our; and <b>át</b> the <i><b>sáme</b></i> <i><b>tíme</b></i> the <b>cón</b>crete <i><b>óf</b></i> all <b>cólo</b>urs; <i><b>ís</b></i> it <i><b>fór</b></i> these <b>réa</b>sons <b>thát</b> there <i><b>ís</b></i> such <i><b>á</b></i> <i>dumb</i> <b>blánk</b>ness, <b>fúll</b> of <b>méan</b>ing, <b>ín</b> a <b>wíde</b> <i>land</i><b>scápe</b> of <b>snóws</b>: a <b>cólour</b>le<i><b>ss</b></i>, al<b>l</b>-colour <i><b>óf</b></i> athe<b>í</b><i>sm</i> <i>from</i> <b>whích</b> we <b>shrínk</b>?
 
-
-
-```python
-# best parses as dataframe
-para.best_parses()
-```
 
 
 
@@ -2565,4 +2547,10 @@ para.best_parses()
 </tbody>
 </table>
 </div>
-</cadence.text:></p>
+
+
+
+
+```python
+
+```
