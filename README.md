@@ -474,6 +474,9 @@ Or **élse** of <span style="color:darkred">**thée**</span> this <span style="c
 ```python
 # get parse data as dataframe
 sonnet.parses()                  # plausible (unbounded) parses
+sonnet.unbounded_parses()        # same as above
+sonnet.all_parses()              # all parses, plausible or no
+sonnet.best_parses()             # only top ranking parse
 ```
 
 
@@ -568,10 +571,10 @@ sonnet.parses()                  # plausible (unbounded) parses
 </thead>
 <tbody>
 <tr>
-<th rowspan="25" valign="top">1</th>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">Not from the stars do I my judgement pluck;</th>
+<th rowspan="14" valign="top">1</th>
+<th>1</th>
+<th>1</th>
+<th>Not from the stars do I my judgement pluck;</th>
 <th>1</th>
 <th>not FROM* the STARS do I* my JUDGE ment PLUCK;</th>
 <th>w s w s w s w s w s</th>
@@ -606,80 +609,6 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>1</td>
 <td>1.0</td>
 <td>3.0</td>
-<td>6</td>
-</tr>
-<tr>
-<th>2</th>
-<th>NOT from.the* STARS do I* my JUDGE ment PLUCK;</th>
-<th>s w w s w s w s w s</th>
-<th>0</th>
-<th>P U U P U U U P U P</th>
-<th>'nɑt frʌm ðə 'stɑrz duː aɪ maɪ 'ʤʌʤ.mənt 'plʌk</th>
-<th>0</th>
-<th>False</th>
-<th></th>
-<td>3.0</td>
-<td>2.0</td>
-<td>1.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>6</td>
-<td>6</td>
-<td>4</td>
-<td>1</td>
-<td>5</td>
-<td>4</td>
-<td>10</td>
-<td>1</td>
-<td>6</td>
-<td>5</td>
-<td>10</td>
-<td>9</td>
-<td>19</td>
-<td>2</td>
-<td>2</td>
-<td>1.0</td>
-<td>4.0</td>
-<td>6</td>
-</tr>
-<tr>
-<th>3</th>
-<th>NOT from.the* STARS.DO* i.my* JUDGE ment PLUCK;</th>
-<th>s w w s s w w s w s</th>
-<th>2</th>
-<th>P U U P P U U P U P</th>
-<th>'nɑt frʌm ðə 'stɑrz 'duː aɪ maɪ 'ʤʌʤ.mənt 'plʌk</th>
-<th>2</th>
-<th>False</th>
-<th></th>
-<td>6.0</td>
-<td>6.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>6</td>
-<td>6</td>
-<td>4</td>
-<td>1</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>1</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>7</td>
-<td>19</td>
-<td>5</td>
-<td>9</td>
-<td>1.0</td>
-<td>5.0</td>
 <td>6</td>
 </tr>
 <tr>
@@ -803,9 +732,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>6</td>
 </tr>
 <tr>
-<th rowspan="2" valign="top">5</th>
-<th rowspan="2" valign="top">1</th>
-<th rowspan="2" valign="top">Nor can I fortune to brief minutes tell,</th>
+<th>5</th>
+<th>1</th>
+<th>Nor can I fortune to brief minutes tell,</th>
 <th>1</th>
 <th>nor CAN* i FOR tune TO* brief* MIN utes TELL,</th>
 <th>w s w s w s w s w s</th>
@@ -843,46 +772,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>7</td>
 </tr>
 <tr>
-<th>2</th>
-<th>nor CAN* i FOR tune.to* BRIEF.MIN* utes TELL,</th>
-<th>w s w s w w s s w s</th>
+<th>6</th>
 <th>1</th>
-<th>U U U P U U P P U P</th>
-<th>nɔːr kæn aɪ 'fɔːr.ʧən tuː 'briːf 'mɪ.nʌts 'tɛl</th>
-<th>0</th>
-<th>False</th>
-<th></th>
-<td>5.0</td>
-<td>4.0</td>
-<td>1.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>7</td>
-<td>3</td>
-<td>2</td>
-<td>5</td>
-<td>4</td>
-<td>10</td>
-<td>2</td>
-<td>6</td>
-<td>5</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>2</td>
-<td>2</td>
-<td>2.0</td>
-<td>4.0</td>
-<td>7</td>
-</tr>
-<tr>
-<th rowspan="3" valign="top">6</th>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">Pointing to each his thunder, rain and wind,</th>
+<th>Pointing to each his thunder, rain and wind,</th>
 <th>1</th>
 <th>POINT ing.to* EACH his THUN der, RAIN and WIND,</th>
 <th>s w w s w s w s w s</th>
@@ -920,83 +812,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>8</td>
 </tr>
 <tr>
-<th>2</th>
-<th>point* ING* to EACH his THUN der, RAIN and WIND,</th>
-<th>w s w s w s w s w s</th>
-<th>2</th>
-<th>P U U P U P U P U P</th>
-<th>'pɔɪn.tɪŋ tuː 'iːʧ hɪz 'θʌn.dɛː 'reɪn ænd 'waɪnd</th>
-<th>0</th>
-<th>False</th>
-<th></th>
-<td>3.0</td>
-<td>0.0</td>
-<td>1.0</td>
-<td>0.0</td>
-<td>1.0</td>
-<td>1.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>8</td>
-<td>2</td>
-<td>2</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>2</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>10</td>
-<td>19</td>
-<td>2</td>
-<td>2</td>
-<td>2.0</td>
-<td>5.0</td>
-<td>8</td>
-</tr>
-<tr>
-<th>3</th>
-<th>POINT.ING* to EACH his THUN der, RAIN and WIND,</th>
-<th>s s w s w s w s w s</th>
+<th>7</th>
 <th>1</th>
-<th>P U U P U P U P U P</th>
-<th>'pɔɪn.tɪŋ tuː 'iːʧ hɪz 'θʌn.dɛː 'reɪn ænd 'waɪnd</th>
-<th>0</th>
-<th>False</th>
-<th></th>
-<td>4.0</td>
-<td>0.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>8</td>
-<td>2</td>
-<td>2</td>
-<td>6</td>
-<td>5</td>
-<td>10</td>
-<td>2</td>
-<td>5</td>
-<td>4</td>
-<td>10</td>
-<td>9</td>
-<td>19</td>
-<td>3</td>
-<td>5</td>
-<td>2.0</td>
-<td>5.0</td>
-<td>8</td>
-</tr>
-<tr>
-<th rowspan="3" valign="top">7</th>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">Or say with princes if it shall go well</th>
+<th>Or say with princes if it shall go well</th>
 <th>1</th>
 <th>or SAY with PRI nces IF* it SHALL go* WELL</th>
 <th>w s w s w s w s w s</th>
@@ -1034,83 +852,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>8</td>
 </tr>
 <tr>
-<th>2</th>
-<th>or SAY with PRI nces IF.IT* shall GO.WELL*</th>
-<th>w s w s w s s w s s</th>
-<th>2</th>
-<th>U P U P U U U U P P</th>
-<th>ɔːr 'seɪ wɪð 'prɪn.səz ɪf ɪt ʃæl 'goʊ 'wɛl</th>
+<th>8</th>
 <th>1</th>
-<th>False</th>
-<th></th>
-<td>6.0</td>
-<td>4.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>8</td>
-<td>2</td>
-<td>1</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>1</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>5</td>
-<td>10</td>
-<td>1.0</td>
-<td>4.0</td>
-<td>8</td>
-</tr>
-<tr>
-<th>3</th>
-<th>or SAY with PRI.NCES* if IT* shall GO.WELL*</th>
-<th>w s w s s w s w s s</th>
-<th>4</th>
-<th>U P U P U U U U P P</th>
-<th>ɔːr 'seɪ wɪð 'prɪn.səz ɪf ɪt ʃæl 'goʊ 'wɛl</th>
-<th>1</th>
-<th>False</th>
-<th></th>
-<td>7.0</td>
-<td>2.0</td>
-<td>3.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>8</td>
-<td>2</td>
-<td>1</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>1</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>6</td>
-<td>13</td>
-<td>1.0</td>
-<td>4.0</td>
-<td>8</td>
-</tr>
-<tr>
-<th rowspan="3" valign="top">8</th>
-<th rowspan="3" valign="top">1</th>
-<th rowspan="3" valign="top">By oft predict that I in heaven find:</th>
+<th>By oft predict that I in heaven find:</th>
 <th>1</th>
 <th>by OFT pre DICT that I* in HEAV en FIND:</th>
 <th>w s w s w s w s w s</th>
@@ -1145,80 +889,6 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>1</td>
 <td>2.0</td>
 <td>4.0</td>
-<td>6</td>
-</tr>
-<tr>
-<th>2</th>
-<th>by OFT pre DICT.THAT* i IN.HEAV* en FIND:</th>
-<th>w s w s s w s s w s</th>
-<th>2</th>
-<th>U P U P P U P P U P</th>
-<th>baɪ 'ɔːft prɪ.'dɪkt 'ðæt aɪ 'ɪn 'hɛ.vən 'faɪnd</th>
-<th>2</th>
-<th>False</th>
-<th></th>
-<td>4.0</td>
-<td>4.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>6</td>
-<td>4</td>
-<td>2</td>
-<td>6</td>
-<td>6</td>
-<td>10</td>
-<td>2</td>
-<td>4</td>
-<td>4</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>2</td>
-<td>2</td>
-<td>2.0</td>
-<td>6.0</td>
-<td>6</td>
-</tr>
-<tr>
-<th>3</th>
-<th>by OFT pre DICT.THAT* i.in* HEAV en FIND:</th>
-<th>w s w s s w w s w s</th>
-<th>1</th>
-<th>U P U P P U U P U P</th>
-<th>baɪ 'ɔːft prɪ.'dɪkt 'ðæt aɪ ɪn 'hɛ.vən 'faɪnd</th>
-<th>1</th>
-<th>False</th>
-<th></th>
-<td>4.0</td>
-<td>4.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>4</td>
-<td>6</td>
-<td>4</td>
-<td>2</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>2</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>2</td>
-<td>2</td>
-<td>2.0</td>
-<td>5.0</td>
 <td>6</td>
 </tr>
 <tr>
@@ -1262,9 +932,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>6</td>
 </tr>
 <tr>
-<th rowspan="2" valign="top">10</th>
-<th rowspan="2" valign="top">1</th>
-<th rowspan="2" valign="top">And constant stars in them I read such art</th>
+<th>10</th>
+<th>1</th>
+<th>And constant stars in them I read such art</th>
 <th>1</th>
 <th>and CON stant STARS in THEM* i READ such ART</th>
 <th>w s w s w s w s w s</th>
@@ -1299,43 +969,6 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>1</td>
 <td>1.0</td>
 <td>4.0</td>
-<td>9</td>
-</tr>
-<tr>
-<th>2</th>
-<th>and CON stant STARS.IN* them.i* READ such ART</th>
-<th>w s w s s w w s w s</th>
-<th>1</th>
-<th>U P U P P U U P U P</th>
-<th>ænd 'kɑn.stənt 'stɑrz 'ɪn ðɛm aɪ 'rɛd səʧ 'ɑrt</th>
-<th>1</th>
-<th>False</th>
-<th></th>
-<td>4.0</td>
-<td>4.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>5</td>
-<td>9</td>
-<td>1</td>
-<td>1</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>1</td>
-<td>5</td>
-<td>5</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>4</td>
-<td>6</td>
-<td>1.0</td>
-<td>5.0</td>
 <td>9</td>
 </tr>
 <tr>
@@ -1419,9 +1052,9 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>7</td>
 </tr>
 <tr>
-<th rowspan="2" valign="top">13</th>
-<th rowspan="2" valign="top">1</th>
-<th rowspan="2" valign="top">Or else of thee this I prognosticate:</th>
+<th>13</th>
+<th>1</th>
+<th>Or else of thee this I prognosticate:</th>
 <th>1</th>
 <th>or ELSE of THEE* this I* prog* NOS ti CATE:</th>
 <th>w s w s w s w s w s</th>
@@ -1454,43 +1087,6 @@ sonnet.parses()                  # plausible (unbounded) parses
 <td>19</td>
 <td>1</td>
 <td>1</td>
-<td>2.0</td>
-<td>3.0</td>
-<td>6</td>
-</tr>
-<tr>
-<th>2</th>
-<th>or ELSE of THEE.THIS* i PROG.NOS* ti CATE:</th>
-<th>w s w s s w s s w s</th>
-<th>2</th>
-<th>U P U U U U S P U S</th>
-<th>ɔːr 'ɛls ʌv ðiː ðɪs aɪ `prɑg.'nɑ.stə.`keɪt</th>
-<th>0</th>
-<th>False</th>
-<th></th>
-<td>6.0</td>
-<td>2.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>2.0</td>
-<td>0.0</td>
-<td>5</td>
-<td>6</td>
-<td>4</td>
-<td>2</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>2</td>
-<td>6</td>
-<td>4</td>
-<td>10</td>
-<td>8</td>
-<td>19</td>
-<td>3</td>
-<td>4</td>
 <td>2.0</td>
 <td>3.0</td>
 <td>6</td>
@@ -1543,10 +1139,6 @@ sonnet.parses()                  # plausible (unbounded) parses
 
 
 ```python
-sonnet.unbounded_parses()        # same as above
-sonnet.best_parses()             # only top ranking parse
-sonnet.all_parses()              # all parses
-
 # any of the above can return syllable level data as well
 sonnet.all_parses(by_syll=True)
 sonnet.best_parses(by_syll=True)
@@ -2093,7 +1685,7 @@ para = cd.Prose(melville)
 para.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 54.33it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 56.87it/s]
 
 
 
@@ -2441,6 +2033,7 @@ Or <span style="color:darkred">**ís**</span> it, **thát** <span style="color:d
 
 
 ```python
+# best parses as dataframe
 para.best_parses()
 ```
 

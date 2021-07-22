@@ -875,7 +875,8 @@ def show_parse_md(dfparse):
                 #if row.is_w: md=f'<i>{md}</i>'
                 #if row.is_stressed: md=f'<i>{md}</i>'
                 if row['*total']>0:
-                    md=f'<span style="color:darkred">{md}</span>'
+                    #md=f'<span style="color:darkred">{md}</span>'
+                    md=f'*{md}*'
                 md=f'{wpref}{md}{wsuf}'
                 mdword+=[md]
             mdrow.append(''.join(mdword))
