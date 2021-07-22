@@ -6,7 +6,9 @@ A rhythm analysis toolkit, gathering multiple parsing engines:
 
 ## Quickstart
 
-### 1. Install python package
+### Install
+
+#### 1. Install python package
 ```
 # install from pypi
 pip install -U cadences
@@ -15,7 +17,7 @@ pip install -U cadences
 pip install -U git+https://github.com/quadrismegistus/cadence
 ```
 
-### 2. Insteall espeak (TTS)
+#### 2. Insteall espeak (TTS)
 
 Install espeak, free TTS software, to 'sound out' unknown words. See [here](http://espeak.sourceforge.net/download.html) for all downloads. For Mac or Linux, you can use:
 ```
@@ -23,15 +25,13 @@ apt-get install espeak     # linux
 brew install espeak        # mac
 ```
 
-### 3. Import
-
 
 ```python
-# Import
+# this should now work
 import cadence as cd
 ```
 
-### 4. Load text
+### Load text
 
 
 ```python
@@ -68,7 +68,7 @@ sonnet
 
 
 
-### 5. Scan (syllabify)
+### Preprocess text (scan, syllabify, etc)
 
 
 ```python
@@ -76,7 +76,7 @@ sonnet
 sonnet.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 28.51it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 14/14 [00:00&lt;00:00, 57.78it/s]
 
 
 
@@ -406,7 +406,7 @@ sonnet.scan()
 
 
 
-### 6. Parse metrically
+### Parse text
 
 
 ```python
@@ -1667,7 +1667,9 @@ sonnet.best_parses(by_syll=True).query('line_i==1') # first line
 
 
 
-#### Prose
+## Advanced
+
+### Prose
 
 
 ```python
@@ -1685,7 +1687,7 @@ para = cd.Prose(melville)
 para.scan()
 ```
 
-    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 57.19it/s]
+    Iterating over line scansions [x1]: 100%|██████████| 11/11 [00:00&lt;00:00, 56.25it/s]
 
 
 
