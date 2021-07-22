@@ -1,4 +1,4 @@
-<html><body><p># Cadence
+<p># Cadence
 
 A rhythm analysis toolkit, gathering multiple parsing engines:
 * [Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.
@@ -2970,4 +2970,4 @@ para.best_parses()
 </tbody>
 </table>
 </div>
-</cadence.text:></p></body></html>
+</cadence.text:></p>
