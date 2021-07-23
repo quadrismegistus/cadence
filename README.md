@@ -1,4 +1,4 @@
-<p># Cadence
+# Cadence
 
 A rhythm analysis toolkit, gathering multiple parsing engines:
 * [Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.
