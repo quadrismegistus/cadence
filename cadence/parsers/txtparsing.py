@@ -17,6 +17,10 @@ def to_txt(txt_or_fn):
             txt=f.read()
     else:
         txt=txt_or_fn
+    
+    # clean?
+    txt=txt.replace('--','—')
+
     return txt
 
     
@@ -43,7 +47,7 @@ def to_sents_str(stanza_txt):
         for sent in nltk.sent_tokenize(stanza_txt)
     ]
 
-def to_lineparts(linetxt,seps=set(',:;––'),min_len=1,max_len=25):
+def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=25):
     o=[]
     for sent in to_sents_str(linetxt):
         toks=tokenize_agnostic(sent)
@@ -177,8 +181,15 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         
         df['stanza_i']=stanza_i+1
         df['line_i']=line_i+1
-        df['line_str']=linepart_txt#line_txt
+        df['line_str']=line_txt
         df['linepart_i']=linepart_i+1
+        df['linepart_str']=linepart_txt
+        uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
+        df['linepart_num_syll']=len(uniqdf)
+
+        #display(df)
+        #stop
+
         ol+=[df]
         lpi=lpinow
     if ol: yield pd.concat(ol)

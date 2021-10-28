@@ -3,3 +3,4 @@ pandas
 numpy
 nltk==3.5
 wget
+git+git://github.com/Jwink3101/parmapper@master

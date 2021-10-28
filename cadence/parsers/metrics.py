@@ -25,8 +25,10 @@ def iter_combos(txtdf,num_proc=1):
         for dfi,dfcombo in enumerate(apply_combos(linedf_nopunc, 'word_i', 'word_ipa_i')):
             dfcombo['combo_i']=dfi
             dfcombo['combo_stress']=''.join(dfcombo.syll_stress)
-            dfcombo['combo_syll_i']=list(index_by_truth(dfcombo.is_syll))
-            dfcombo['combo_num_syll']=dfcombo['combo_syll_i'].max()+1
+            # dfcombo['combo_syll_i']=pd.Series(list(index_by_truth(dfcombo.is_syll)))+1
+            dfcombo['combo_syll_i']=list(range(len(dfcombo)))
+            dfcombo['combo_syll_i']+=1
+            dfcombo['combo_num_syll']=dfcombo['combo_syll_i'].max()
             dfcombo['combo_ipa']=' '.join(
                 '.'.join(wdf.syll_ipa)
                 for wi,wdf in sorted(dfcombo.groupby('word_i'))
@@ -36,6 +38,15 @@ def iter_combos(txtdf,num_proc=1):
 
 def get_all_combos(txtdf):
     return resetindex(pd.concat(iter_combos(txtdf)))
+
+def iter_combo_ends(linepartdf,n=8,runts=False):
+    for combo in iter_combos(linepartdf):
+        df=combo.query('is_syll==1')
+        sylls=sorted(list(df.groupby(['stanza_i','line_i','linepart_i','word_i','word_ipa_i','syll_i'])))
+        if not runts and len(sylls)<n: continue
+        yield setindex(pd.concat([y for x,y in sylls[-n:]]),sort=False)
+
+
 
 """
 ITER PARSES
@@ -210,7 +221,7 @@ def parse_combo(linecombodf,engine=ENGINE,**kwargs):
 
 def parse_prosodic_line(txt_or_txtdf, lang='en',
                    meter='default_english', use_espeak=True,
-                   constraints=None,constraint_weights=None,**kwargs):
+                   constraints=None,constraint_weights=None,set_index=True,**kwargs):
     p.config['resolve_optionality']=1
     p.config['print_to_screen']=False
     p.config['en_TTS_ENGINE']='espeak' if use_espeak else 'none'
@@ -249,7 +260,8 @@ def parse_prosodic_line(txt_or_txtdf, lang='en',
     l.children = line_words
     l.parse(meter=meter_obj)
     odf=prosodic_line_to_data(l,txtdf,**kwargs)
-    return setindex(odf,sort=True)
+    if set_index: odf=setindex(odf,sort=True)
+    return odf
         
 
 def prosodic_line_to_data(
@@ -443,7 +455,7 @@ def bound_parses(odforig,only_unbounded=False):
         
     odf['parse_is_bounded']=[isbound(isb,prank) for isb,prank in zip(odf.parse_is_bounded, odf.parse_rank)]
     odf['parse_bounded_by']=[isboundedby(isb,prank) for isb,prank in zip(odf.parse_bounded_by.fillna(''), odf.parse_rank)]
-    if only_unbounded: odf=odf[odf.ds_bounded!=True]
+    if only_unbounded: odf=odf.query('parse_is_bounded==True')
     # re-rank
     #display(odf)
     odf.parse_rank=odf.parse_rank.rank(ascending=True,method='dense').apply(int)
@@ -813,11 +825,14 @@ def get_num_stanzas(txt_or_txtdf):
 
 
 
-def parse_line(linedf):
+def parse_line(linedf,engine=ENGINE,**kwargs):
     """
     Line DF -> Combos -> Parsed -> Concat
     """
-    return setindex(pd.concat(parse_combo(combo) for combo in iter_combos(linedf)))
+    if engine==ENGINE_PROSODIC:
+        return parse_prosodic_line(linedf,**kwargs)
+    else:
+        return setindex(pd.concat(parse_combo(combo) for combo in iter_combos(linedf)))
 
 
 

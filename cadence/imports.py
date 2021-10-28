@@ -11,6 +11,7 @@ from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle,shutil
 from collections import defaultdict,Counter
 import subprocess,multiprocessing as mp
+mp.set_start_method('fork')
 from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
@@ -51,8 +52,9 @@ PARSERANKCOL='parse_rank'
 LINEKEY=[
     'stanza_i',
     'line_i',
-    'linepart_i',#'linepart_str',
     'line_str',
+    'linepart_i',#'linepart_str',
+    'linepart_str',
     
     
     PARSERANKCOL,
