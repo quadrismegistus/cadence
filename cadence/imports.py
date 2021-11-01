@@ -55,6 +55,7 @@ LINEKEY=[
     'line_str',
     'linepart_i',#'linepart_str',
     'linepart_str',
+    'linepart_end_str',
     
     
     PARSERANKCOL,

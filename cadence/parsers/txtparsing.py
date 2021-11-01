@@ -92,6 +92,7 @@ def do_scan_iter(obj,cache=False,**kwargs):
                 return db[key]
     odf=line2df(linepart_txt, **kwargs)
     try:
+        #pass
         assign_proms(odf)
     except KeyError:
         pass
@@ -184,8 +185,9 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         df['line_str']=line_txt
         df['linepart_i']=linepart_i+1
         df['linepart_str']=linepart_txt
-        uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
-        df['linepart_num_syll']=len(uniqdf)
+        if 'is_syll' in set(df.columns):
+            uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
+            df['linepart_num_syll']=len(uniqdf)
 
         #display(df)
         #stop

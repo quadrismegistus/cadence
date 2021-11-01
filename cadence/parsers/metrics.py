@@ -21,7 +21,8 @@ def iter_combos(txtdf,num_proc=1):
     for dfline in iter_lines(txtdf,num_proc=num_proc):
         # ldf=resetindex(dfline)
         ldf=dfline.reset_index()
-        linedf_nopunc = ldf[ldf.is_syll!=0]
+        # linedf_nopunc = ldf[ldf.is_syll!=0]
+        linedf_nopunc=ldf
         for dfi,dfcombo in enumerate(apply_combos(linedf_nopunc, 'word_i', 'word_ipa_i')):
             dfcombo['combo_i']=dfi
             dfcombo['combo_stress']=''.join(dfcombo.syll_stress)
@@ -39,14 +40,29 @@ def iter_combos(txtdf,num_proc=1):
 def get_all_combos(txtdf):
     return resetindex(pd.concat(iter_combos(txtdf)))
 
-def iter_combo_ends(linepartdf,n=8,runts=False):
-    for combo in iter_combos(linepartdf):
-        df=combo.query('is_syll==1')
-        sylls=sorted(list(df.groupby(['stanza_i','line_i','linepart_i','word_i','word_ipa_i','syll_i'])))
-        if not runts and len(sylls)<n: continue
-        yield setindex(pd.concat([y for x,y in sylls[-n:]]),sort=False)
 
-
+# def iter_combo_ends(txt,n=10,runts=False,progress=True,first_n_str=None):
+#     txt=txt[:first_n_str]
+#     for linedf in iter_lines(txt,progress=progress):
+#         if not is_valid_line(linedf): continue
+#         if not runts: linedf=linedf.query(f'linepart_num_syll>={n}')
+#         for xi,linepartdf in sorted(linedf.groupby('linepart_i')):
+#             wordimax=linepartdf.word_i.max()
+#             wordimin=wordimax-n
+#             linepartdf=linepartdf.query(f'word_i>{wordimin}')
+#             #display(linepartdf)
+#             #stop
+#             combos_done=set()
+#             for combodf in iter_combos(linepartdf):
+#                 combo_num_syll=combodf.iloc[0].combo_num_syll
+#                 combo_end = combodf.query(f'combo_syll_i>{combo_num_syll - n}')
+#                 if combo_end.iloc[0].syll_i!=1: continue
+#                 combo_end_str=' '.join(combo_end.query('syll_i==1').word_str)
+#                 combo_end['linepart_str']=combo_end_str
+#                 combo_id=tuple(combo_end.syll_ipa)
+#                 if combo_id in combos_done: continue
+#                 yield combo_end
+#                 combos_done|={combo_id}
 
 """
 ITER PARSES
@@ -66,7 +82,7 @@ def parse_iter(
         by_line=True,
         by_syll=False,
         only_best=False,
-        only_unbounded=False,
+        only_unbounded=True,
         num_proc=DEFAULT_NUM_PROC,
         progress=True,
         force=False,
@@ -88,7 +104,7 @@ def parse_iter(
         only_unbounded=only_unbounded,
         force=force,
         verbose=verbose,
-        kwargs=kwargs
+        **kwargs
     )
 
 def iter_parsed_lines(
@@ -97,7 +113,7 @@ def iter_parsed_lines(
         progress=False,
         by_line=False,
         only_best=False,
-        only_unbounded=False,
+        only_unbounded=True,
         verbose=True,
         **kwargs
         ):
@@ -106,7 +122,7 @@ def iter_parsed_lines(
         txt_or_txtdf,
         progress=progress if not verbose else False,
         desc='Metrically parsing lines',
-        **kwargs.get('kwargs',{})
+        **kwargs#.get('kwargs',{})
     )
     
     # proc
@@ -154,6 +170,7 @@ def do_iter_parsed_lines(
 
 #     odf=pd.DataFrame()
     o=[]
+    # print(kwargs)
     for linepart_i,linepartdf in sorted(linedf.groupby('linepart_i')):
         if kwargs.get('engine')==ENGINE_PROSODIC:
             odf=parse_prosodic_line(
@@ -226,6 +243,9 @@ def parse_prosodic_line(txt_or_txtdf, lang='en',
     p.config['print_to_screen']=False
     p.config['en_TTS_ENGINE']='espeak' if use_espeak else 'none'
     p.config['num_bounded_parses_to_store']=NUM_BOUNDED_TO_STORE
+
+    # print(constraints)
+    # print(kwargs)
     
     meter_obj=p.config['meters'][meter]
     config=default_config=meter_obj.config
@@ -260,6 +280,7 @@ def parse_prosodic_line(txt_or_txtdf, lang='en',
     l.children = line_words
     l.parse(meter=meter_obj)
     odf=prosodic_line_to_data(l,txtdf,**kwargs)
+    if 'parse_pos_i' in set(odf.columns): odf['parse_pos_i']+=1
     if set_index: odf=setindex(odf,sort=True)
     return odf
         
@@ -269,7 +290,7 @@ def prosodic_line_to_data(
         txtdf,
         viols_in_parse_str=True,
         total_col=TOTALCOL,
-        only_unbounded=False,
+        only_unbounded=True,
         **kwargs):
     
     if line is None: return pd.DataFrame()
@@ -395,7 +416,7 @@ def postproc_dfline(
     #stop
     
     if only_best and 'parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns):
-        odf=odf.query('parse_rank==1')
+        odf=odf[odf.parse_rank==1]
     return odf
 
 def is_bounded(pdf1,pdf2,totalcol=TOTALCOL,cprefix='*'):
@@ -455,7 +476,7 @@ def bound_parses(odforig,only_unbounded=False):
         
     odf['parse_is_bounded']=[isbound(isb,prank) for isb,prank in zip(odf.parse_is_bounded, odf.parse_rank)]
     odf['parse_bounded_by']=[isboundedby(isb,prank) for isb,prank in zip(odf.parse_bounded_by.fillna(''), odf.parse_rank)]
-    if only_unbounded: odf=odf.query('parse_is_bounded==True')
+    if only_unbounded: odf=odf[odf.parse_is_bounded==False]
     # re-rank
     #display(odf)
     odf.parse_rank=odf.parse_rank.rank(ascending=True,method='dense').apply(int)
@@ -468,7 +489,7 @@ def iter_combos_as_lines(parsed_line_iter,by_line=False,only_best=False):
         for x in lineiter:
             if only_best:
                 try:
-                    yield x.query('parse_rank==1')
+                    yield x[odf.parse_rank==1]
                 except Exception:
                     yield x
             else:
@@ -924,6 +945,4 @@ def show_parses_md(parses_bysyll):
     return omd
     
     
-
-
 

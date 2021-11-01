@@ -20,7 +20,7 @@ def w_resolution(df_mpos,weight=1):
     # does this apply to weak positions?
     if df_mpos.parse_syll.iloc[0]=='w': return np.nan # cannot apply to strong positions
 
-    firstsyll_islight=df_mpos.iloc[0].is_syll
+    firstsyll_islight=df_mpos.iloc[0].is_light
     firstsyll_isstressed=df_mpos.iloc[0].is_stressed
     if not (firstsyll_islight and firstsyll_isstressed): return weight
     return 0

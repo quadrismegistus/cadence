@@ -9,11 +9,13 @@ def to_lang(lang_code=None):
     return LANGS[lang_code]
 
 
-DF_IPA=None
-def get_df_ipa(fn=PATH_IPA_FEATS):
-    global DF_IPA
-    if DF_IPA is None: DF_IPA=pd.read_csv(fn).set_index('ipa')
-    return DF_IPA
+D_IPA=None
+def get_d_ipa(fn=PATH_IPA_FEATS):
+    global D_IPA
+    if D_IPA is None: D_IPA=pd.read_csv(fn).set_index('ipa').to_dict()
+    return D_IPA
+
+
 
 def to_phons(syll_ipa):
     pass
@@ -25,24 +27,22 @@ def line2df(line_txt,
     
     func = CODE2LANG.get(lang, CODE2LANG[DEFAULT_LANG] )
     odf=func(line_txt,incl_alt=incl_alt,**y)
-    try:
-        odf=odf.sort_values(sby)[
-            sby + [col for col in odf.columns if col not in set(sby)]
-        ]
-        odf['is_syll']=[int(x) for x in odf['syll_ipa']!='']
-        uniqdf=odf[odf.is_syll==1].drop_duplicates(['word_i','syll_i'])
-        odf['line_num_syll']=len(uniqdf)
-    except KeyError as e:
-        pass
+    # try:
+    #     # odf=odf.sort_values(sby)[
+    #     #     sby + [col for col in odf.columns if col not in set(sby)]
+    #     # ]
+    #     # odf['is_syll']=odf.syll_ipa.apply(lambda x: int(x==''))#[int(x) for x in odf['syll_ipa']!='']
+    #     #odf['line_num_syll']=len(odf[(odf.is_syll==1) & (odf.word_ipa_i==1)])
+    #     #uniqdf=odf[odf.is_syll==1].drop_duplicates(['word_i','syll_i'])
+    #     #odf['line_num_syll']=len(uniqdf)
+    # except KeyError as e:
+    #     pass
     return odf
 
 
 
 
 # ## langs
-
-# def phontypes(self):
-#     return sorted(list(set(get_df_ipa().ipa)),key=lambda x: -len(x))
 
 
 # stress
@@ -60,11 +60,11 @@ def getstress_str(sylipa):
     return ''
 
 def getweight(sylipa):
-    dfipa=get_df_ipa()
-    phondata = dfipa.loc[[ipastr for ipastr in sylipa if ipastr in set(dfipa.index)]]
+    dipa=get_d_ipa()
+    phondata = [dipa[ipastr] for ipastr in sylipa if ipastr in dipa]
     if not len(phondata): return np.nan
-    ends_with_cons=phondata['cons'].iloc[-1]==True
-    has_long_vowel=any(x==True for x in phondata['long'])
+    ends_with_cons=phondata[-1]['cons']==True
+    has_long_vowel=any(x['long']==True for x in phondata)
     is_dipthong=None #@TODO
     weight=1 if ends_with_cons or has_long_vowel or is_dipthong else 0
     return weight

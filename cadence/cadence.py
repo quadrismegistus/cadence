@@ -133,7 +133,7 @@ class Text(object):
         
         odf=self._parses[key]
         if only_unbounded and ('parse_is_bounded' in set(odf.index.names) or 'parse_is_bounded' in set(odf.columns)):
-            odf=odf.query('parse_is_bounded==False')
+            odf=odf[odf.parse_is_bounded==False]
          
         pi2rank={}
         odfnoindex=odf.sort_index().reset_index()
@@ -151,7 +151,7 @@ class Text(object):
         odf=setindex(pd.concat(o),sort=True) if len(o) else pd.DataFrame()
         
         if only_best and ('parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns)):
-            odf=odf.query('parse_rank==1')
+            odf=odf[odf.parse_rank==1]
         
         return odf #setindex(odf,sort=True)
 
