@@ -273,6 +273,8 @@ def parse_prosodic_line(txt_or_txtdf, lang='en',
             word_obj = plang.make((ipa_str,sylls_text), token)
             word_obj.word_i=wi0
             word_obj.word_ipa_i=wi
+            if wdf.is_funcword.iloc[0]==1: word_obj.feats['functionword']=True
+            # print(word_obj, word_obj.feats)
             word_objs.append(word_obj)
         wordtoken_obj = p.WordToken(word_objs, token)
         line_words.append(wordtoken_obj)
@@ -281,6 +283,8 @@ def parse_prosodic_line(txt_or_txtdf, lang='en',
     l.parse(meter=meter_obj)
     odf=prosodic_line_to_data(l,txtdf,**kwargs)
     if 'parse_pos_i' in set(odf.columns): odf['parse_pos_i']+=1
+    if 'parse_i' in set(odf.columns): odf['parse_i']+=1
+    if 'combo_i' in set(odf.columns): odf['combo_i']+=1
     if set_index: odf=setindex(odf,sort=True)
     return odf
         

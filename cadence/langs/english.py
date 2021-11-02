@@ -33,8 +33,9 @@ def get_special_cases():
                 SPECIALD['maybestressed']={w.strip().lower() for w in f.read().strip().split()}
 
         import nltk
-        SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
-        SPECIALD['functionwords']|=SPECIALD['unstressed']
+        #SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
+        SPECIALD['functionwords']=SPECIALD['unstressed']
+        SPECIALD['functionwords']=SPECIALD['maybestressed']
 
     return SPECIALD
 
@@ -104,15 +105,17 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
 
     ipas = ipas[:1] if not incl_alt else ipas
     sd=get_special_cases()
-    if token in sd['unstressed']:
-        ipa=ipas[0]
-        ipax=ipa if ipa[0].isalpha() else ipa[1:]
-        ipas=[ipax]
-    elif token in sd['maybestressed']:
+    if token in sd['maybestressed']:
         if len(ipas)<2:
             ipa=ipas[0]
             ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
             ipas.append(ipax)
+    elif token in sd['unstressed']:
+        ipa=ipas[0]
+        ipax=ipa if ipa[0].isalpha() else ipa[1:]
+        ipas=[ipax]
+
+    is_funcword=token in sd['functionwords']
 
     # get orths
     results = set()
@@ -125,6 +128,8 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
         sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
         sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
 
+        is_funcword_now = int(is_funcword and num_sylls==1 and ipa[0]!="'")
+
         for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
             results_ld.append({
                 'word_ipa_i':ipa_i+1,
@@ -133,7 +138,7 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
                 'word_ipa':ipa,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
-                'is_funcword':int(token in sd['functionwords'])
+                'is_funcword':is_funcword_now
             })
     return results_ld
 
@@ -424,22 +429,14 @@ def syllabify_orth_with_pyphen(token,num_sylls=None):
     sylls = Pyphen.inserted(token,hyphen='||||').split('||||')
     return sylls
 
-def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_pyphen):
+# def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_pyphen):
+def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
     key=(token,num_sylls)
     if not key in ORTH_CACHE:
         l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]
         if num_sylls and len(l)!=num_sylls:
-            l2=[]
-            for i in range(num_sylls):
-                if i<len(l):
-                    l2.append(l[i])
-                else:
-                    # split last
-                    last = l[-1]
-                    last1=last[:len(last)//2]
-                    last2=last[(len(last)//2):]
-                    l2[-1]=last1
-                    l2.append(last2)
+            l2=l[:num_sylls]
+            l2[-1]+=''.join(l[num_sylls:])
             l=l2
         ORTH_CACHE[key]=l
     return ORTH_CACHE[key]
