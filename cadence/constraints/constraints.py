@@ -42,10 +42,10 @@ def no_window(s,badwindow=(1,1)):
         if len(window)>=wlen:window.pop(0)
     return l
 
-def no_clash(df_mpos):
-    return no_window(df_mpos.is_stressed,badwindow=(1,1))
-def no_lapse(df_mpos):
-    return no_window(df_mpos.is_stressed,badwindow=(0,0))
+def no_clash(dfparse):
+    return no_window(dfparse.is_stressed,badwindow=(1,1))
+def no_lapse(dfparse):
+    return no_window(dfparse.is_stressed,badwindow=(0,0,0))
 
 
 
@@ -60,6 +60,20 @@ DEFAULT_CONSTRAINTS = {
     'f-res':f_resolution,
     'w-res':w_resolution,
 }
+
+def apply_posthoc_constraints(dfparse):
+    dfparse['*clash']=[
+        x
+        for pi,pdf in dfparse.groupby('parse_i')
+        for x in no_clash(pdf)
+    ]
+    dfparse['*lapse']=[
+        x
+        for pi,pdf in dfparse.groupby('parse_i')
+        for x in no_lapse(pdf)
+    ]
+
+    dfparse[TOTALCOL]=dfparse[[col for col in dfparse.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
 
 
 

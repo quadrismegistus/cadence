@@ -54,11 +54,17 @@ def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=25):
         ophrase=[]
         for tok in toks:
             ophrase+=[tok]
+            # print(tok,ophrases)
             ophrase_len=len([x for x in ophrase if x[0].isalpha()])
             if ophrase_len>=min_len and (tok in seps or ophrase_len>=max_len):
                 o+=[''.join(ophrase)]
                 ophrase=[]
-        if ophrase: o+=[''.join(ophrase)]
+        if ophrase:
+            if o and not any(x.isalpha() for x in ophrase):
+                o[-1]+=''.join(ophrase)
+            else:
+                o+=[''.join(ophrase)]
+        # if ophrase and any(x.isalpha() for x in ophrase): o+=[''.join(ophrase)]
     return o    
 
 def to_words(line_txt,lang_code=DEFAULT_LANG):
@@ -83,22 +89,13 @@ def do_scan_iter(obj,cache=False,**kwargs):
         stanza_i,stanza_txt,
         line_i,line_txt,
         linepart_i,linepart_txt,
-        key
+        #key
     ) = obj
-#     print(key)
-    if cache:
-        with get_db('lines','r') as db:
-            if key in db:
-                return db[key]
     odf=line2df(linepart_txt, **kwargs)
     try:
-        #pass
         assign_proms(odf)
     except KeyError:
         pass
-    if cache:
-        with get_db('lines',autocommit=True) as db:
-            db[key]=odf
     return odf
         
 
@@ -115,10 +112,10 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
     full_txt=to_txt(txt_or_fn)
     if not full_txt: return
     
-    if verse:
+    if verse==True or prose==False:
         linebreaks=True
         phrasebreaks=False
-    elif prose:
+    elif prose==True or verse==False:
         linebreaks=False
         phrasebreaks=True
 
@@ -128,18 +125,13 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
     kwargs['lang']=lang
     kwargs['incl_alt']=incl_alt
     
-    def getkey(linepart_txt):
-        return hashstr(str([
-            linepart_txt,
-            sorted(kwargs.items())
-        ]))[:12]
         
     objs=[
         (
             stanza_i,stanza_txt,
             line_i,line_txt,
             linepart_i,linepart_txt,
-            getkey(linepart_txt)
+            # getkey(linepart_txt)
         )
         for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt))
         for line_i,line_txt in enumerate(to_lines_now(stanza_txt))
@@ -147,17 +139,7 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
             to_lineparts(line_txt) if phrasebreaks else [line_txt]
         )
     ]    
-    
-#     with get_db('lines','r') as db:
-#         objs_done=[]
-#         objs_todo=[]
-#         for obj in objs:
-#             key=obj[-1]
-#             if key in db:
-#                 objs_done[key]=db[key]
-    
-    
-    
+
 
     iterr=pmap_iter(
         do_scan_iter,
@@ -174,7 +156,7 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
     lpi=None
     ol=[]
     for dfi,df in enumerate(iterr):
-        (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt,key) = objs[dfi]
+        (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt) = objs[dfi]
         lpinow=(stanza_i,line_i)
         if lpi is not None and lpi!=lpinow and ol:
             yield pd.concat(ol)
@@ -196,11 +178,6 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         lpi=lpinow
     if ol: yield pd.concat(ol)
 
-        #db[key]=df
-#         yield df
-        #i+=1
-        #if i>=100: db.commit()
-        #db.commit()
 
 def assign_proms(df):
     # set proms

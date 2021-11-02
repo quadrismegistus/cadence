@@ -59,10 +59,15 @@ LINEKEY=[
     
     
     PARSERANKCOL,
-    'parse_str','parse',
-    'parse_i',
+    #'parse_str',
+    'parse',
+    # 'combo_stress',
+    'parse_str',
+
     
-    'combo_stress','combo_ipa','combo_i',
+    'combo_stress',
+    'combo_ipa',
+    'combo_i',
 #     'combo_i','combo_stress','combo_ipa',
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
