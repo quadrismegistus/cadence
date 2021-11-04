@@ -1,6 +1,8 @@
+sqlitedict
 tqdm
 pandas
 numpy
-nltk==3.5
+nltk==3.6
 wget
+prosodic==1.5.1
 git+git://github.com/Jwink3101/parmapper@master
