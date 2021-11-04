@@ -35,8 +35,8 @@ PATH_HERE=os.path.abspath(os.path.dirname(__file__))
 PATH_CODE=PATH_HERE
 PATH_REPO=os.path.abspath(os.path.join(PATH_CODE,'..'))
 PATH_HOME=os.path.join(os.path.expanduser('~'),'.cadence')
-# PATH_DATA=os.path.join(PATH_HOME,'data')
-PATH_DATA=os.path.join(PATH_REPO,'data')
+PATH_DATA=os.path.join(PATH_HOME,'data')
+# PATH_DATA=os.path.join(PATH_REPO,'data')
 DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
 
 
