@@ -4,5 +4,5 @@ pandas
 numpy
 nltk
 wget
+parmapper @ git+https://github.com/Jwink3101/parmapper@master#egg=parmapper
 prosodic
-git+git://github.com/Jwink3101/parmapper@master

@@ -12,6 +12,10 @@ def read(filename):
     with io.open(filename, mode="r", encoding='utf-8') as fd:
         return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
 
+with open("requirements.txt", "r") as fh:
+    requirements = [x.strip() for x in fh.read().split('\n') if x.strip()]
+
+print(requirements)
 
 setup(
     name="cadences",
@@ -28,7 +32,7 @@ setup(
 
     packages=find_packages(exclude=('tests',)),
 
-    install_requires=[x.strip() for x in read('requirements.txt').split('\n') if x.strip()],
+    install_requires=requirements,
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
