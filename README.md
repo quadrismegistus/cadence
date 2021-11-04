@@ -10,10 +10,7 @@ A rhythm analysis toolkit, gathering multiple parsing engines:
 
 #### 1. Install python package
 ```
-# install from pypi
-pip install -U cadences
-
-# or from github very latest
+# install from github
 pip install -U git+https://github.com/quadrismegistus/cadence
 ```
 
