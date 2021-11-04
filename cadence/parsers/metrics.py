@@ -390,7 +390,7 @@ def postproc_dfline(
         dfline,
         by_line=False,
         verbose=True,
-        verbose_bylinepart=False,
+        verbose_bylinepart=True,
         only_best=False,
         only_unbounded=False,
         rebound_parses=False,

@@ -403,8 +403,8 @@ def check_basic_config():
 ### utils
 def printm(x):
     try:
-        from IPython.display import HTML
-        return display(HTML(x))
+        from IPython.display import Markdown
+        return display(Markdown(x))
     except ImportError:
         print(x)
 
