@@ -68,7 +68,7 @@ def to_sents_str(stanza_txt):
 #     return o    
 
 
-def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=20):
+def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=15):
     o=[]
     for sent in to_sents_str(linetxt):
         sentparts=[]
