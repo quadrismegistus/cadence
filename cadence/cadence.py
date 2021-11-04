@@ -38,6 +38,7 @@ class Text(object):
         self._parses={}
         self._num_lines=None
         self._num_stanzas=None
+        self.infod={}
         
         self.kwargs=kwargs
         for k,v in self.kwargs.items(): setattr(self,k,v)
@@ -101,19 +102,24 @@ class Text(object):
     
     def parse(self,
             force=False,
+            verbose=True,
             only_best=False,
             only_unbounded=True,
             **kwargs):
+        kwargs['verbose']=verbose
         kwargs_line={**self.kwargs, **kwargs, **{'by_syll':False}}
         kwargs_syll={**self.kwargs, **kwargs, **{'by_syll':True}}
         key_line=kwargs_key(kwargs_line)
         key_syll=kwargs_key(kwargs_syll)
-        if force or not key_syll in self._parses or not key_line in self._parses:
+        if force or not (key_syll in self._parses) or (not key_line in self._parses):
             self._parses[key_syll]=parse(self.txt, **kwargs_syll)
             self._parses[key_line]=to_lines(self._parses[key_syll])
         elif kwargs.get('verbose',True):
             for li,linedf in sorted(self._parses[key_syll].reset_index().groupby(['stanza_i','line_i'])):
                 display(show_parse(linedf))
+
+        self.infod=info_parses(self._parses[key_line])
+        if verbose: printm(show_info_parses(self.infod))
                 
         
     def parses(self,
@@ -133,27 +139,12 @@ class Text(object):
         
         odf=self._parses[key]
         if only_unbounded and ('parse_is_bounded' in set(odf.index.names) or 'parse_is_bounded' in set(odf.columns)):
-            odf=odf[odf.parse_is_bounded==False]
-         
-        pi2rank={}
-        odfnoindex=odf.sort_index().reset_index()
-        o=[]
-        gby=['stanza_i','line_i','linepart_i']
-        for i,g in sorted(odfnoindex.groupby(gby)):
-            gdedup=g.drop_duplicates('parse_i').sort_values('parse_rank')
-#             display(i,len(g))
-            #display(gdedup)
-            for ii,pi in enumerate(gdedup.parse_i): pi2rank[pi]=ii+1
-            g.parse_rank=g.parse_i.apply(lambda x: pi2rank.get(x,np.nan))
-            #display(gdedup)
-            o+=[g]
-            #print()
-        odf=setindex(pd.concat(o),sort=True) if len(o) else pd.DataFrame()
-        
+            #odf=odf[odf.parse_is_bounded==False]
+            odf=odf.query('parse_is_bounded==False')
         if only_best and ('parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns)):
-            odf=odf[odf.parse_rank==1]
+            odf=odf.query('parse_rank==1')
         
-        return odf #setindex(odf,sort=True)
+        return odf
 
     def best_parses(self, force=False, **kwargs):
         return self.parses(force=force,only_best=True,**kwargs)

@@ -46,20 +46,13 @@ def no_clash(dfparse):
     return no_window(dfparse.is_stressed,badwindow=(1,1))
 def no_lapse(dfparse):
     return no_window(dfparse.is_stressed,badwindow=(0,0,0))
-
-
-
-# default constraints
-DEFAULT_CONSTRAINTS = {
-    'w/peak':no_weak_peaks,
-    'w/stressed':no_stressed_weaks,
-    's/unstressed':no_unstressed_strongs,
-    # 's/trough':no_strong_troughs,
-    'clash':no_clash,
-    'lapse':no_lapse,
-    'f-res':f_resolution,
-    'w-res':w_resolution,
-}
+def no_nonalt(dfparse):
+    ww=no_window(dfparse.is_w,badwindow=(1,1))
+    ss=no_window(dfparse.is_s,badwindow=(1,1))
+    return [1 if x or y else 0 for x,y in zip(ww,ss)]
+def no_trochsub(dfparse):
+    x=int(dfparse.is_s.iloc[0]==1)
+    return [x]+[0 for y in range(len(dfparse)-1)]
 
 def apply_posthoc_constraints(dfparse):
     dfparse['*clash']=[
@@ -72,17 +65,12 @@ def apply_posthoc_constraints(dfparse):
         for pi,pdf in dfparse.groupby('parse_i')
         for x in no_lapse(pdf)
     ]
+    dfparse['*nonalt']=[
+        x
+        for pi,pdf in dfparse.groupby('parse_i')
+        for x in no_nonalt(pdf)
+    ]
+
 
     dfparse[TOTALCOL]=dfparse[[col for col in dfparse.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
 
-
-
-def apply_constraints(mpos_window,constraints=DEFAULT_CONSTRAINTS):
-    total=None
-    assert len(set(mpos_window.parse_pos_i))==1
-    dfc=pd.DataFrame(index=mpos_window.index)
-    for cname,cfunc in constraints.items():
-        cvals=cfunc(mpos_window)
-        dfc['*'+cname]=cvals
-    dfc['*total']=dfc.sum(axis=1)
-    return dfc

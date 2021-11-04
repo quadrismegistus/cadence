@@ -165,6 +165,19 @@ def iter_parsed_metrical_positions(linecombodf):
         yield parse_group(posdf)
 
 
+def parse_group(df,constraints=DEFAULT_CONSTRAINTS):
+    """
+    Actual parsing, interface to constraints
+    """
+
+    dfcols=set(df.columns)
+    if not 'is_w' in dfcols: df['is_w']=[np.int(x=='w') for x in df.parse_syll]
+    if not 'is_s' in dfcols: df['is_s']=[np.int(x=='s') for x in df.parse_syll]
+    dfpc=apply_constraints(df)
+    lkeys=[c for c in df.columns if c not in set(dfpc.columns)]
+    return df[lkeys].join(dfpc)
+
+
 def get_parsed_metrical_positions(linecombodf):
     return setindex(pd.concat(iter_parsed_metrical_positions(linecombodf)))
 
@@ -228,3 +241,31 @@ def parse_line(linedf,engine=ENGINE,**kwargs):
         return setindex(pd.concat(parse_combo(combo) for combo in iter_combos(linedf)))
 
 
+
+
+
+
+def apply_constraints_cadence(mpos_window,constraints=DEFAULT_CONSTRAINTS):
+    total=None
+    assert len(set(mpos_window.parse_pos_i))==1
+    dfc=pd.DataFrame(index=mpos_window.index)
+    for cname,cfunc in constraints.items():
+        cvals=cfunc(mpos_window)
+        dfc['*'+cname]=cvals
+    dfc['*total']=dfc.sum(axis=1)
+    return dfc
+
+
+
+
+# default constraints
+DEFAULT_CONSTRAINTS_FUNC = {
+    'w/peak':no_weak_peaks,
+    'w/stressed':no_stressed_weaks,
+    's/unstressed':no_unstressed_strongs,
+    # 's/trough':no_strong_troughs,
+    'clash':no_clash,
+    'lapse':no_lapse,
+    'f-res':f_resolution,
+    'w-res':w_resolution,
+}

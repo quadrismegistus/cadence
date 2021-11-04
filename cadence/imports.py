@@ -35,7 +35,8 @@ PATH_HERE=os.path.abspath(os.path.dirname(__file__))
 PATH_CODE=PATH_HERE
 PATH_REPO=os.path.abspath(os.path.join(PATH_CODE,'..'))
 PATH_HOME=os.path.join(os.path.expanduser('~'),'.cadence')
-PATH_DATA=os.path.join(PATH_HOME,'data')
+# PATH_DATA=os.path.join(PATH_HOME,'data')
+PATH_DATA=os.path.join(PATH_REPO,'data')
 DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
 
 
@@ -60,6 +61,8 @@ LINEKEY=[
     
     PARSERANKCOL,
     #'parse_str',
+    'is_troch',
+    'parse_i',
     'parse',
     # 'combo_stress',
     'parse_str',
@@ -78,6 +81,14 @@ LINEKEY=[
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
+
+DEFAULT_CONSTRAINTS = {
+    '*w/peak',
+    '*w/stressed',
+    # '*s/unstressed',
+    '*f-res',
+    '*w-res'
+}
 
 NUM_BOUNDED_TO_STORE = 10
 
@@ -100,6 +111,8 @@ Through caverns measureless to man
 """
 line=txt.split('\n')[0]
 
+APPLY_POSTHOC_CONSTRAINTS=False
+
 
 # local imports
 from .tools import *
@@ -107,6 +120,7 @@ from .langs import *
 from .constraints import *
 from .parsers import *
 from .cadence import *
+
 
 # check
 check_basic_config()

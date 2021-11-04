@@ -47,25 +47,54 @@ def to_sents_str(stanza_txt):
         for sent in nltk.sent_tokenize(stanza_txt)
     ]
 
-def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=25):
+# def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=25):
+#     o=[]
+#     for sent in to_sents_str(linetxt):
+#         toks=tokenize_agnostic(sent)
+#         ophrase=[]
+#         for tok in toks:
+#             ophrase+=[tok]
+#             # print(tok,ophrases)
+#             ophrase_len=len([x for x in ophrase if x[0].isalpha()])
+#             if ophrase_len>=min_len and (tok in seps or ophrase_len>=max_len):
+#                 o+=[''.join(ophrase)]
+#                 ophrase=[]
+#         # if ophrase:
+#         #     if o and not any(x.isalpha() for x in ophrase):
+#         #         o[-1]+=''.join(ophrase)
+#         #     else:
+#         #         o+=[''.join(ophrase)]
+#         # if ophrase and any(x.isalpha() for x in ophrase): o+=[''.join(ophrase)]
+#     return o    
+
+
+def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=10):
     o=[]
     for sent in to_sents_str(linetxt):
-        toks=tokenize_agnostic(sent)
-        ophrase=[]
-        for tok in toks:
-            ophrase+=[tok]
-            # print(tok,ophrases)
-            ophrase_len=len([x for x in ophrase if x[0].isalpha()])
-            if ophrase_len>=min_len and (tok in seps or ophrase_len>=max_len):
-                o+=[''.join(ophrase)]
-                ophrase=[]
-        if ophrase:
-            if o and not any(x.isalpha() for x in ophrase):
-                o[-1]+=''.join(ophrase)
-            else:
-                o+=[''.join(ophrase)]
-        # if ophrase and any(x.isalpha() for x in ophrase): o+=[''.join(ophrase)]
-    return o    
+        sentparts=[]
+        sentpart=[]
+        for token in tokenize_nice(sent):
+            pref,tok,suf = split_punct(token)
+
+            # end prev?
+            if sentpart and set(pref)&set(seps) and len(sentpart)>=min_len:
+                sentparts.append(sentpart)
+                sentpart=[]
+
+            # add no matter what
+            sentpart.append(token)
+
+            # end after? or if too long?
+            if sentpart and ((set(suf)&set(seps) and len(sentpart)>=min_len) or len(sentpart)>=max_len):
+                sentparts.append(sentpart)
+                sentpart=[]
+
+        # add if remaining
+        if sentpart:
+            sentparts.append(sentpart)
+            sentpart=[]
+        o+=sentparts
+    return [''.join(x) for x in o]
 
 def to_words(line_txt,lang_code=DEFAULT_LANG):
     lang = to_lang(lang_code)
@@ -92,6 +121,9 @@ def do_scan_iter(obj,cache=False,**kwargs):
         #key
     ) = obj
     odf=line2df(linepart_txt, **kwargs)
+    odf=odf[odf.syll_i!=0]
+
+
     try:
         assign_proms(odf)
     except KeyError:
@@ -157,6 +189,7 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
     ol=[]
     for dfi,df in enumerate(iterr):
         (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt) = objs[dfi]
+        if not linepart_txt: continue
         lpinow=(stanza_i,line_i)
         if lpi is not None and lpi!=lpinow and ol:
             yield pd.concat(ol)
@@ -167,9 +200,17 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
         df['line_str']=line_txt
         df['linepart_i']=linepart_i+1
         df['linepart_str']=linepart_txt
-        if 'is_syll' in set(df.columns):
-            uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
-            df['linepart_num_syll']=len(uniqdf)
+
+        df['linepart_num_syll']=len(df[df['word_ipa_i']==1])
+        df['linepart_num_monosyll']=sum([
+            1 if len(g)==1 else 0
+            for i,g in df[df.word_ipa_i==1].groupby('word_i')
+        ])
+
+        #if 'is_syll' in set(df.columns):
+        #   uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
+        #   df['linepart_num_syll']=len(uniqdf)
+
 
         #display(df)
         #stop
@@ -210,19 +251,19 @@ def get_info_byline(txtdf):
 
 
 
-sonnet="""
-How heavy do I journey on the way,
-When what I seek, my weary travel's end,
-Doth teach that ease and that repose to say
-'Thus far the miles are measured from thy friend!'
-The beast that bears me, tired with my woe,
-Plods dully on, to bear that weight in me,
-As if by some instinct the wretch did know
-His rider loved not speed, being made from thee:
-The bloody spur cannot provoke him on
-That sometimes anger thrusts into his hide;
-Which heavily he answers with a groan,
-More sharp to me than spurring to his side;
-For that same groan doth put this in my mind;
-My grief lies onward and my joy behind.
-"""
+# sonnet="""
+# How heavy do I journey on the way,
+# When what I seek, my weary travel's end,
+# Doth teach that ease and that repose to say
+# 'Thus far the miles are measured from thy friend!'
+# The beast that bears me, tired with my woe,
+# Plods dully on, to bear that weight in me,
+# As if by some instinct the wretch did know
+# His rider loved not speed, being made from thee:
+# The bloody spur cannot provoke him on
+# That sometimes anger thrusts into his hide;
+# Which heavily he answers with a groan,
+# More sharp to me than spurring to his side;
+# For that same groan doth put this in my mind;
+# My grief lies onward and my joy behind.
+# """

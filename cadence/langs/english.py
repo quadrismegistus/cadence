@@ -35,7 +35,7 @@ def get_special_cases():
         import nltk
         #SPECIALD['functionwords']=set(nltk.corpus.stopwords.words('english'))
         SPECIALD['functionwords']=SPECIALD['unstressed']
-        SPECIALD['functionwords']=SPECIALD['maybestressed']
+        SPECIALD['functionwords']|=SPECIALD['maybestressed']
 
     return SPECIALD
 
@@ -58,8 +58,9 @@ def scan(line,incl_alt=True,**y):
     return pd.DataFrame(o)
 
 def tokenize(txt,**y): 
-    return txt.split()
-    #return tokenize_agnostic(txt,**y)
+    # return txt.split()
+    # return tokenize_agnostic(txt,**y)
+    return tokenize_nice(txt,**y)
 
 
 # def tokenize(txt):
@@ -77,7 +78,7 @@ def tokenize(txt,**y):
 def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
     # not real?
     token_nice=token
-    token = ''.join(x for x in token if x.isalpha()).lower()
+    token = zero_punc(token).lower()
     if not token:# or not token_alpha:
         return [{
             'word_ipa_i':0,
@@ -124,9 +125,11 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
         num_sylls=ipa.count('.')+1
         sylls_ipa = ipa.split('.')
         sylls_text = syllabify_orth(token_nice,num_sylls=num_sylls)
-        maxlen=max([len(sylls_ipa), len(sylls_text)])
-        sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
-        sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
+
+        # maxlen=max([len(sylls_ipa), len(sylls_text)])
+        
+        # sylls_ipa+=['' for n in range(len(sylls_ipa) - maxlen)]
+        # sylls_text+=['' for n in range(len(sylls_text) - maxlen)]
 
         is_funcword_now = int(is_funcword and num_sylls==1 and ipa[0]!="'")
 
@@ -418,7 +421,16 @@ def syllabify_orth_with_nltk(token,num_sylls=None):
     if not nltk_ssp:
         from nltk.tokenize import SyllableTokenizer
         nltk_ssp = SyllableTokenizer()
-    l = nltk_ssp.tokenize(token)
+    tokenl=token.lower()
+    l = nltk_ssp.tokenize(tokenl)
+    if tokenl!=token:
+        o=[]
+        i=0
+        for x in l:
+            xlen=len(x)
+            o+=[token[i:i+xlen]]
+            i+=xlen
+        l=o
     return l
 
 def syllabify_orth_with_pyphen(token,num_sylls=None):
@@ -433,11 +445,21 @@ def syllabify_orth_with_pyphen(token,num_sylls=None):
 def syllabify_orth(token,num_sylls=None, func=syllabify_orth_with_nltk):
     key=(token,num_sylls)
     if not key in ORTH_CACHE:
-        l=func(token,num_sylls=num_sylls) if num_sylls>1 else [token]
-        if num_sylls and len(l)!=num_sylls:
-            l2=l[:num_sylls]
-            l2[-1]+=''.join(l[num_sylls:])
+        pref,tok,suf = split_punct(token)
+        l=func(tok,num_sylls=num_sylls) if num_sylls>1 else [tok]
+        while len(l)<num_sylls:
+            lastsyll=l[-1]
+            lastsyll_len_half=len(lastsyll)//2
+            lastsyll_a,lastsyll_b=lastsyll[:lastsyll_len_half],lastsyll[lastsyll_len_half:]
+            l=[sx for sx in l[:-1]] + [lastsyll_a, lastsyll_b]
+        while len(l)>num_sylls:
+            l2=l[:-1]
+            l2[-1]+=l[-1]
             l=l2
+
+        l[0]=pref+l[0]
+        l[-1]+=suf
+
         ORTH_CACHE[key]=l
     return ORTH_CACHE[key]
 

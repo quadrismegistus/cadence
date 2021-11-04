@@ -3,24 +3,29 @@ from ..imports import *
 def split_punct(tok):
     toks=tokenize_agnostic(tok)
     wordil=[]
-    for i,x in enumerate(toks):
-        if any(y.isalpha() for y in x): wordil+=[i]
-        
     
-    pref=''.join([
-        x
-        for i,x in enumerate(toks)
-        if i<wordil[-1]
-    ])
-    suf=''.join([
-        x
-        for i,x in enumerate(toks)
-        if i>wordil[-1]
-    ])
-    words=''.join(
-        toks[wordil[0] : wordil[-1]+1]
-    ) if wordil else ''
-    return (pref,words,suf)
+    try:
+        for i,x in enumerate(toks):
+            if any(y.isalpha() for y in x): wordil+=[i]
+        pref=''.join([
+            x
+            for i,x in enumerate(toks)
+            if i<wordil[-1]
+        ])
+        suf=''.join([
+            x
+            for i,x in enumerate(toks)
+            if i>wordil[-1]
+        ])
+        words=''.join(
+            toks[wordil[0] : wordil[-1]+1]
+        ) if wordil else ''
+        return (pref,words,suf)
+    except IndexError:
+        return ('',tok,'')
+
+def zero_punc(token):
+    return ''.join(x for x in token if x.isalpha())
 
 def tokenize_agnostic(txt):
     return re.findall(r"[\w']+|[.,!?; -—–\n]", txt)
@@ -51,6 +56,31 @@ def tokenize_nltk(txt,lower=False):
 	]
 	# return
 	return tokens
+
+def tokenize_nice(xstr,starters=set("([‘“"),**kwargs):
+    l=tokenize_agnostic(xstr)
+    l2=[]
+    addback=False
+    for x in l:
+        if not x:#.strip():
+            pass
+        elif x[0].isalpha():
+            if addback and len(l2):
+                l2[-1]+=x
+                addback=False
+            else:
+                l2+=[x]
+        else:
+            if x in starters:
+                l2+=[x]
+                addback=True
+            elif len(l2):
+                l2[-1]+=x
+            else:
+                l2+=[x]
+                addback=True
+    return l2
+
 
 # def tokenize(txt,*x,**y):
 # 	return tokenize_fast(txt,*x,**y)
@@ -278,6 +308,7 @@ def get_db(
     )
 
 
+
 def slices(l,n,strict=True):
     o=[]
     for x in l:
@@ -371,8 +402,11 @@ def check_basic_config():
 
 ### utils
 def printm(x):
-    from IPython.display import display,Markdown
-    display(Markdown(x))
+    try:
+        from IPython.display import Markdown
+        return display(Markdown(x))
+    except ImportError:
+        print(x)
 
 
 

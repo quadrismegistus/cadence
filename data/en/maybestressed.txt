@@ -1,5 +1,5 @@
 'round
-all
+#all
 did
 does
 don't
@@ -74,3 +74,19 @@ i
 we
 they
 is
+though
+tho
+tho
+though
+thou
+thy
+thee
+thine
+me
+you
+him
+her
+them
+us
+by
+on
