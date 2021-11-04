@@ -539,8 +539,8 @@ for k,v in list(accentd.items()): accentd[k.upper()]=v.upper()
 
 def show_parses(parses_bysyll):
     try:
-        from IPython.display import Markdown
-        return Markdown(show_parses_md(parses_bysyll))
+        from IPython.display import HTML
+        return HTML(show_parses_md(parses_bysyll))
     except ImportError:
         return show_parses_txt(parses_bysyll)
     
@@ -602,8 +602,8 @@ def show_parse(dfparse,only_best=True):
     dfparse=get_best_parses(dfparse)
 
     try:
-        from IPython.display import Markdown
-        return Markdown(show_parse_md(dfparse))
+        from IPython.display import HTML
+        return HTML(show_parse_md(dfparse))
     except ImportError:
         return show_parse_txt(dfparse)
     
