@@ -22,7 +22,7 @@ logging.Logger.manager.loggerDict['sqlitedict'].disabled=True
 
 from parmapper import parmap
 from functools import partial
-
+import diskcache as dc
 
 # constants
 ENGINE_PROSODIC='prosodic'
@@ -30,6 +30,8 @@ ENGINE_CADENCE='cadence'
 ENGINE=ENGINE_PROSODIC
 
 MIN_WORDS_IN_PHRASE=2
+MAX_WORDS_IN_PHRASE=15
+SEPS_PHRASE=set(',:;–—()[].!?')
 DEFAULT_LANG='en'
 PATH_HERE=os.path.abspath(os.path.dirname(__file__))
 PATH_CODE=PATH_HERE
@@ -42,9 +44,16 @@ DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
 
 PATH_NOTEBOOKS=os.path.join(PATH_REPO,'notebooks')
 PATH_IPA_FEATS=os.path.join(PATH_DATA,'data.feats.ipa.csv')
+PATH_DB_SCAN=os.path.join(PATH_DATA,'db_scan.dc')
+PATH_DB_PARSE=os.path.join(PATH_DATA,'db_parse.dc')
+PATH_DB=os.path.join(PATH_DATA,'db.dc')
+DBSEP='____'
+
 INCL_ALT=True
 DEFAULT_NUM_PROC=1
 #mp.cpu_count()//2# - 1
+
+DEFAULT_METER='default_english'
 
 KEEP_BEST=1
 SBY=csby=['combo_i','word_i','syll_i']
@@ -85,7 +94,7 @@ TOTALCOL='*total'
 DEFAULT_CONSTRAINTS = {
     '*w/peak',
     '*w/stressed',
-    # '*s/unstressed',
+    '*s/unstressed',
     '*f-res',
     '*w-res'
 }

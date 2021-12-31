@@ -7,11 +7,21 @@ ITER LINES
 """
 
 def iter_lines(txt_or_txtdf,num_proc=1,**kwargs):
+    #yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
     if type(txt_or_txtdf) == str:
         yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
     else:
         for i,g in txt_or_txtdf.groupby(['stanza_i','line_i']):#,'linepart_i']):
             yield g
+
+def iter_lines(txt_or_txtdf,num_proc=1,**kwargs):
+    #yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
+    if type(txt_or_txtdf) == str:
+        yield from scan_iter(txt_or_txtdf,num_proc=num_proc,**kwargs)
+    else:
+        for i,g in txt_or_txtdf.groupby(['stanza_i','line_i']):#,'linepart_i']):
+            yield g
+
 
 def iter_combos(txtdf,num_proc=1):
     for dfline in iter_lines(txtdf,num_proc=num_proc):
@@ -41,7 +51,7 @@ def get_all_combos(txtdf):
 ITER PARSES
 """
 
-def parse(txt_or_txtdf,*x,verbose=True,**y):
+def parse(txt_or_txtdf,*x,verbose=False,**y):
     """
     Return parses
     """
@@ -55,22 +65,20 @@ def parse(txt_or_txtdf,*x,verbose=True,**y):
 
 def parse_iter(
         txt_or_txtdf,
-        by_line=True,
-        by_syll=False,
+        by_line=False,
+        by_syll=True,
         only_best=False,
         only_unbounded=True,
         num_proc=DEFAULT_NUM_PROC,
         progress=True,
         force=False,
-        verbose=True,
+        verbose=False,
         **kwargs):
     """
     Return parses as iter
     """
     if by_syll: by_line=False
     elif by_line: by_syll=False
-#     if by_line: by_syll=False
-#     if not by_syll: by_line=True
     yield from iter_parsed_lines(
         txt_or_txtdf,
         num_proc=num_proc,
@@ -90,7 +98,7 @@ def iter_parsed_lines(
         by_line=False,
         only_best=False,
         only_unbounded=True,
-        verbose=True,
+        verbose=False,
         rebound_parses=False,
         verse=None,
         prose=None,
@@ -138,29 +146,52 @@ def do_iter_parsed_lines(
         num_proc=DEFAULT_NUM_PROC,
         force=True,
         cache=False,
-        verbose=True,
+        verbose=False,
         **kwargs):
     o=[]
     if not 'linepart_i' in set(linedf.columns) and not 'linepart_i' in set(linedf.index.names): return pd.DataFrame()
     for linepart_i,linepartdf in sorted(linedf.groupby('linepart_i')):
-        if kwargs.get('engine')==ENGINE_PROSODIC:
-            odf=parse_prosodic_line(
-                linepartdf,
-                **kwargs
-            )
-        else:
-            o=list(iter_parsed_combos(
-                linepartdf,
-                num_proc=1,
-                progress=False,
-                **kwargs
-            ))  
-            odf=pd.concat(o) if len(o) else pd.DataFrame()
+        odf=parse_linepartdf(linepartdf,**kwargs)
         o+=[odf]
-    odf=pd.concat(o) if len(o) else pd.DataFrame()    
+    odf=pd.concat(o) if len(o) else pd.DataFrame()  
     return odf
     
+def get_linepart_str_from_df(linepartdf):
+    ltxts=getcol(linepartdf,'linepart_str')
+    if len(ltxts):
+        lpstr=ltxts.iloc[0].strip()
+    else:
+        wordl=getcol(linepartdf,'word_str')
+        if len(wordl):
+            lpstr=' '.join(wordl).strip()
+    return ''
 
+def parse_linepartdf(linepartdf,path=None,**kwargs):
+    lpstr=get_linepart_str_from_df(linepartdf)
+    cs="|".join(sorted(list(kwargs.get("constraints",DEFAULT_CONSTRAINTS))))
+    dbk=f'{lpstr}{DBSEP}parse{DBSEP}{cs}{DBSEP}{kwargs.get("engine")}'
+    
+    with get_db(path=path) as db:
+        if not dbk in db:
+            # odf
+            if kwargs.get('engine')==ENGINE_PROSODIC:
+                odf=parse_prosodic_line(
+                    linepartdf,
+                    **kwargs
+                )
+            else:
+                o=list(iter_parsed_combos(
+                    linepartdf,
+                    num_proc=1,
+                    progress=False,
+                    **kwargs
+                ))  
+                odf=pd.concat(o) if len(o) else pd.DataFrame()
+            db[dbk]=odf
+        else:
+            odf=db[dbk]
+        return odf
+    # 
 
 def iter_parsed_combos(
         txtdf,
@@ -208,7 +239,7 @@ def parse_combo(linecombodf,engine=ENGINE,**kwargs):
 def parse_prosodic_line(
         txt_or_txtdf,
         lang='en',
-        meter='default_english',
+        meter=DEFAULT_METER,
         use_espeak=True,
         constraints=DEFAULT_CONSTRAINTS,
         constraint_weights=None,
@@ -234,7 +265,7 @@ def parse_prosodic_line(
         config['constraints']=constraints_pros
         meter_obj=p.Meter(config)
     
-    txtdf = scan(txt_or_txtdf) if type(txt_or_txtdf)==str else txt_or_txtdf
+    txtdf = scan(txt_or_txtdf,**kwargs) if type(txt_or_txtdf)==str else txt_or_txtdf
     txtdf = txtdf.sort_index()
     
     line_words=[]
@@ -373,23 +404,24 @@ def prosodic_line_to_data(
 
     return odf
 
-
-
-
 def rank_parses(dfparses):
-    odf=dfparses
+    odf=resetindex(dfparses)
     odf[TOTALCOL]=odf[[col for col in odf.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
     odf['is_troch']=odf.parse.apply(lambda x: int(x and x[0]=='s'))
-    newrankdf=odf[['parse_i',TOTALCOL]].groupby('parse_i').sum().sort_values(TOTALCOL)
-    newrankdf['ranks']=newrankdf[TOTALCOL].rank(method='dense')
-    newrank=dict(zip(newrankdf.index, newrankdf.ranks))
+    newrankdf=odf[['parse_i',TOTALCOL]].groupby('parse_i').sum().sort_values(TOTALCOL).reset_index()
+    # newrankdf['ranks']=newrankdf[TOTALCOL].rank(method='dense')
+    # newrankdf=newrankdf.sort_values('ranks')
+    # newrankdf=newrankdf.sort_values(TOTAL_COL)
+    newrankdf['ranks_int']=pd.Series(list(range(len(newrankdf))))+1
+    newrank=dict(zip(newrankdf.parse_i, newrankdf.ranks_int))
     odf['parse_rank']=odf.parse_i.apply(lambda x: int(newrank.get(x,0)))
     return odf
+
 
 def postproc_dfline(
         dfline,
         by_line=False,
-        verbose=True,
+        verbose=False,
         verbose_bylinepart=True,
         only_best=False,
         only_unbounded=False,
@@ -618,44 +650,57 @@ def show_parses_md(parses_bysyll):
     return omd
     
  
-def info_parses(dfparses,lcols=['stanza_i','line_i','linepart_i']):
-    # byline
-    dfparses=dfparses.query('parse_is_bounded==False & parse_num_syll>=4')
-    if 'syll_i' in set(dfparses.columns)|set(dfparses.index.names):
-        dfparses=to_lines(dfparses)
-
-    
-
+def info_parses(dfparses_or_path,lcols=['stanza_i','line_i','linepart_i'],min_num_syll=4):
     infod={}
-    infod['num_lines_total']=dfparses.groupby(['stanza_i','line_i','linepart_i']).size().shape[0]
-    
-    # avg num sylls
-    num_sylls = dfparses.groupby(lcols).parse_num_syll.mean()
-    num_monosylls = dfparses.groupby(lcols).linepart_num_monosyll.mean()
-    infod['num_sylls_avg'] = num_sylls.mean()
 
-    infod['num_monosylls_avg'] = num_monosylls.mean()
-    num_monosylls_per_10syll = num_monosylls / num_sylls * 10
-    infod['num_monosylls_per_10syll_avg'] = num_monosylls_per_10syll.mean()
-    
+    try:
+        if type(dfparses_or_path)==str:
+            if os.path.exists(dfparses_or_path):
+                dfparses=read_df(dfparses_or_path)
+            else:
+                return {}
+        else:
+            dfparses=dfparses_or_path    
+        
+        # byline
+        allcols=set(dfparses.columns)|set(dfparses.index.names)
+        if 'syll_i' in allcols: dfparses=to_lines(dfparses)
+        allcols=set(dfparses.columns)|set(dfparses.index.names)
+        if 'parse_num_syll' not in allcols: return infod
+        dfparses=dfparses.query(f'parse_num_syll>={min_num_syll}')
 
-    # avg num parses per line?
-    num_parses = dfparses.groupby(lcols).size()# / dfparses.groupby(lcols).parse_num_syll.mean()
-    infod['num_parses_avg'] = num_parses.mean()
-    num_parses_per_10syll = num_parses / num_sylls * 10
-    infod['num_parses_per_10syll_avg'] = num_parses_per_10syll.mean()
-    
-    
-    # avg viols?
-    vkeys=[col for col in dfparses.columns if col.startswith('*')]
-    for vk in vkeys:
-        vk2='' if vk=='*total' else f'__{vk}'
-        num_viols = dfparses.groupby(lcols)[vk].mean()
-        infod[f'num_viols_avg{vk2}'] = num_viols.mean()
-        num_viols_per_10syll = num_viols /num_sylls * 10
-        infod[f'num_viols_per_10syll_avg{vk2}'] = num_viols_per_10syll.mean()
 
-    return infod
+        infod['num_lines_total']=dfparses.groupby(['stanza_i','line_i','linepart_i']).size().shape[0]
+        
+        # avg num sylls
+        num_sylls = dfparses.groupby(lcols).parse_num_syll.mean()
+        num_monosylls = dfparses.groupby(lcols).linepart_num_monosyll.mean()
+        infod['num_sylls_avg'] = num_sylls.mean()
+
+        infod['num_monosylls_avg'] = num_monosylls.mean()
+        num_monosylls_per_10syll = num_monosylls / num_sylls * 10
+        infod['num_monosylls_per_10syll_avg'] = num_monosylls_per_10syll.mean()
+        
+
+        # avg num parses per line?
+        num_parses = dfparses.groupby(lcols).size()# / dfparses.groupby(lcols).parse_num_syll.mean()
+        infod['num_parses_avg'] = num_parses.mean()
+        num_parses_per_10syll = num_parses / num_sylls * 10
+        infod['num_parses_per_10syll_avg'] = num_parses_per_10syll.mean()
+        
+        
+        # avg viols?
+        vkeys=[col for col in dfparses.columns if col.startswith('*')]
+        for vk in vkeys:
+            vk2='' if vk=='*total' else f'__{vk}'
+            num_viols = dfparses.groupby(lcols)[vk].mean()
+            infod[f'num_viols_avg{vk2}'] = num_viols.mean()
+            num_viols_per_10syll = num_viols /num_sylls * 10
+            infod[f'num_viols_per_10syll_avg{vk2}'] = num_viols_per_10syll.mean()
+
+        return infod
+    except KeyError:
+        return infod
     
 def show_info_parses(infod):
     return f'''

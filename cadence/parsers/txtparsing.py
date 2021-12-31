@@ -47,28 +47,7 @@ def to_sents_str(stanza_txt):
         for sent in nltk.sent_tokenize(stanza_txt)
     ]
 
-# def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=25):
-#     o=[]
-#     for sent in to_sents_str(linetxt):
-#         toks=tokenize_agnostic(sent)
-#         ophrase=[]
-#         for tok in toks:
-#             ophrase+=[tok]
-#             # print(tok,ophrases)
-#             ophrase_len=len([x for x in ophrase if x[0].isalpha()])
-#             if ophrase_len>=min_len and (tok in seps or ophrase_len>=max_len):
-#                 o+=[''.join(ophrase)]
-#                 ophrase=[]
-#         # if ophrase:
-#         #     if o and not any(x.isalpha() for x in ophrase):
-#         #         o[-1]+=''.join(ophrase)
-#         #     else:
-#         #         o+=[''.join(ophrase)]
-#         # if ophrase and any(x.isalpha() for x in ophrase): o+=[''.join(ophrase)]
-#     return o    
-
-
-def to_lineparts(linetxt,seps=set(',:;–—()[].!?'),min_len=1,max_len=15):
+def to_lineparts(linetxt,seps=SEPS_PHRASE,min_len=1,max_len=15):
     o=[]
     for sent in to_sents_str(linetxt):
         sentparts=[]
@@ -106,41 +85,36 @@ def to_words(line_txt,lang_code=DEFAULT_LANG):
 def to_syllables(word_txt,lang_code=DEFAULT_LANG):
     return lang.syllabify(word_txt)
 
-def scan(txt_or_fn,**kwargs):
-    return setindex(
-        pd.concat(
-            scan_iter(txt_or_fn,**kwargs)
-        )
-    )
-
-def do_scan_iter(obj,cache=False,**kwargs):
-    (
-        stanza_i,stanza_txt,
-        line_i,line_txt,
-        linepart_i,linepart_txt,
-        #key
-    ) = obj
-    odf=line2df(linepart_txt, **kwargs)
-    odf=odf[odf.syll_i!=0]
+# def scan(txt_or_fn,**kwargs):
+#     try:
+#         return setindex(
+#             pd.concat(
+#                 scan_iter(txt_or_fn,**kwargs)
+#             )
+#         )
+#     except ValueError:
+#         return pd.DataFrame()
 
 
-    try:
-        assign_proms(odf)
-    except KeyError:
-        pass
-    return odf
-        
 
-def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
+
+
+def lineparts(
+        txt_or_fn,
+        lang=DEFAULT_LANG,
         progress=True,
         incl_alt=INCL_ALT,
         num_proc=DEFAULT_NUM_PROC,
-        linebreaks=True,
+        linebreaks=False,
         phrasebreaks=True,
         verse=None,
         prose=None,
+        linepart_min_len=MIN_WORDS_IN_PHRASE,
+        linepart_max_len=MAX_WORDS_IN_PHRASE,
+        linepart_seps=SEPS_PHRASE,
         desc='Iterating over line scansions',
         **kwargs):
+    
     full_txt=to_txt(txt_or_fn)
     if not full_txt: return
     
@@ -159,65 +133,90 @@ def scan_iter(txt_or_fn,lang=DEFAULT_LANG,
     
         
     objs=[
-        (
-            stanza_i,stanza_txt,
-            line_i,line_txt,
-            linepart_i,linepart_txt,
-            # getkey(linepart_txt)
+        dict(
+            stanza_i=stanza_i+1,
+            line_i=line_i+1,
+            linepart_i=linepart_i+1,
+            linepart_str=linepart_txt
         )
         for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt))
         for line_i,line_txt in enumerate(to_lines_now(stanza_txt))
         for linepart_i,linepart_txt in enumerate(
-            to_lineparts(line_txt) if phrasebreaks else [line_txt]
+            to_lineparts(
+                line_txt,
+                seps=linepart_seps,
+                min_len=linepart_min_len,
+                max_len=linepart_max_len
+            ) if phrasebreaks else [line_txt]
         )
-    ]    
+    ]
+    return pd.DataFrame(objs)
 
 
-    iterr=pmap_iter(
-        do_scan_iter,
-        objs,
-        kwargs=kwargs,
-        num_proc=num_proc,
-        desc=desc,
-        progress=progress
-    )
-
-#     dfl=[]
-    i=0#
-    #with get_db('lines','c') as db:
-    lpi=None
-    ol=[]
-    for dfi,df in enumerate(iterr):
-        (stanza_i,stanza_txt,line_i,line_txt,linepart_i,linepart_txt) = objs[dfi]
-        if not linepart_txt: continue
-        lpinow=(stanza_i,line_i)
-        if lpi is not None and lpi!=lpinow and ol:
-            yield pd.concat(ol)
-            ol=[]
-        
-        df['stanza_i']=stanza_i+1
-        df['line_i']=line_i+1
-        df['line_str']=line_txt
-        df['linepart_i']=linepart_i+1
-        df['linepart_str']=linepart_txt
-
-        df['linepart_num_syll']=len(df[df['word_ipa_i']==1])
-        df['linepart_num_monosyll']=sum([
-            1 if len(g)==1 else 0
-            for i,g in df[df.word_ipa_i==1].groupby('word_i')
-        ])
-
-        #if 'is_syll' in set(df.columns):
-        #   uniqdf=df[df.is_syll==1].drop_duplicates(['word_i','syll_i'])
-        #   df['linepart_num_syll']=len(uniqdf)
 
 
-        #display(df)
-        #stop
+def get_db_scan(path=None):
+    if not path or not os.path.exists(path): path=PATH_DB_SCAN
+    with dc.Cache(path) as of: return of
 
-        ol+=[df]
-        lpi=lpinow
-    if ol: yield pd.concat(ol)
+def get_db_parse(path=None):
+    if not path or not os.path.exists(path): path=PATH_DB_PARSE
+    with dc.Cache(path) as of: return of
+
+def get_db(path=None):
+    if not path or not os.path.exists(path): path=PATH_DB
+    with dc.Cache(path) as of: return of
+
+
+def get_line_data(linepart_txt,**kwargs):
+    df=line2df(linepart_txt,**kwargs)
+    df=df[df.syll_i!=0]
+    df['linepart_num_syll']=len(df[df['word_ipa_i']==1])
+    df['linepart_num_monosyll']=sum([
+        1 if len(g)==1 else 0
+        for i,g in df[df.word_ipa_i==1].groupby('word_i')
+    ])
+    assign_proms(df)
+    # df=setindex(df)
+    return df
+
+def get_scansion(linepart_txt,path=None,**kwargs):
+    lptxt=linepart_txt.strip()
+    key=f'{lptxt}{DBSEP}scan'
+    with get_db(path=path) as d:
+        if not key in d:
+            d[key]=get_line_data(lptxt,**kwargs)
+        return d[key]
+
+
+
+def do_scan_iter(dfx):
+    ltxts=getcol(dfx,'linepart_str')
+    return get_scansion(ltxts.iloc[0].strip()) if len(ltxts) else pd.DataFrame()
+    
+
+def scan_iter(df_or_txt_or_fn,num_proc=1,**kwargs):
+    if type(df_or_txt_or_fn) not in {pd.DataFrame,str}: return
+
+    if type(df_or_txt_or_fn)!=pd.DataFrame:
+        txt=to_txt(df_or_txt_or_fn)
+        df=lineparts(txt,**kwargs)
+    else:
+        df=df_or_txt_or_fn
+
+    dfg=df.groupby(['stanza_i','line_i','linepart_i'])
+    for odf in pmap_iter_groups(do_scan_iter, dfg, num_proc=num_proc):
+        yield odf
+
+
+def scan(txt_or_fn,**kwargs):
+    odf=pd.DataFrame()
+    try:
+        odf=pd.concat(scan_iter(txt_or_fn,**kwargs))
+        odf=setindex(odf)
+    except ValueError:
+        pass
+    return odf
 
 
 def assign_proms(df):
@@ -251,19 +250,19 @@ def get_info_byline(txtdf):
 
 
 
-# sonnet="""
-# How heavy do I journey on the way,
-# When what I seek, my weary travel's end,
-# Doth teach that ease and that repose to say
-# 'Thus far the miles are measured from thy friend!'
-# The beast that bears me, tired with my woe,
-# Plods dully on, to bear that weight in me,
-# As if by some instinct the wretch did know
-# His rider loved not speed, being made from thee:
-# The bloody spur cannot provoke him on
-# That sometimes anger thrusts into his hide;
-# Which heavily he answers with a groan,
-# More sharp to me than spurring to his side;
-# For that same groan doth put this in my mind;
-# My grief lies onward and my joy behind.
-# """
+sonnet="""
+How heavy do I journey on the way,
+When what I seek, my weary travel's end,
+Doth teach that ease and that repose to say
+'Thus far the miles are measured from thy friend!'
+The beast that bears me, tired with my woe,
+Plods dully on, to bear that weight in me,
+As if by some instinct the wretch did know
+His rider loved not speed, being made from thee:
+The bloody spur cannot provoke him on
+That sometimes anger thrusts into his hide;
+Which heavily he answers with a groan,
+More sharp to me than spurring to his side;
+For that same groan doth put this in my mind;
+My grief lies onward and my joy behind.
+"""

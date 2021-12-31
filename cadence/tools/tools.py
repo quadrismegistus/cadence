@@ -1,5 +1,14 @@
 from ..imports import *
 
+def getcol(df,col):
+    if col in set(df.columns):
+        return pd.Series(df[col])
+    elif col in set(df.index.names):
+        return pd.Series(df.index.get_level_values(col))
+    else:
+        return pd.Series()
+
+
 def split_punct(tok):
     toks=tokenize_agnostic(tok)
     wordil=[]
@@ -257,26 +266,6 @@ def index_by_truth(x):
             yield np.nan
 
 
-def do_pmap_group(obj,*args,**kwargs):
-    import pandas as pd
-    import types
-    func,group_df,group_key,group_name = obj
-
-    if type(group_name) not in {list,tuple}:group_name=[group_name]
-    if type(group_df)==str: group_df=pd.read_pickle(group_df)
-    out=func(group_df,*args,**kwargs)
-    if isinstance(out, types.GeneratorType):
-        out=[x for x in out]
-    if type(out)==list:
-        try:
-            out=[x for x in out if type(x) in {pd.DataFrame, pd.Series}]
-            out=pd.concat(out)
-        except ValueError:
-            return out
-    if type(out)==pd.DataFrame:
-        for x,y in zip(group_key,group_name): out[x]=y
-    return out
-
 def joindfs(a,b):
     bcols = set(b.columns) - set(a.columns)
     return a.join(b[bcols])
@@ -362,11 +351,33 @@ def pmap_iter_groups(func,df_grouped,use_cache=False,num_proc=DEFAULT_NUM_PROC,i
         num_proc=num_proc,
         **attrs
     )
+
+
+def do_pmap_group(obj,*args,**kwargs):
+    import pandas as pd
+    import types
+    func,group_df,group_key,group_name = obj
+
+    if type(group_name) not in {list,tuple}:group_name=[group_name]
+    if type(group_df)==str: group_df=pd.read_pickle(group_df)
+    out=func(group_df,*args,**kwargs)
+    if isinstance(out, types.GeneratorType):
+        out=[x for x in out]
+    if type(out)==list:
+        try:
+            out=[x for x in out if type(x) in {pd.DataFrame, pd.Series}]
+            out=pd.concat(out)
+        except ValueError:
+            return out
+    if type(out)==pd.DataFrame:
+        cols1=list(out.columns)
+        for x,y in zip(group_key,group_name): out[x]=y
+        out=out[group_key + cols1]
+    return out
+
+
 def pmap_groups(*x,**y):
     res = list(pmap_iter_groups(*x,**y))
-    # print([type(x) for x in res])
-    # for y in res[-1]:
-        # print(type(y), y)
     resl = []
     for x in res:
         if type(x)==list:
@@ -475,3 +486,26 @@ def get_num_lines(filename):
 
     return numlines
 
+
+
+
+
+
+def read_df(ifn,key='',**attrs):
+	if not os.path.exists(ifn): return
+	import pandas as pd
+	ext = os.path.splitext(ifn.replace('.gz',''))[-1][1:]
+	if ext=='csv':
+		return pd.read_csv(ifn,**attrs)
+	elif ext in {'xls','xlsx'}:
+		return pd.read_excel(ifn,**attrs)
+	elif ext in {'txt','tsv'}:
+		return pd.read_csv(ifn,sep='\t',**attrs)
+	elif ext=='ft':
+		return pd.read_feather(ifn,**attrs)
+	elif ext=='pkl':
+		return pd.read_pickle(ifn,**attrs)
+	elif ext=='h5':
+		return pd.read_hdf(ifn, key=key,**attrs)
+	else:
+		raise Exception(f'[save_df()] What kind of df is this: {ifn}')
