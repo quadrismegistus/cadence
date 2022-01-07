@@ -1,5 +1,8 @@
 from ..imports import *
 
+
+
+
 def getcol(df,col):
     if col in set(df.columns):
         return pd.Series(df[col])
@@ -37,7 +40,7 @@ def zero_punc(token):
     return ''.join(x for x in token if x.isalpha())
 
 def tokenize_agnostic(txt):
-    return re.findall(r"[\w']+|[.,!?; -—–\n]", txt)
+    return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
     
 def tokenize_fast(line,lower=False):
 	line = line.lower() if lower else line
@@ -66,36 +69,50 @@ def tokenize_nltk(txt,lower=False):
 	# return
 	return tokens
 
-def tokenize_nice(xstr,starters=set("([‘“"),**kwargs):
-    l=tokenize_agnostic(xstr)
-    l2=[]
-    addback=False
-    for x in l:
-        if not x:#.strip():
-            pass
-        elif x[0].isalpha():
-            if addback and len(l2):
-                l2[-1]+=x
-                addback=False
-            else:
-                l2+=[x]
-        else:
-            if x in starters:
-                l2+=[x]
-                addback=True
-            elif len(l2):
-                l2[-1]+=x
-            else:
-                l2+=[x]
-                addback=True
-    return l2
+# def tokenize_nice(xstr,starters=set("([‘“"),**kwargs):
+#     l=tokenize_agnostic(xstr)
+#     l2=[]
+#     addback=False
+#     for x in l:
+#         if not x:#.strip():
+#             pass
+#         elif x[0].isalpha():
+#             if addback and len(l2):
+#                 l2[-1]+=x
+#                 addback=False
+#             else:
+#                 l2+=[x]
+#         else:
+#             if x in starters:
+#                 l2+=[x]
+#                 addback=True
+#             elif len(l2):
+#                 l2[-1]+=x
+#             else:
+#                 l2+=[x]
+#                 addback=True
+#     return l2
 
 
 # def tokenize(txt,*x,**y):
 # 	return tokenize_fast(txt,*x,**y)
+def tokenize_nice_iter(s,sep=' ',**kwargs):
+    s=s.replace('\r\n','\n')
+    s=s.replace('\r','\n')
+    s=s.replace('\n',' \n ')
+    s=s.replace('\t',' \t ')
+    wnow=''
+    for w in s.split(sep):
+        w2=w+sep
+        if w.strip(): # word
+            word=wnow+w2
+            yield word
+            wnow=''
+        else:
+            wnow+=w2
 
-
-
+def tokenize_nice(s,**kwargs): return list(tokenize_nice_iter(s,**kwargs))
+def to_words_str(s,**kwargs): return tokenize_nice(s,**kwargs)
 
 def subfinder(mylist, pattern):
     matches = []
@@ -117,6 +134,7 @@ def detokenize(x):
     return x
 
 def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
+    if not len(df): return df
     df = df[set(df.columns) - set(df.index.names)]
     df = resetindex(df)
 
@@ -214,7 +232,7 @@ def pmap_iter(func, objs, args=[], kwargs={}, num_proc=DEFAULT_NUM_PROC, use_thr
     # if parallel
     if not desc: desc=f'Mapping {func.__name__}()'
     if desc: desc=f'{desc} [x{num_proc}]'
-    if num_proc>1 and len(objs)>1:
+    if num_proc>1 and ((type(objs) not in {list,tuple,set}) or len(objs)>1):
 
         # real objects
         objects = [(func,obj,args,kwargs) for obj in objs]
@@ -276,25 +294,25 @@ def hashstr(x):
 	return hashlib.sha224(str(x).encode('utf-8')).hexdigest()
 
 
-# Use sqlite dictionary
-def get_db(
-        prefix,
-        mode='c',
-        folders=[],
-        autocommit=False,
-        ):
-    if mode=='w': autocommit=True
-    ofnfn=os.path.join(PATH_DATA, f'db.{prefix}.sqlite')
-    odir=os.path.dirname(ofnfn)
-    if not os.path.exists(odir): os.makedirs(odir)
-    if not os.path.exists(ofnfn): mode='c'
-    return SqliteDict(
-        ofnfn,
-        tablename='data',
-        autocommit=autocommit,
-        flag='r' if mode=='r' else 'c',
-        timeout=30
-    )
+# # Use sqlite dictionary
+# def get_db(
+#         prefix,
+#         mode='c',
+#         folders=[],
+#         autocommit=False,
+#         ):
+#     if mode=='w': autocommit=True
+#     ofnfn=os.path.join(PATH_DATA, f'db.{prefix}.sqlite')
+#     odir=os.path.dirname(ofnfn)
+#     if not os.path.exists(odir): os.makedirs(odir)
+#     if not os.path.exists(ofnfn): mode='c'
+#     return SqliteDict(
+#         ofnfn,
+#         tablename='data',
+#         autocommit=autocommit,
+#         flag='r' if mode=='r' else 'c',
+#         timeout=30
+#     )
 
 
 

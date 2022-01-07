@@ -79,15 +79,16 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
     # not real?
     token_nice=token
     token = zero_punc(token).lower()
-    if not token:# or not token_alpha:
-        return [{
-            'word_ipa_i':0,
-            'syll_i':0,
-            'word_str':token,
-            'word_ipa':'',
-            'syll_ipa':'',
-            'syll_str':token,
-        }]
+    if not token: return []
+    # if not token:# or not token_alpha:
+    #     return [{
+    #         'word_ipa_i':0,
+    #         'syll_i':0,
+    #         'word_str':token,
+    #         'word_ipa':'',
+    #         'syll_ipa':'',
+    #         'syll_str':token,
+    #     }]
 
 
     # get ipas

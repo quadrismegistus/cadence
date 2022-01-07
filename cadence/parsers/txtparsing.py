@@ -4,6 +4,27 @@ from ..imports import *
 
 
 
+# loading txt/strings
+def to_fn_txt(txt_or_fn):
+    # load txt
+    if type(txt_or_fn)==str and not '\n' in txt_or_fn and os.path.exists(txt_or_fn):
+        fn=txt_or_fn
+        with open(fn,encoding='utf-8',errors='replace') as f:
+            txt=f.read()
+    else:
+        fn=''
+        txt=txt_or_fn
+    return (fn,txt.strip())
+
+
+### convenient objs
+def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
+    return ', '.join(
+        f'{k}={v}'
+        for k,v in kwargs.items()
+        if k not in bad_keys
+    )
+    
 
 
 
@@ -11,17 +32,10 @@ from ..imports import *
 # loading txt/strings
 def to_txt(txt_or_fn):
     # load txt
-    if not txt_or_fn: return
-    if os.path.exists(txt_or_fn):
+    if type(txt_or_fn)==str and not '\n' in txt_or_fn and os.path.exists(txt_or_fn):
         with open(txt_or_fn,encoding='utf-8',errors='replace') as f:
-            txt=f.read()
-    else:
-        txt=txt_or_fn
-    
-    # clean?
-    txt=txt.replace('--','—')
-
-    return txt
+            return f.read()
+    return txt_or_fn
 
     
     
@@ -37,70 +51,65 @@ def to_txt_from_scandf(scandf):
         for stanza_i,stanzadf in scandf.groupby('stanza_i')
     )
     
-def to_stanzas(full_txt):
-    return [st.strip() for st in full_txt.strip().split('\n\n') if st.strip()]
-def to_lines_str(stanza_txt):
-    return [l.strip() for l in stanza_txt.split('\n') if l.strip()]
-def to_sents_str(stanza_txt):
-    return [
-        sent.replace('\n',' ').strip()
-        for sent in nltk.sent_tokenize(stanza_txt)
-    ]
+def to_stanzas_str(full_txt,sep=SEP_STANZA,**kwargs):
+    return [st.strip() for st in full_txt.strip().split(sep) if st.strip()]
 
-def to_lineparts(linetxt,seps=SEPS_PHRASE,min_len=1,max_len=15):
+def to_lines_str(stanza_txt,sep=SEP_STANZA,**kwargs):
+    return [st.strip() for st in stanza_txt.strip().split(sep) if st.strip()]
+
+def to_sents_str(stanza_txt,**kwargs):
+    return list(nltk.sent_tokenize(stanza_txt))
+
+def limit_lineparts(linepart_toks,min_len=None,max_len=None):
+    if not min_len and not max_len: return [linepart_toks]
+
+    lp=[]
     o=[]
-    for sent in to_sents_str(linetxt):
-        sentparts=[]
-        sentpart=[]
-        for token in tokenize_nice(sent):
-            pref,tok,suf = split_punct(token)
-
-            # end prev?
-            if sentpart and set(pref)&set(seps) and len(sentpart)>=min_len:
-                sentparts.append(sentpart)
-                sentpart=[]
-
-            # add no matter what
-            sentpart.append(token)
-
-            # end after? or if too long?
-            if sentpart and ((set(suf)&set(seps) and len(sentpart)>=min_len) or len(sentpart)>=max_len):
-                sentparts.append(sentpart)
-                sentpart=[]
-
-        # add if remaining
-        if sentpart:
-            sentparts.append(sentpart)
-            sentpart=[]
-        o+=sentparts
-    return [''.join(x) for x in o]
-
-def to_words(line_txt,lang_code=DEFAULT_LANG):
-    lang = to_lang(lang_code)
-    o=lang.tokenize(line_txt)
-    #print(o)
-    #stop
+    for tok in reversed(linepart_toks):
+        lp.insert(0,tok)
+        if len(lp)>=max_len:
+            o.insert(0,lp)
+            lp=[]
+    if lp: o.insert(0,lp)
+    
     return o
     
-def to_syllables(word_txt,lang_code=DEFAULT_LANG):
-    return lang.syllabify(word_txt)
 
-# def scan(txt_or_fn,**kwargs):
-#     try:
-#         return setindex(
-#             pd.concat(
-#                 scan_iter(txt_or_fn,**kwargs)
-#             )
-#         )
-#     except ValueError:
-#         return pd.DataFrame()
+def to_lineparts_str(line_str,seps=SEPS_PHRASE,**kwargs):
+    lineparts=[]
+    linepart=[]
+    tokens=list(tokenize_nice(line_str))
+    for token in tokens:
+        pref,tok,suf = split_punct(token)        
+        is_pref_stopper=set(pref)&set(seps)
+        is_suf_stopper=set(suf)&set(seps)
+        
+        if is_pref_stopper:
+            lineparts.append(linepart)
+            linepart=[]
+        
+        linepart.append(token)
+        
+        if is_suf_stopper:
+            lineparts.append(linepart)
+            linepart=[]
+
+    # add if remaining
+    if linepart:
+        lineparts.append(linepart)
+        linepart=[]
+        
+    ## Further divide by max_len
+    o=[''.join(lpstr2) for lp_toks in lineparts for lpstr2 in limit_lineparts(lp_toks,**kwargs)]        
+    return o
 
 
 
 
 
-def lineparts(
-        txt_or_fn,
+
+def to_lineparts_ld(
+        txt_or_fn_or_lpdf,
         lang=DEFAULT_LANG,
         progress=True,
         incl_alt=INCL_ALT,
@@ -109,14 +118,21 @@ def lineparts(
         phrasebreaks=True,
         verse=None,
         prose=None,
-        linepart_min_len=MIN_WORDS_IN_PHRASE,
-        linepart_max_len=MAX_WORDS_IN_PHRASE,
-        linepart_seps=SEPS_PHRASE,
+        min_len=MIN_WORDS_IN_PHRASE,
+        max_len=MAX_WORDS_IN_PHRASE,
+        seps=SEPS_PHRASE,
         desc='Iterating over line scansions',
         **kwargs):
     
-    full_txt=to_txt(txt_or_fn)
-    if not full_txt: return
+    if type(txt_or_fn_or_lpdf) == pd.DataFrame:
+        odf=resetindex(txt_or_fn_or_lpdf)
+        if 'linepart_str' in set(odf.columns):
+            return odf
+        else:
+            raise Exception('Input is neither string or a linepart-df [result of lineparts()]')
+    
+    full_txt=to_txt(txt_or_fn_or_lpdf)
+    if full_txt is None: return
     
     if verse==True or prose==False:
         linebreaks=True
@@ -139,84 +155,200 @@ def lineparts(
             linepart_i=linepart_i+1,
             linepart_str=linepart_txt
         )
-        for stanza_i,stanza_txt in enumerate(to_stanzas(full_txt))
+        for stanza_i,stanza_txt in enumerate(to_stanzas_str(full_txt))
+        for line_i,line_txt in enumerate(to_lines_now(stanza_txt))
+        for linepart_i,linepart_txt in enumerate(
+            to_lineparts_str(
+                line_txt,
+                seps=seps,
+                min_len=min_len,
+                max_len=max_len
+            ) if phrasebreaks else [line_txt]
+        )
+    ]
+    return objs
+
+def to_words(line_txt,lang_code=DEFAULT_LANG):
+    lang = to_lang(lang_code)
+    o=lang.tokenize(line_txt)
+    #print(o)
+    #stop
+    return o
+    
+def to_syllables(word_txt,lang_code=DEFAULT_LANG):
+    lang = to_lang(lang_code)
+    return lang.syllabify(word_txt)
+
+# def scan(txt_or_fn,**kwargs):
+#     try:
+#         return setindex(
+#             pd.concat(
+#                 scan_iter(txt_or_fn,**kwargs)
+#             )
+#         )
+#     except ValueError:
+#         return pd.DataFrame()
+
+
+
+
+
+def lineparts(
+        txt_or_fn_or_lpdf,
+        lang=DEFAULT_LANG,
+        progress=True,
+        incl_alt=INCL_ALT,
+        num_proc=DEFAULT_NUM_PROC,
+        linebreaks=False,
+        phrasebreaks=True,
+        verse=None,
+        prose=None,
+        min_len=MIN_WORDS_IN_PHRASE,
+        max_len=MAX_WORDS_IN_PHRASE,
+        seps=SEPS_PHRASE,
+        desc='Iterating over line scansions',
+        **kwargs):
+    
+    if type(txt_or_fn_or_lpdf) == pd.DataFrame:
+        odf=resetindex(txt_or_fn_or_lpdf)
+        if 'linepart_str' in set(odf.columns):
+            return odf
+        else:
+            raise Exception('Input is neither string or a linepart-df [result of lineparts()]')
+    
+
+    full_txt=to_txt(txt_or_fn_or_lpdf)
+    if full_txt is None: return
+    
+    if verse==True or prose==False:
+        linebreaks=True
+        phrasebreaks=False
+    elif prose==True or verse==False:
+        linebreaks=False
+        phrasebreaks=True
+
+    df=pd.DataFrame()
+    dfl=[]
+    to_lines_now = to_lines_str if linebreaks else to_sents_str
+    kwargs['lang']=lang
+    kwargs['incl_alt']=incl_alt
+    
+        
+    objs=[
+        dict(
+            stanza_i=stanza_i+1,
+            line_i=line_i+1,
+            linepart_i=linepart_i+1,
+            linepart_str=linepart_txt
+        )
+        for stanza_i,stanza_txt in enumerate(to_stanzas_str(full_txt))
         for line_i,line_txt in enumerate(to_lines_now(stanza_txt))
         for linepart_i,linepart_txt in enumerate(
             to_lineparts(
                 line_txt,
-                seps=linepart_seps,
-                min_len=linepart_min_len,
-                max_len=linepart_max_len
+                seps=seps,
+                min_len=min_len,
+                max_len=max_len
             ) if phrasebreaks else [line_txt]
         )
     ]
-    return pd.DataFrame(objs)
+    return objs
 
 
-
+SIZELIM=53687091200
 
 def get_db_scan(path=None):
     if not path or not os.path.exists(path): path=PATH_DB_SCAN
-    with dc.Cache(path) as of: return of
+    return get_db(path=path)
 
 def get_db_parse(path=None):
     if not path or not os.path.exists(path): path=PATH_DB_PARSE
-    with dc.Cache(path) as of: return of
+    return get_db(path=path)
 
 def get_db(path=None):
     if not path or not os.path.exists(path): path=PATH_DB
-    with dc.Cache(path) as of: return of
+    return dc.Cache(path,size_limit=SIZELIM)
+
+
+def get_linepart_str(lpdf_or_str):
+    if type(lpdf_or_str)==str: return lpdf_or_str
+    elif type(lpdf_or_str)==pd.DataFrame:
+        lpdf=resetindex(lpdf_or_str)
+        return ''.join(lpdf[(lpdf.word_ipa_i==1) & (lpdf.syll_i==1)].word_str)
+    return ''
+
+def get_linepart_df(lpdf_or_str,**kwargs):
+    if type(lpdf_or_str)==pd.DataFrame: return resetindex(lpdf_or_str)
+    elif type(lpdf_or_str)==str: return resetindex(get_scansion(lpdf_or_str,**kwargs))
+    return pd.DataFrame()
+
 
 
 def get_line_data(linepart_txt,**kwargs):
-    df=line2df(linepart_txt,**kwargs)
-    df=df[df.syll_i!=0]
-    df['linepart_num_syll']=len(df[df['word_ipa_i']==1])
-    df['linepart_num_monosyll']=sum([
-        1 if len(g)==1 else 0
-        for i,g in df[df.word_ipa_i==1].groupby('word_i')
-    ])
-    assign_proms(df)
-    # df=setindex(df)
-    return df
+    try:
+        df=line2df(linepart_txt,**kwargs)
+        df['word_i']=df['word_i'].rank(method='dense').apply(int)
+        df=df[df.syll_i!=0]
+        # df['linepart_str']=linepart_txt
+        df['linepart_num_syll']=len(df[df['word_ipa_i']==1])
+        df['linepart_num_monosyll']=sum([
+            1 if len(g)==1 else 0
+            for i,g in df[df.word_ipa_i==1].groupby('word_i')
+        ])
+        assign_proms(df)
+        # df=setindex(df)
+        return df
+    except Exception as e:
+        return pd.DataFrame()
 
-def get_scansion(linepart_txt,path=None,**kwargs):
-    lptxt=linepart_txt.strip()
-    key=f'{lptxt}{DBSEP}scan'
-    with get_db(path=path) as d:
-        if not key in d:
-            d[key]=get_line_data(lptxt,**kwargs)
-        return d[key]
-
-
-
-def do_scan_iter(dfx):
-    ltxts=getcol(dfx,'linepart_str')
-    return get_scansion(ltxts.iloc[0].strip()) if len(ltxts) else pd.DataFrame()
+def get_scansion(linepart_txt,path=None,cache=True,force=False,**kwargs):
+    if type(linepart_txt)==pd.DataFrame:
+        return linepart_txt
     
-
-def scan_iter(df_or_txt_or_fn,num_proc=1,**kwargs):
-    if type(df_or_txt_or_fn) not in {pd.DataFrame,str}: return
-
-    if type(df_or_txt_or_fn)!=pd.DataFrame:
-        txt=to_txt(df_or_txt_or_fn)
-        df=lineparts(txt,**kwargs)
+    # lpl=linepart_txt.strip().split()
+    #lptxt=' '.join(lpl)
+    #lpkey='_'.join(lpl)
+    lptxt=linepart_txt#.strip().replace(' ','_')
+    lpkey=lptxt
+    key=f'{lpkey}{DBSEP}scan'
+    if not force and cache:
+        with get_db(path=path) as d:
+            if not key in d:
+                d[key]=get_line_data(lptxt,**kwargs)
+            odf=d[key]
     else:
-        df=df_or_txt_or_fn
+        odf=get_line_data(lptxt)
+    
+    if len(odf): odf['linepart_str']=lptxt
+    return setindex(odf)
 
-    dfg=df.groupby(['stanza_i','line_i','linepart_i'])
-    for odf in pmap_iter_groups(do_scan_iter, dfg, num_proc=num_proc):
+
+
+def scan_iter(df_or_txt_or_fn,num_proc=1,lim=None,progress=True,lineparts_ld=[],**kwargs):
+    if not lineparts_ld:
+        lineparts_ld=to_lineparts_ld(df_or_txt_or_fn,**kwargs)
+    iterr_o=pmap_iter(
+        do_scan_iter,
+        lineparts_ld,
+        progress=progress,
+        num_proc=num_proc,
+        desc='Scanning lines'
+    )
+    for i,odf in enumerate(iterr_o):
+        if lim and i>=lim: break
         yield odf
 
-
+        
 def scan(txt_or_fn,**kwargs):
-    odf=pd.DataFrame()
-    try:
-        odf=pd.concat(scan_iter(txt_or_fn,**kwargs))
-        odf=setindex(odf)
-    except ValueError:
-        pass
-    return odf
+    o=list(scan_iter(txt_or_fn,**kwargs))
+    return pd.concat(o) if len(o) else pd.DataFrame()
+
+def do_scan_iter(rowd,**kwargs):
+    lpstr=rowd['linepart_str']
+    odf=get_scansion(lpstr,**kwargs)
+    for k,v in rowd.items(): odf[k]=v
+    return setindex(odf)
+
 
 
 def assign_proms(df):

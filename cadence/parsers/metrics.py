@@ -51,147 +51,123 @@ def get_all_combos(txtdf):
 ITER PARSES
 """
 
+
+# def get_scansion_key(scansion_df_or_str,**kwargs):
+#     sdf=get_scansion(scansion_df_or_str,**kwargs)
+    
+#     # sdf
+#     o=[]
+#     for word_i,wdf in sdf.groupby('word_i'):
+#         x=[]
+#         for word_ipa_i,widf in wdf.groupby('word_ipa_i'):
+#             x+=[widf.word_ipa.iloc[0]]
+#         o+=['/'.join(x)]
+#     ostr='_'.join(o)
+#     return ostr
+
+def get_parse_cache(linepart_str,path=None,**kwargs):
+    #lpdf=get_scansion(linepart_str,**kwargs)
+    lpdf_key=linepart_str#get_scansion_key(lpdf)
+    cs="|".join(sorted(list(kwargs.get("constraints",DEFAULT_CONSTRAINTS))))
+    dbk=f'{lpdf_key}{DBSEP}parse{DBSEP}{cs}'
+    with get_db(path=path) as db:
+        if not dbk in db:
+            db[dbk]=get_parse_nocache(linepart_str,**kwargs)
+        # else: print('from cache:',[dbk])
+        return db[dbk]
+
+def get_parse_nocache(linepart_str,path=None,**kwargs):
+    # print('no cache:',[linepart_str])
+    lpdf=get_scansion(linepart_str,**kwargs)
+    if len(lpdf):
+        pdf=parse_linepartdf(lpdf,**kwargs)
+        # strcols={'word_str', 'syll_str', 'linepart_str'}
+        if len(pdf):
+            # pdf=pdf[[col for col in pdf.columns if col not in strcols]]
+            return pdf
+    return pd.DataFrame()
+
+def get_parse(linepart_str_or_df,path=None,cache=True,force=False,**kwargs):
+    linepart_str = get_linepart_str(linepart_str_or_df)
+    linepart_df = get_linepart_df(linepart_str_or_df)
+        
+    if cache and not force:
+        pdf=get_parse_cache(linepart_str,path=path,**kwargs)
+    else:
+        pdf=get_parse_nocache(linepart_str,path=path,**kwargs)
+            
+    cols1=set(linepart_df.columns)
+    cols2=set(pdf.columns)
+    row=linepart_df.iloc[0]
+    joiner=['word_i','word_ipa_i','syll_i']
+    odf=pdf.merge(linepart_df[(cols1-cols2) | set(joiner)],on=joiner,how='left')
+    if len(odf): odf['linepart_str']=linepart_str
+    return setindex(odf)
+
+    
+def parse_linepartdf(linepartdf,linepart_str=None,**kwargs):
+    odf=resetindex(linepartdf)
+    odf=parse_prosodic_line(odf,**kwargs)
+    odf=postproc_dfline(odf,**kwargs)
+    if 'index' in odf.columns: odf=odf.drop('index',1)
+    return odf
+
+
+def do_parse_iter(obj):
+    metad,attrs = obj
+    lpstr=metad.get('linepart_str')
+    odf=get_parse(lpstr,**attrs)
+    for k,v in metad.items(): odf[k]=v
+    return setindex(odf)
+
+
+def parse_iter(
+        txt_or_txtdf,
+        num_proc=DEFAULT_NUM_PROC,
+        progress=True,
+        lim=None,
+        shuffle=False,
+        lineparts_ld=None,
+        **kwargs
+    ):
+    try:
+        if not lineparts_ld: lineparts_ld=lineparts(txt_or_txtdf, **kwargs)
+        objs = [(d,kwargs) for d in lineparts_ld]
+        if shuffle: random.shuffle(objs)
+        if lim: objs=objs[:lim]
+        proc_gen=pmap_iter(do_parse_iter, objs, num_proc=num_proc, progress=progress)
+        yield from proc_gen
+    except AssertionError:
+    # except (KeyError,AttributeError) as e:
+        # print('!!',e)
+        yield pd.DataFrame()
+
 def parse(txt_or_txtdf,*x,verbose=False,**y):
     """
     Return parses
     """
     o=list(parse_iter(txt_or_txtdf,*x, verbose=verbose, **y))
     odf=pd.concat(o) if len(o) else pd.DataFrame()
-    odf=odf.sort_index()
-    #if verbose:
-    #    printm(f'{info_parses(odf)}')
     return odf
 
 
-def parse_iter(
-        txt_or_txtdf,
-        by_line=False,
-        by_syll=True,
-        only_best=False,
-        only_unbounded=True,
-        num_proc=DEFAULT_NUM_PROC,
-        progress=True,
-        force=False,
-        verbose=False,
-        **kwargs):
-    """
-    Return parses as iter
-    """
-    if by_syll: by_line=False
-    elif by_line: by_syll=False
-    yield from iter_parsed_lines(
-        txt_or_txtdf,
-        num_proc=num_proc,
-        progress=progress,
-        by_line=by_line,
-        only_best=only_best,
-        only_unbounded=only_unbounded,
-        force=force,
-        verbose=verbose,
-        **kwargs
-    )
-
-def iter_parsed_lines(
-        txt_or_txtdf,
-        num_proc=DEFAULT_NUM_PROC,
-        progress=False,
-        by_line=False,
-        only_best=False,
-        only_unbounded=True,
-        verbose=False,
-        rebound_parses=False,
-        verse=None,
-        prose=None,
-        **kwargs
-        ):
-    # preproc
-    preproc_gen = iter_lines(
-        txt_or_txtdf,
-        progress=progress if not verbose else False,
-        desc='Metrically parsing lines',
-        verse=verse,
-        prose=prose,
-        **kwargs#.get('kwargs',{})
-    )
-    
-    # proc
-    kwargs['only_unbounded']=only_unbounded
-    kwargs['engine']=ENGINE
-    proc_gen = parmap(
-        do_iter_parsed_lines,
-        preproc_gen,
-        N=num_proc,
-        kwargs=kwargs
-    )
-    
-    # postproc
-    postproc_func = partial(
-        postproc_dfline,
-        by_line=by_line,
-        only_best=only_best,
-        # only_unbounded=only_unbounded,
-        verbose=verbose,
-        rebound_parses=rebound_parses,
-        verse=verse,
-        prose=prose,
-        **kwargs
-    )
-    postproc_gen = map(postproc_func, proc_gen)
-    
-    # yield from total queue
-    yield from postproc_gen
-
-def do_iter_parsed_lines(
-        linedf,
-        num_proc=DEFAULT_NUM_PROC,
-        force=True,
-        cache=False,
-        verbose=False,
-        **kwargs):
+def parse_iter_lines(txt_or_txtdf,**kwargs):
     o=[]
-    if not 'linepart_i' in set(linedf.columns) and not 'linepart_i' in set(linedf.index.names): return pd.DataFrame()
-    for linepart_i,linepartdf in sorted(linedf.groupby('linepart_i')):
-        odf=parse_linepartdf(linepartdf,**kwargs)
-        o+=[odf]
-    odf=pd.concat(o) if len(o) else pd.DataFrame()  
-    return odf
-    
-def get_linepart_str_from_df(linepartdf):
-    ltxts=getcol(linepartdf,'linepart_str')
-    if len(ltxts):
-        lpstr=ltxts.iloc[0].strip()
-    else:
-        wordl=getcol(linepartdf,'word_str')
-        if len(wordl):
-            lpstr=' '.join(wordl).strip()
-    return ''
+    last=None
+    joiner=['stanza_i','line_i']
+    iterr=parse_iter(txt_or_txtdf,**kwargs)
+    for pdf in iterr:
+        if not len(pdf): continue
+        pdf=resetindex(pdf)
+        row=pdf.iloc[0]
+        pdfkey=tuple([row[k] for k in joiner])
+        if (last is not None) and (last!=pdfkey) and len(o):
+            yield setindex(pd.concat(o))
+            o=[]
+        o+=[pdf]
+        last=pdfkey
+    if len(o): yield setindex(pd.concat(o))
 
-def parse_linepartdf(linepartdf,path=None,**kwargs):
-    lpstr=get_linepart_str_from_df(linepartdf)
-    cs="|".join(sorted(list(kwargs.get("constraints",DEFAULT_CONSTRAINTS))))
-    dbk=f'{lpstr}{DBSEP}parse{DBSEP}{cs}{DBSEP}{kwargs.get("engine")}'
-    
-    with get_db(path=path) as db:
-        if not dbk in db:
-            # odf
-            if kwargs.get('engine')==ENGINE_PROSODIC:
-                odf=parse_prosodic_line(
-                    linepartdf,
-                    **kwargs
-                )
-            else:
-                o=list(iter_parsed_combos(
-                    linepartdf,
-                    num_proc=1,
-                    progress=False,
-                    **kwargs
-                ))  
-                odf=pd.concat(o) if len(o) else pd.DataFrame()
-            db[dbk]=odf
-        else:
-            odf=db[dbk]
-        return odf
-    # 
 
 def iter_parsed_combos(
         txtdf,
@@ -243,6 +219,7 @@ def parse_prosodic_line(
         use_espeak=True,
         constraints=DEFAULT_CONSTRAINTS,
         constraint_weights=None,
+        parse_maxsec=DEFAULT_PARSE_MAXSEC,
         set_index=True,
         **kwargs):
     p.config['resolve_optionality']=1
@@ -255,6 +232,8 @@ def parse_prosodic_line(
     
     meter_obj=p.config['meters'][meter]
     config=default_config=meter_obj.config
+    config['parse_maxsec']=parse_maxsec
+    config['print_to_screen']=False
 
 
     if constraints is not None:
@@ -404,17 +383,19 @@ def prosodic_line_to_data(
 
     return odf
 
-def rank_parses(dfparses):
-    odf=resetindex(dfparses)
-    odf[TOTALCOL]=odf[[col for col in odf.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
-    odf['is_troch']=odf.parse.apply(lambda x: int(x and x[0]=='s'))
-    newrankdf=odf[['parse_i',TOTALCOL]].groupby('parse_i').sum().sort_values(TOTALCOL).reset_index()
-    # newrankdf['ranks']=newrankdf[TOTALCOL].rank(method='dense')
-    # newrankdf=newrankdf.sort_values('ranks')
-    # newrankdf=newrankdf.sort_values(TOTAL_COL)
-    newrankdf['ranks_int']=pd.Series(list(range(len(newrankdf))))+1
-    newrank=dict(zip(newrankdf.parse_i, newrankdf.ranks_int))
-    odf['parse_rank']=odf.parse_i.apply(lambda x: int(newrank.get(x,0)))
+
+def rank_parses(dfparses,**kwargs):
+    odf=dfparses
+    try:
+        odf[TOTALCOL]=odf[[col for col in odf.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
+        odf['is_troch']=odf['parse'].apply(lambda x: int(x and x[0]=='s'))
+        newrankdf=odf[['parse_i',TOTALCOL]].groupby('parse_i').sum().sort_values(TOTALCOL).reset_index()
+        newrankdf['ranks_int']=pd.Series(list(range(len(newrankdf))))+1
+        newrank=dict(zip(newrankdf.parse_i, newrankdf.ranks_int))
+        odf['parse_rank']=odf.parse_i.apply(lambda x: int(newrank.get(x,0)))
+        odf['num_parses']=odf['parse_rank'].max()
+    except (KeyError,AttributeError) as e:
+        pass
     return odf
 
 
@@ -425,31 +406,16 @@ def postproc_dfline(
         verbose_bylinepart=True,
         only_best=False,
         only_unbounded=False,
-        rebound_parses=False,
+        rebound=False,
+        rank=True,
         verse=None,
         prose=None,
         **kwargs):
-    #display(dfline)
-    o=[]
-
-    if not 'linepart_i' in set(dfline.columns) and not 'linepart_i' in set(dfline.index.names): return pd.DataFrame()
-    for i,dfg in sorted(dfline.groupby('linepart_i')):
-        dfg=rank_parses(dfg)
-        if rebound_parses: dfg=bound_parses(dfg,only_unbounded=only_unbounded)
-        if verbose and verbose_bylinepart and not verse: display(show_parse(dfg))
-        o+=[dfg]
-    if verbose and verbose_bylinepart and not verse: print()
-    if verbose and (not verbose_bylinepart or verse):
-        odf=pd.concat(o) if len(o) else pd.DataFrame()
-        display(show_parse(odf))
-    if by_line:
-        o=[to_lines(dfg) for dfg in o]
-    odf=pd.concat(o) if len(o) else pd.DataFrame()
-    
-    if only_best and ('parse_rank' in set(odf.index.names) or 'parse_rank' in set(odf.columns)):
-        # odf=odf[odf.parse_rank==1]
-        odf=odf.query('parse_rank==1')
-    odf=setindex(odf)
+    odf=dfline
+    if rebound: odf=bound_parses(odf,only_unbounded=only_unbounded)
+    if rank: odf=rank_parses(odf,**kwargs)
+    if only_best: odf=odf[odf.parse_rank==1]
+    if by_line: odf=to_lines(odf)
     return odf
 
 def is_bounded(pdf1,pdf2,totalcol=TOTALCOL,cprefix='*'):
@@ -523,6 +489,7 @@ def bound_parses(odforig,only_unbounded=False):
 Summarizing by line
 """
 
+
 def to_lines(parses,totalcol=TOTALCOL,rankcol=PARSERANKCOL, agg=sum):
     # parses
     rparses=resetindex(parses)
@@ -537,15 +504,15 @@ def to_lines(parses,totalcol=TOTALCOL,rankcol=PARSERANKCOL, agg=sum):
               ]
     aggfunc = dict((vc,sum) for vc in valcols)
     # medians=['combo_num_syll','parse_num_syll','line_num_syll','parse_num_pos']
-    medians = [col for col in rcols if '_num_' in col]
+    medians = [col for col in rcols if '_num_' in col or col=='num_parses']
     for mx in medians:
         if mx in rcols:
             aggfunc[mx]=np.median
-    lgby=['stanza_i','line_i','linepart_i']
+    lgby=['stanza_i','line_i','linepart_i','linepart_str']
     try:
         linesums = rparses.groupby(pkcols).agg(aggfunc)
     except Exception as e:
-        print('!!',e)
+        # print('!!',e)
         return pd.DataFrame()
     return linesums
     
@@ -619,7 +586,7 @@ def show_parse_md(dfparse):
     
     # spltr='\n * '
     # o=spltr + spltr.join(mdline)#.replace('</u> <u>',' ')
-    o=''.join(mdline)#.replace('</u> <u>',' ')
+    o=' | '.join(mdline)#.replace('</u> <u>',' ')
     return o
 
 def get_best_parse(dfparse):

@@ -6,6 +6,7 @@ sys.path.append('/home/ryan/github/prosodic')
 import warnings
 warnings.filterwarnings('ignore')
 import prosodic as p
+from string import punctuation
 
 from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle,shutil
@@ -28,15 +29,19 @@ import diskcache as dc
 ENGINE_PROSODIC='prosodic'
 ENGINE_CADENCE='cadence'
 ENGINE=ENGINE_PROSODIC
+DEFAULT_PARSE_MAXSEC=30
+DEFAULT_LINE_LIM=None
 
 MIN_WORDS_IN_PHRASE=2
 MAX_WORDS_IN_PHRASE=15
-SEPS_PHRASE=set(',:;–—()[].!?')
+SEPS_PHRASE=set(',:;–—()[].!?"“”’‘')
+SEP_STANZA='\n\n'
+SEP_LINE='\n'
 DEFAULT_LANG='en'
 PATH_HERE=os.path.abspath(os.path.dirname(__file__))
 PATH_CODE=PATH_HERE
 PATH_REPO=os.path.abspath(os.path.join(PATH_CODE,'..'))
-PATH_HOME=os.path.join(os.path.expanduser('~'),'.cadence')
+PATH_HOME=os.path.join(os.path.expanduser('~'),'cadence_data')
 PATH_DATA=os.path.join(PATH_HOME,'data')
 # PATH_DATA=os.path.join(PATH_REPO,'data')
 DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
@@ -60,6 +65,8 @@ SBY=csby=['combo_i','word_i','syll_i']
 PARSERANKCOL='parse_rank'
 
 LINEKEY=[
+    'id_author',
+    'id',
     'stanza_i',
     'line_i',
     'line_str',
