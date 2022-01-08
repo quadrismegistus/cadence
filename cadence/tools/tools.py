@@ -1,7 +1,16 @@
 from ..imports import *
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
-
+### convenient objs
+def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
+    return ', '.join(
+        f'{k}={v}'
+        for k,v in kwargs.items()
+        if k not in bad_keys
+    )
+    
 
 def getcol(df,col):
     if col in set(df.columns):
@@ -13,16 +22,18 @@ def getcol(df,col):
 
 
 def split_punct(tok):
+    if not tok: return ('','','')
     toks=tokenize_agnostic(tok)
     wordil=[]
     
     try:
         for i,x in enumerate(toks):
-            if any(y.isalpha() for y in x): wordil+=[i]
+            if any(y.isalpha() for y in x):
+                wordil+=[i]
         pref=''.join([
             x
             for i,x in enumerate(toks)
-            if i<wordil[-1]
+            if i<wordil[0]
         ])
         suf=''.join([
             x
@@ -96,14 +107,14 @@ def tokenize_nltk(txt,lower=False):
 
 # def tokenize(txt,*x,**y):
 # 	return tokenize_fast(txt,*x,**y)
-def tokenize_nice_iter(s,sep=' ',**kwargs):
+def tokenize_nice_iter2(s,sep=' ',**kwargs):
     s=s.replace('\r\n','\n')
     s=s.replace('\r','\n')
     s=s.replace('\n',' \n ')
     s=s.replace('\t',' \t ')
     wnow=''
-    for w in s.split(sep):
-        w2=w+sep
+    for i,w in enumerate(s.split(sep)):
+        w2=sep+w if i else w
         if w.strip(): # word
             word=wnow+w2
             yield word
@@ -111,7 +122,7 @@ def tokenize_nice_iter(s,sep=' ',**kwargs):
         else:
             wnow+=w2
 
-def tokenize_nice(s,**kwargs): return list(tokenize_nice_iter(s,**kwargs))
+def tokenize_nice2(s,**kwargs): return list(tokenize_nice_iter2(s,**kwargs))
 def to_words_str(s,**kwargs): return tokenize_nice(s,**kwargs)
 
 def subfinder(mylist, pattern):

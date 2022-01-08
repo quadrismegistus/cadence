@@ -12,7 +12,7 @@ from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle,shutil
 from collections import defaultdict,Counter
 import subprocess,multiprocessing as mp
-mp.set_start_method('fork')
+mp.set_start_method('spawn')
 from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
@@ -31,11 +31,13 @@ ENGINE_CADENCE='cadence'
 ENGINE=ENGINE_PROSODIC
 DEFAULT_PARSE_MAXSEC=30
 DEFAULT_LINE_LIM=None
+DEFAULT_PROCESSORS={'tokenize':'combined'}
 
 MIN_WORDS_IN_PHRASE=2
 MAX_WORDS_IN_PHRASE=15
 SEPS_PHRASE=set(',:;–—()[].!?"“”’‘')
 SEP_STANZA='\n\n'
+SEP_PARA='\n\n'
 SEP_LINE='\n'
 DEFAULT_LANG='en'
 PATH_HERE=os.path.abspath(os.path.dirname(__file__))
@@ -43,6 +45,8 @@ PATH_CODE=PATH_HERE
 PATH_REPO=os.path.abspath(os.path.join(PATH_CODE,'..'))
 PATH_HOME=os.path.join(os.path.expanduser('~'),'cadence_data')
 PATH_DATA=os.path.join(PATH_HOME,'data')
+if not os.path.exists(PATH_DATA): os.makedirs(PATH_DATA)
+PATH_DB_SYLLABIFY=os.path.join(PATH_DATA,'syllabified.dc')
 # PATH_DATA=os.path.join(PATH_REPO,'data')
 DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
 
@@ -67,32 +71,30 @@ PARSERANKCOL='parse_rank'
 LINEKEY=[
     'id_author',
     'id',
-    'stanza_i',
-    'line_i',
-    'line_str',
-    'linepart_i',#'linepart_str',
-    'linepart_str',
-    'linepart_end_str',
+    'para_i','stanza_i',
+    'para_start_char','para_end_char',
+    'sent_i','sentpart_i',
+    'line_i','line_str',
+    'linepart_i','linepart_str','linepart_end_str',
     
-    
-    PARSERANKCOL,
-    #'parse_str',
-    'is_troch',
-    'parse_i',
-    'parse',
-    # 'combo_stress',
-    'parse_str',
+    PARSERANKCOL,'is_troch','parse_i','parse','parse_str',
 
     
-    'combo_stress',
-    'combo_ipa',
-    'combo_i',
-#     'combo_i','combo_stress','combo_ipa',
+    'combo_stress','combo_ipa','combo_i',
+    
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
-    'word_i','word_str','word_ipa_i','word_ipa',
+    
+    'word_i','word_pref','word_str','word_ipa_i','word_ipa',
+    'word_lemma','word_upos','word_xpos','word_deprel','word_head',
+    'word_constituency',
+    'word_start_char','word_end_char',
+    
     'syll_i','combo_syll_i','syll_str','syll_ipa','syll_stress','syll_weight',
+    
     'parse_syll_i','parse_syll',
+
+
 ]
 PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY

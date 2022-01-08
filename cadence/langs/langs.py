@@ -1,7 +1,13 @@
 from ..imports import *
 from .english import scan as en_scan
+from .english import get_df
+SYLLABIFY_DF_D={}
+
 CODE2LANG = {
     'en':en_scan
+}
+CODE2LANG_SYLLABIFY={
+    'en':get_df,
 }
 
 def to_lang(lang_code=None):
@@ -17,8 +23,91 @@ def get_d_ipa(fn=PATH_IPA_FEATS):
 
 
 
+def assign_proms(df):
+    # set proms
+    df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
+    df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
+    df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
+    df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
+
+    df['prom_strength']=[
+        x
+        for i,df_word in df.groupby(['word_i','word_ipa_i'])
+        for x in getstrength(df_word)
+    ]
+    df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
+    df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
+    df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
+    df['is_light']=(df['prom_weight']==0).apply(np.int32)
+    df['is_peak']=(df['prom_strength']==1).apply(np.int32)
+    df['is_trough']=(df['prom_strength']==0).apply(np.int32)
+
+
+
+def syllabify_df(idf,num_proc=1,lang=DEFAULT_LANG,**kwargs):
+    idfwords=list(getcol(idf,'word_str'))
+    idfwordkey=(lang, tuple(idfwords))
+    od={}
+    word_strs=list(set(getcol(idf,'word_str')))
+    o=[syllabify(word_str,**kwargs) for word_str in word_strs]
+    odf=pd.concat(o).fillna(0) if len(o) else pd.DataFrame()
+    if len(odf):
+        odf=resetindex(idf).merge(odf,on='word_str',how='outer')
+        for col in odf.columns:
+            if col.endswith('_i') or col.startswith('is_'):
+                odf[col]=odf[col].fillna(0).apply(int)
+            elif col.endswith('_ipa') or col.endswith('_str'):
+                odf[col]=odf[col].fillna('')
+        assign_proms(odf)
+        odf=setindex(odf)
+        return odf
+    return idf
+    
+
+
+
+
+def syllabify(word_str,lang=DEFAULT_LANG,**kwargs):
+    global SYLLABIFY_DF_D
+    key=(lang,word_str)
+
+    if key in SYLLABIFY_DF_D: return SYLLABIFY_DF_D[key]
+    
+    odf=None
+    with dc.Cache(PATH_DB_SYLLABIFY) as db:
+        if not key in db:
+            func=CODE2LANG_SYLLABIFY[lang]
+            # eprint(f'Getting word via {func}')
+            odf=func(word_str, **kwargs)
+            db[key]=odf#.sample(frac=1)
+        else:
+            odf=db[key]
+    # if odf is not None: assign_proms(odf)
+    SYLLABIFY_DF_D[key]=odf
+    return odf
+
+
+
+
 def to_phons(syll_ipa):
     pass
+
+def to_int(x):
+    try:
+        xint=int(x)
+        if x==xint:
+            return xint
+    except ValueError:
+        pass
+    return x
+
+def nice_int(odf):
+    for col in odf.columns:
+        if col.endswith('_i') or col.startswith('is_'):
+            odf[col]=pd.to_numeric(odf[col], errors='coerce', downcast='integer')
+    return odf
+
+
 
 def line2df(line_txt,
         lang=DEFAULT_LANG,

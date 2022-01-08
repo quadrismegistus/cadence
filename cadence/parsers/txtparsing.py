@@ -284,6 +284,9 @@ def get_linepart_df(lpdf_or_str,**kwargs):
 
 
 
+
+
+
 def get_line_data(linepart_txt,**kwargs):
     try:
         df=line2df(linepart_txt,**kwargs)
@@ -351,24 +354,24 @@ def do_scan_iter(rowd,**kwargs):
 
 
 
-def assign_proms(df):
-    # set proms
-    df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
-    df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
-    df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
-    df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
+# def assign_proms(df):
+#     # set proms
+#     df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
+#     df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
+#     df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
+#     df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
 
-    df['prom_strength']=[
-        x
-        for i,df_word in df.groupby(['word_i','word_ipa_i'])
-        for x in getstrength(df_word)
-    ]
-    df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
-    df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
-    df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
-    df['is_light']=(df['prom_weight']==0).apply(np.int32)
-    df['is_peak']=(df['prom_strength']==1).apply(np.int32)
-    df['is_trough']=(df['prom_strength']==0).apply(np.int32)
+#     df['prom_strength']=[
+#         x
+#         for i,df_word in df.groupby(['word_i','word_ipa_i'])
+#         for x in getstrength(df_word)
+#     ]
+#     df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
+#     df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
+#     df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
+#     df['is_light']=(df['prom_weight']==0).apply(np.int32)
+#     df['is_peak']=(df['prom_strength']==1).apply(np.int32)
+#     df['is_trough']=(df['prom_strength']==0).apply(np.int32)
 
 
 def get_info_byline(txtdf):
