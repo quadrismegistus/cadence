@@ -1,5 +1,9 @@
 from ..imports import *
 
+
+def clean_text(txt):
+    return txt.replace('\r\n','\n').replace('\r','\n')
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
@@ -11,6 +15,19 @@ def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
         if k not in bad_keys
     )
     
+
+def to_blosc(obj):
+    import pickle,blosc
+    binary=pickle.dumps(obj)
+    compressed=blosc.compress(binary)
+    return compressed
+    
+def from_blosc(compressed):
+    import pickle,blosc
+    binary=blosc.decompress(compressed)
+    obj=pickle.loads(binary)
+    return obj
+
 
 def getcol(df,col):
     if col in set(df.columns):
@@ -538,3 +555,8 @@ def read_df(ifn,key='',**attrs):
 		return pd.read_hdf(ifn, key=key,**attrs)
 	else:
 		raise Exception(f'[save_df()] What kind of df is this: {ifn}')
+
+
+
+def read_url(url):
+    return requests.get(url).content.decode('utf-8')

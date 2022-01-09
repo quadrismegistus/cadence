@@ -12,7 +12,8 @@ from tqdm import tqdm
 import pandas as pd,numpy as np,random,json,pickle,shutil
 from collections import defaultdict,Counter
 import subprocess,multiprocessing as mp
-mp.set_start_method('spawn')
+# mp.set_start_method('spawn')
+mp.set_start_method('fork')
 from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
@@ -24,6 +25,7 @@ logging.Logger.manager.loggerDict['sqlitedict'].disabled=True
 from parmapper import parmap
 from functools import partial
 import diskcache as dc
+import requests
 
 # constants
 ENGINE_PROSODIC='prosodic'
@@ -45,7 +47,9 @@ PATH_CODE=PATH_HERE
 PATH_REPO=os.path.abspath(os.path.join(PATH_CODE,'..'))
 PATH_HOME=os.path.join(os.path.expanduser('~'),'cadence_data')
 PATH_DATA=os.path.join(PATH_HOME,'data')
+PATH_TXTS=os.path.join(PATH_HOME,'txts')
 if not os.path.exists(PATH_DATA): os.makedirs(PATH_DATA)
+if not os.path.exists(PATH_TXTS): os.makedirs(PATH_TXTS)
 PATH_DB_SYLLABIFY=os.path.join(PATH_DATA,'syllabified.dc')
 # PATH_DATA=os.path.join(PATH_REPO,'data')
 DATA_URL='https://www.dropbox.com/s/fywmqrlpemjf43c/data_cadence.zip?dl=1'
@@ -85,7 +89,7 @@ LINEKEY=[
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
     
-    'word_i','word_pref','word_str','word_ipa_i','word_ipa',
+    'word_i','word_pref','word_str','word_tok','word_ipa_i','word_ipa',
     'word_lemma','word_upos','word_xpos','word_deprel','word_head',
     'word_constituency',
     'word_start_char','word_end_char',
@@ -130,6 +134,19 @@ Through caverns measureless to man
 line=txt.split('\n')[0]
 
 APPLY_POSTHOC_CONSTRAINTS=False
+WORD_TOKDF={}
+
+
+URLS=dict(
+    prideprej='https://www.gutenberg.org/files/1342/1342-0.txt'
+)
+
+NLP_PARSE_POSTAG=True
+NLP_PARSE_TOKENIZE=True
+NLP_PARSE_CONSTITUENCY=True
+NLP_PARSE_DEPPARSE=True
+SHUFFLE_PARAS=True
+LIM_PARAS=10
 
 
 # local imports
@@ -142,3 +159,4 @@ from .cadence import *
 
 # check
 check_basic_config()
+

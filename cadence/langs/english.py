@@ -68,7 +68,7 @@ def get_df(token,**kwargs):
 def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
     # not real?
     token_nice=token
-    token = zero_punc(token).lower()
+    # token = zero_punc(token).lower()
     if not token: return []
     # get ipas
     cache = get_cache()
@@ -116,7 +116,8 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
             results_ld.append({
                 'word_ipa_i':ipa_i+1,
                 'syll_i':si+1,
-                'word_str':token_nice,
+                # 'word_str':token_nice,
+                'word_tok':tokenl,
                 'word_ipa':ipa,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
