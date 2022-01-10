@@ -3,6 +3,16 @@ from .lexconvert import convert as lexconvert
 import nltk
 
 
+def ipa_to_stress(syl_ipa,numeric=True):
+    if not syl_ipa or type(syl_ipa)!=str:
+        return np.nan if numeric else ''
+    elif syl_ipa[0]=="'":
+        return 1.0 if numeric else 'P'
+    elif syl_ipa[0]== "`":
+        return 0.5 if numeric else 'S'
+    else:
+        return 0.0 if numeric else 'U'
+
 
 Pyphen = None
 
@@ -44,8 +54,6 @@ def get_special_cases():
 """
 The only necessary functions
 """
-
-
 
 def scan(line,incl_alt=True,**y):
     o=[
@@ -119,9 +127,12 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
                 # 'word_str':token_nice,
                 'word_tok':tokenl,
                 'word_ipa':ipa,
+                'word_nsyll':num_sylls,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
-                'is_funcword':is_funcword_now
+                'syll_stress':ipa_to_stress(syll_ipa,numeric=False),
+                'prom_stress':ipa_to_stress(syll_ipa,numeric=True),
+                'word_isfunc':is_funcword_now
             })
     return results_ld
 

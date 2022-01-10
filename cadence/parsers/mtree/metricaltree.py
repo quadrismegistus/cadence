@@ -5,7 +5,7 @@
 #9/15 3:30-6:30 <- taken care of?
 #11/25 eh, like 30 mins
 
-import os,sys
+import os
 from collections import defaultdict
 import pickle as pkl
 import numpy as np

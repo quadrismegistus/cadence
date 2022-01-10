@@ -67,6 +67,7 @@ DEFAULT_NUM_PROC=1
 #mp.cpu_count()//2# - 1
 
 DEFAULT_METER='default_english'
+COLS_JOINER=['para_i','sent_i','word_i']
 
 KEEP_BEST=1
 SBY=csby=['combo_i','word_i','syll_i']
@@ -77,9 +78,14 @@ LINEKEY=[
     'id',
     'para_i','stanza_i',
     'para_start_char','para_end_char',
-    'sent_i','sentpart_i',
-    'line_i','line_str',
+    'sent_i'] + [
+        f'sent_depth{i}' for i in range(1,10)
+    ] + [
+        # 'word_i',
+    'sentpart_i',
     'linepart_i','linepart_str','linepart_end_str',
+
+    'line_i','line_str',
     
     PARSERANKCOL,'is_troch','parse_i','parse','parse_str',
 
@@ -89,7 +95,8 @@ LINEKEY=[
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
     
-    'word_i','word_pref','word_str','word_tok','word_ipa_i','word_ipa',
+    'word_i',
+    'word_pref','word_str','word_tok','word_ipa_i','word_ipa',
     'word_lemma','word_upos','word_xpos','word_deprel','word_head',
     'word_constituency',
     'word_start_char','word_end_char',
@@ -145,8 +152,12 @@ NLP_PARSE_POSTAG=True
 NLP_PARSE_TOKENIZE=True
 NLP_PARSE_CONSTITUENCY=True
 NLP_PARSE_DEPPARSE=True
-SHUFFLE_PARAS=True
+SHUFFLE_PARAS=False
 LIM_PARAS=10
+
+joyce_path = os.path.join(PATH_TXTS,'joyce_oxen.txt')
+joyce_s = s = 'Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed.'
+
 
 
 # local imports

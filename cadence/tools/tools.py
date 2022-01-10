@@ -1,11 +1,23 @@
 from ..imports import *
 
+def to_token(toktxt,**y):
+    #return split_punct(toktxt.lower())[1]
+    return zero_punc(toktxt).lower()
+
+
+
+def nice_int_df(odf):
+    for col in odf.columns:
+        if col.endswith('_i') or col.startswith('is_'):
+            odf[col]=pd.to_numeric(odf[col], errors='coerce', downcast='integer')
+    return odf
+
 
 def clean_text(txt):
     return txt.replace('\r\n','\n').replace('\r','\n')
 
 def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    print('\n', *args, file=sys.stderr, end='\n', **kwargs)
 
 ### convenient objs
 def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
@@ -170,10 +182,12 @@ def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
     for x in key:
         if not x in set(cols) and x in set(df.columns):
             cols.append(x)
-
+    nice_int_df(df)
     odf=df.set_index(cols)
     if sort: odf=odf.sort_index()
-    odf=odf[[col for col in odf.columns if not col in badcols and col not in key]]
+    odf=odf[
+        sorted([col for col in odf.columns if not col in badcols and col not in key])
+    ]
 
     constraints = [c for c in odf.columns if c.startswith('*')]
     resortcols = ['*total'] + [c for c in constraints if c!='*total']

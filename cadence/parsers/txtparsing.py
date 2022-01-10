@@ -3,6 +3,17 @@ from ..imports import *
 
 
 
+def getcache_df(self, name, iter_func, index=True, cache=True,**kwargs):
+    d=getattr(self,name)
+    key=kwargs_key(kwargs)
+    if not cache or not key in d:
+        d[key]=pd.DataFrame(iter_func(**kwargs))
+    odf=d[key]
+    try:
+        if len(odf) and index: odf=setindex(odf)
+    except ValueError:
+        pass
+    return odf
 
 # loading txt/strings
 def to_fn_txt(txt_or_fn):
@@ -401,3 +412,25 @@ More sharp to me than spurring to his side;
 For that same groan doth put this in my mind;
 My grief lies onward and my joy behind.
 """
+
+
+
+
+def syllabify_df(df,**kwargs):
+    cols=set(df.columns)
+    if not 'word_tok' in cols and 'word_str' in cols:
+        df['word_tok']=df.word_str.apply(to_token)
+    dfsyll=pd.concat(
+        get_syllable_df(word_tok,index=False,**kwargs)
+        for word_tok in df.word_tok.unique()
+    )
+    odf=df.merge(dfsyll,on='word_tok',how='left')
+
+    ## mtree
+    for col in cols:
+        if col.startswith('mtree_'):
+            odf.loc[
+                ((odf['syll_stress']==0.0) & (odf['word_nsyll']>1)),
+                col
+            ]=np.nan
+    return odf

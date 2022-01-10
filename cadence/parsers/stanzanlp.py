@@ -2,8 +2,8 @@ from ..imports import *
 from .mtree import recurse_tree
 
 NLPD={}
-badcols={'feats','id','text'}
-# badcols={'feats','start_char','end_char','id','text'}
+# badcols={'feats','id','text'}
+badcols={'feats','start_char','end_char','id','text','misc','lemma'}
 
 def get_nlp(
         lang=DEFAULT_LANG,
@@ -21,7 +21,11 @@ def get_nlp(
     global NLPD
 
     if not processors:
-        processors=get_processors(constituency=constituency,depparse=depparse,postag=postag)
+        processors=get_processors(
+            constituency=constituency,
+            depparse=depparse,
+            postag=postag
+        )
     
     procstr=','.join(processors)
     
@@ -34,7 +38,7 @@ def get_nlp(
     key=kwargs_key(kwargs)
 
     if not key in NLPD:
-        eprint('\nLoading NLP model:',kwargs)
+        # eprint('Loading NLP model:',kwargs)
         
         import stanza
         kwargs2={**dict(verbose=verbose), **kwargs}
@@ -75,24 +79,11 @@ def get_processors(
 
 def tokenize_sents_txt(txt,**y): return nltk.sent_tokenize(txt)
 def tokenize_words_txt(txt,**y): return tokenize_nice2(txt)
-def to_token(toktxt,**y):
-    return split_punct(toktxt.lower())[1]
-def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
-    func=CODE2LANG_SYLLABIFY[lang]
-    o_ld=func(word_str,**kwargs)
-    return o_ld
+# def to_token(toktxt,**y):
+#     #return split_punct(toktxt.lower())[1]
+#     return zero_punc(toktxt).lower()
 
-def getcache_df(self, name, iter_func, index=True, cache=True,**kwargs):
-    d=getattr(self,name)
-    key=kwargs_key(kwargs)
-    if not cache or not key in d:
-        d[key]=pd.DataFrame(iter_func(**kwargs))
-    odf=d[key]
-    try:
-        if len(odf) and index: odf=setindex(odf)
-    except ValueError:
-        pass
-    return odf
+
 
 
 def tokenize_sentwords_iter(
@@ -113,8 +104,9 @@ def tokenize_sentwords_iter(
     for sent_i, sent in enumerate(sents):
         tokens=tokenize_words_txt(sent)
         for tok_i,realtok in enumerate(tokens):
-            prefstr,wordstr,sufstr=split_punct(realtok)
-            tokstr=wordstr+sufstr
+            prefstr,wordstr1,sufstr=split_punct(realtok)
+            word_str=wordstr1+sufstr
+            word_tok=to_token(word_str)
             if sep_line in prefstr and realtok.strip(): line_i+=1
             odx_word=dict(
                 para_i=para_i,
@@ -123,8 +115,8 @@ def tokenize_sentwords_iter(
                 line_i=line_i,
                 word_i=tok_i+1,
                 word_pref=prefstr,
-                word_str=tokstr,
-                word_tok=wordstr.lower(),
+                word_str=word_str,
+                word_tok=word_tok,
             )
             yield odx_word
             if set(realtok)&set(seps_phrase): linepart_i+=1
@@ -177,7 +169,17 @@ def get_nlp_doc(doc_ll_or_txt,nlp=None,**kwargs):
     try:
         return nlp(doc_ll_or_txt)
     except Exception as e:
-        eprint(f'!! NLP Parser error: {e}')
+        # eprint(f'!! NLP Parser error: {e}')
+        pass
+
+COLS_RENAMER_NLP=dict(
+    deprel='dep_type',
+    head='dep_head',
+    upos='pos_upos',
+    xpos='pos_xpos',
+    lemma='word_lemma',
+)
+
 
 def get_nlp_doc_wordfeat_df(doc,**kwargs):
     if doc is None: return pd.DataFrame()
@@ -188,15 +190,22 @@ def get_nlp_doc_wordfeat_df(doc,**kwargs):
         ## Get Word Info
         for word_i,word in enumerate(sent.tokens):
             feats=word.to_dict()[0]
-            statd=dict((f'word_{k}',v) for k,v in feats.items() if k not in badcols)
+            statd=dict(
+                # (v,feats[k])
+                # for k,v in COLS_RENAMER_NLP.items()
+                # if k in feats
+                (COLS_RENAMER_NLP.get(k,k), feats[k])
+                for k in feats
+                if k not in badcols
+            )
             for feat in feats.get('feats','').split('|'):
                 if not feat: continue
                 fk,fv=feat.split('=',1)
-                statd[f'word_{fk.lower()}']=fv
+                statd[f'pos_{fk.lower()}']=fv
             dx={
                 'sent_i': sent_i+1,
                 'word_i': word_i+1,
-                'word_str':word.text,
+                # 'word_str':word.text,
                 **statd
             }
             ld.append(dx)
@@ -208,6 +217,15 @@ def get_nlp_doc_constituency_df(doc,**kwargs):
     ld=[]
     sents=doc.sentences
     sentd_orig=None
+
+    depthstrd=Counter()
+    def getdepthstr(lvlstr):
+        lvlstr=lvlstr.split('-',1)[-1]
+        depthstrd[lvlstr]+=1
+        return f'{lvlstr}-{depthstrd[lvlstr]}'
+
+    pathseend={}
+
     for sent_i, sent in enumerate(sents):
         if hasattr(sent,'constituency'):
             if sentd_orig is None:
@@ -219,21 +237,43 @@ def get_nlp_doc_constituency_df(doc,**kwargs):
             senttree=recurse_tree(sent.constituency, node_i=0, path=[])
             for word_i,word_constituency_path in enumerate(senttree):
                 word_constituency_path_str='('.join(word_constituency_path)
+                word_constituency_path_nolvl=[xx.split('-',1)[-1] for xx in word_constituency_path]
+                
+
+
                 constituency_depth=len(word_constituency_path)
                 dx={
                     'sent_i': sent_i+1,
                     'word_i': word_i+1,
                     'word_depth':constituency_depth,
-                    'word_constituency':word_constituency_path_str,
+                    # 'word_constituency':word_constituency_path_str,
                 }
+                max_wc_len=10
+                for wci in range(2,len(word_constituency_path)+1):
+                    if wci>max_wc_len: break
+                    wcpath=word_constituency_path[:wci]
+                    pathseen=tuple(wcpath)
+                    if not pathseen in pathseend: pathseend[pathseen]=f'{word_i+1:03}'
+                    newlevel=pathseend[pathseen]
+                    wcpathstr=f'{newlevel}_{"(".join(wcpath)}'
+                    dx[f'sent_depth{wci-1}']=wcpathstr
                 ld.append(dx)
     return pd.DataFrame(ld).fillna('')
 
 def get_nlp_feats_df(doc,**kwargs):
     df_feats=get_nlp_doc_wordfeat_df(doc,**kwargs)
+    # display(df_feats)
+
     df_const=get_nlp_doc_constituency_df(doc,**kwargs)
-    odf=df_feats.merge(df_const,on=['sent_i','word_i'],how='inner')
-    return odf
+    # display(df_const)
+
+    if len(df_feats) and len(df_const):
+        return df_feats.merge(df_const,on=['sent_i','word_i'],how='inner')
+    elif len(df_feats):
+        return df_feats
+    elif len(df_const):
+        return dc_const
+    return pd.DataFrame()
 
 def tokenize_sentwords_ll(words_ld,**kwargs):
     if not len(words_ld): return []
@@ -256,270 +296,3 @@ def get_sent_id_constituency(sent,hash=True):
 
 
 
-
-# def tokenize_sents_txt(txt): return nltk.sent_tokenize(txt)
-# def tokenize_words_txt(txt): return tokenize_nice2(txt)
-
-# def tokenize_nlp_txt(
-#         txt,
-#         nlp=None,
-#         sentwords=None,
-#         pretokenized=True,
-#         lang=DEFAULT_LANG,
-#         processors=['tokenize'],
-#         **kwargs):
-#     #print(nlp,processors)
-#     if nlp is None:
-#         nlp=get_nlp(
-#             lang=lang,
-#             processors=processors,
-#             tokenize_pretokenized=pretokenized
-#         )
-    
-#     if pretokenized:
-#         return nlp(sentwords)
-#     else:
-#         return nlp(txt)
-
-# def clean_text(txt):
-#     return txt.replace('\r\n','\n').replace('\r','\n')
-
-
-# def tokenize_paras_df(txt,**kwargs):
-#     return pd.DataFrame(tokenize_paras_ld(txt,**kwargs))
-
-
-# def do_tokenize_paras_nlp_iter(row,pretokenized=True,**kwargs):
-#     txt=row['para_str']
-#     tokdf=row['para_tokdf']=tokenize_sentwords(txt,**kwargs)
-#     sentwords=tokenize_sentwords_ll(tokdf)
-#     doc=tokenize_nlp_txt(
-#         txt,
-#         sentwords=sentwords,
-#         pretokenized=True,
-#         **kwargs
-#     )
-#     row['para_doc']=doc
-#     return row
-
-# def tokenize_paras_nlp_iter(
-#         txt,
-#         ld_paras=None,
-#         progress=True,
-#         num_proc=1,
-#         shuffle_paras=False,
-#         lim_paras=None,
-
-#         lang=DEFAULT_LANG,
-#         processors=DEFAULT_PROCESSORS,
-#         pretokenized=True,
-#         **kwargs):
-
-#     #from stanza_batch import batch    
-    
-#     if ld_paras is None: ld_paras=tokenize_paras_ld(txt,**kwargs)
-#     if shuffle_paras: random.shuffle(ld_paras)
-#     if lim_paras: ld_paras=ld_paras[:lim_paras]
-
-#     nlp=get_nlp(lang=lang,processors=processors,tokenize_pretokenized=pretokenized)
-#     kwargs['nlp']=nlp
-#     kwargs['lang']=lang
-#     kwargs['processors']=processors
-#     # kwargs['pretokenized']=pretokenized
-
-#     iterr=pmap_iter(
-#         do_tokenize_paras_nlp_iter,
-#         ld_paras,
-#         num_proc=num_proc,
-#         desc='Scanning paragraphs',
-#         kwargs=kwargs
-#     )
-#     yield from iterr
-
-
-# def tokenize_sentwords_iter(
-#         txt,
-#         doc=None,
-#         lang=DEFAULT_LANG,
-#         engine='',
-#         sep_line=SEP_LINE,
-#         sep_para=SEP_STANZA,
-#         seps_phrase=SEPS_PHRASE,
-#         processors=DEFAULT_PROCESSORS,
-#         progress=True,
-#         para_i=None,
-#         **kwargs):
-#     char_i=0
-#     line_i=1
-#     linepart_i=1
-#     linepart_ii=0
-
-#     #if not doc:
-#     #    doc=tokenize_nlp_txt(txt,processors=processors,lang=lang,**kwargs)
-    
-#     #sents=doc.sentences
-#     # start_offset=sents[0].tokens[0].start_char
-#     start_offset=0
-
-#     sents=tokenize_sents_txt(txt)
-
-#     for sent_i, sent in enumerate(sents):
-#         tokens=tokenize_words_txt(sent)
-#         for tok_i,tok in enumerate(tokens):
-#             #prefstr=txt[char_i-start_offset : tok.start_char - start_offset]
-#             # realtok=tok.text
-#             realtok=tok
-#             prefstr,wordstr,sufstr=split_punct(realtok)
-#             tokstr=wordstr+sufstr
-#             #tokstr=txt[tok.start_char - start_offset : tok.end_char - start_offset]
-#             #realtok=txt[char_i-start_offset:tok.end_char-start_offset]
-#             #print([prefstr,tokstr])
-#             if sep_line in prefstr and realtok.strip(): line_i+=1
-#             # char_i=tok.end_char
-#             #featd=tok.to_dict()[0]
-#             #print()
-#             odx_para=dict(para_i=para_i) if para_i is None else {}
-#             #odx_feat=dict(('word_'+k,v) for k,v in featd.items() if k not in badcols)
-#             odx_word=dict(
-#                 para_i=para_i,
-#                 sent_i=sent_i+1,
-#                 sentpart_i=linepart_i,
-#                 line_i=line_i,
-#                 word_i=tok_i+1,
-#                 word_pref=prefstr,
-#                 word_str=tokstr,
-#                 # word_str=wordstr,
-#                 # word_suf=sufstr,
-#                 # word_str=realtok,
-#                 word_tok=wordstr.lower(),
-#                 # word_str1=tok.text,
-#                 # word_str2=tokstr,
-#                 # word_tok3=realtok,
-#             )
-
-#             # assert tok.text==tokstr
-            
-#             # odx=dict(**odx_para, **odx_word, **odx_feat)
-#             #print(odx)
-#             yield odx_word
-            
-#             # if change_linepart:
-#                 # linepart_i+=1
-#                 # change_linepart=False
-#             if set(realtok)&set(seps_phrase):
-#                 linepart_i+=1
-#                 # change_linepart=True
-
-# def tokenize_sentwords(txt,doc=None,**kwargs):
-#     iterr=tokenize_sentwords_iter(txt,doc=doc,**kwargs)
-#     tokdf=pd.DataFrame(iterr)
-#     return tokdf
-
-# def tokenize_sentwords_ll(tokdf,**kwargs):
-#     if not len(tokdf): return []
-#     return [list(sdf.word_str) for si,sdf in sorted(tokdf.groupby('sent_i'))]
-
-# def tokenize_nlp_iter(
-#         txt,
-#         constituency=True,
-#         depparse=True,
-#         syllabify=True,
-#         num_proc=1,
-#         **kwargs):
-#     # make proc list
-    
-#     processors=get_processors(constituency=constituency,depparse=depparse,**kwargs)
-
-#     iterr=tokenize_paras_nlp_iter(txt,processors=processors,num_proc=num_proc,**kwargs)
-    
-#     for para_row in iterr:
-#         para_str,para_doc=para_row['para_str'], para_row['para_doc']
-        
-#         # tokenize
-#         tokdf=tokenize_sentwords(para_str,doc=para_doc,**kwargs)
-        
-#         # add anno?
-#         if constituency: tokdf=tokenize_constituency(tokdf,para_doc,**kwargs)
-#         if depparse: tokdf=tokenize_deps(tokdf,para_doc,**kwargs)
-#         if syllabify: tokdf=syllabify_df(tokdf,**kwargs)
-
-#         for k in ['para_i']: tokdf[k]=para_row[k]
-        
-#         # done
-#         odf=setindex(tokdf)
-#         odf.attrs=dict(para_row)
-#         yield odf
-
-
-
-
-
-
-
-# def tokenize_constituency(tokdf,doc,**kwargs):
-#     sents=doc.sentences
-#     ld=[]
-#     sentd_orig=dict((get_sent_id_tokens(sent), sent) for sent in sents)
-#     for sent_i, sent in enumerate(sents):
-#         # print('????',sent_i)
-#         # print(sent.constituency)
-#         # sent_id_tokens=get_sent_id_tokens(sent)
-#         try:
-#             sent_id_constituency=get_sent_id_constituency(sent)
-#             sent_orig=sentd_orig[sent_id_constituency]        
-#         except (KeyError,AttributeError) as e:
-#             # print('!! Cannot find sentence id',e)
-#             continue
-
-#         senttree=recurse_tree(sent.constituency, node_i=0, path=[])
-#         for word_i,word_constituency_path in enumerate(senttree):
-#             word_constituency_path_str='('.join(word_constituency_path)
-#             constituency_depth=len(word_constituency_path)
-#             dx={
-#                 'sent_i': sent_orig.id+1,
-#                 'word_i': word_i+1,
-#                 'word_depth':constituency_depth,
-#                 'word_constituency':word_constituency_path_str,
-#             }
-#             ld.append(dx)
-#         # stop
-#     df=pd.DataFrame(ld)
-#     if not len(df): return tokdf
-#     return tokdf.merge(df,on=['sent_i','word_i'],how='left')
-
-# def tokenize_deps(tokdf,doc,cols_done=set(),lang=DEFAULT_LANG,**kwargs):
-#     sents=doc.sentences
-#     ld=[]
-#     cols_done=set(tokdf.columns)
-#     for sent_i, sent in enumerate(sents):
-#         for word_i,word in enumerate(sent.tokens):
-#             feats=word.to_dict()[0]
-#             statd=dict((f'word_{k}',v) for k,v in feats.items() if k not in badcols)
-#             for feat in feats.get('feats','').split('|'):
-#                 if not feat: continue
-#                 fk,fv=feat.split('=',1)
-#                 statd[fk]=fv
-            
-#             dx={
-#                 'sent_i': sent.id+1,
-#                 'word_i': word_i+1,
-#                 **statd
-#             }
-#             ld.append(dx)
-#     df=pd.DataFrame(ld).fillna('')
-#     joiner=['sent_i','word_i']
-#     ocols=(set(df.columns)-set(tokdf.columns))|set(joiner)
-#     return tokdf.merge(df[ocols],on=joiner,how='left')
-
-
-
-# ########
-# # Scanning
-# ########
-
-# def scan_iter_stanzanlp(txt,**kwargs):
-#     iterr=tokenize_nlp_iter(txt,**kwargs)
-#     yield from iterr
-
-
-# def scan_iter(txt,**kwargs): return scan_iter_stanzanlp(txt,**kwargs)
