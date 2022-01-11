@@ -178,30 +178,33 @@ class CadenceMetricalTree(MetricalTree):
 
     def get_stats(self, arto=False, **kwargs):
         #self.gen_word_info()
-
-        data = defaultdict(list)
-        self.set_lstress()
-        self.set_pstress()
-        self.set_stress()
-        find_phrasal_heads(self)
-        self.set_phrasal_peaks()
-        
-        j = 0
-        preterms = list(self.preterminals())
-        min1p = float(min([preterm.pstress() for preterm in preterms if not np.isnan(preterm.pstress())]))
-        max1p = max([preterm.pstress() for preterm in preterms if not np.isnan(preterm.pstress())]) - min1p
-        min1s = float(min([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]))
-        max1s = max([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]) - min1s
-        sent1 = ' '.join([preterm[0] for preterm in preterms])
-        sentlen1 = len(preterms)
-        
-        for j,preterm in enumerate(preterms):
-            data['word_i'].append(j+1)
-            data['word_str'].append(preterm[0])
-            # data['mtree_pstress'].append(preterm.pstress())
-            data['prom_lstress'].append(preterm.lstress()+1)
-            data['prom_pstress'].append((preterm.stress()-min1p)/max1p if max1p else np.nan)
-            data['prom_tstress'].append((preterm.stress()-min1s)/max1s if max1s else np.nan)
-            data['prom_pstrength'].append(preterm._pstrength)
-            data['mtree_ishead'].append(preterm._phrasal_head)
-        return pd.DataFrame(data)
+        try:
+            data = defaultdict(list)
+            self.set_lstress()
+            self.set_pstress()
+            self.set_stress()
+            find_phrasal_heads(self)
+            self.set_phrasal_peaks()
+            
+            j = 0
+            preterms = list(self.preterminals())
+            min1p = float(min([preterm.pstress() for preterm in preterms if not np.isnan(preterm.pstress())]))
+            max1p = max([preterm.pstress() for preterm in preterms if not np.isnan(preterm.pstress())]) - min1p
+            min1s = float(min([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]))
+            max1s = max([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]) - min1s
+            sent1 = ' '.join([preterm[0] for preterm in preterms])
+            sentlen1 = len(preterms)
+            
+            for j,preterm in enumerate(preterms):
+                data['word_i'].append(j+1)
+                data['word_str'].append(preterm[0])
+                # data['mtree_pstress'].append(preterm.pstress())
+                data['prom_lstress'].append(preterm.lstress()+1)
+                data['prom_pstress'].append((preterm.stress()-min1p)/max1p if max1p else np.nan)
+                data['prom_tstress'].append((preterm.stress()-min1s)/max1s if max1s else np.nan)
+                data['prom_pstrength'].append(preterm._pstrength)
+                data['mtree_ishead'].append(preterm._phrasal_head)
+            return pd.DataFrame(data)
+        except Exception as e:
+            # eprint('!!',e,'!!')
+            return pd.DataFrame()

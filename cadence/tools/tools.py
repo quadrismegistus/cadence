@@ -1,5 +1,23 @@
 from ..imports import *
 
+def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='left'):
+    df1=resetindex(df1)
+    df2=resetindex(df2)
+    if df1 is None and df2 is None: return pd.DataFrame()
+    if not len(df1) and not len(df2): return pd.DataFrame()
+    if len(df1) and not len(df2): return df1
+    if len(df2) and not len(df1): return df2
+    
+    df1cols=set(df1.columns)
+    df2cols=set(df2.columns)
+    
+    if set(on) - df2cols: return df1
+    if set(on) - df1cols: return df2
+    
+    df2cols = (df2cols - df1cols) | set(on)
+
+    return df1[df1cols].merge(df2[df2cols],on=on,how=how)
+
 def to_token(toktxt,**y):
     #return split_punct(toktxt.lower())[1]
     return zero_punc(toktxt).lower()
@@ -355,6 +373,19 @@ def hashstr(x):
 #         flag='r' if mode=='r' else 'c',
 #         timeout=30
 #     )
+
+
+# loading txt/strings
+def to_fn_txt(txt_or_fn):
+    # load txt
+    if type(txt_or_fn)==str and not '\n' in txt_or_fn and os.path.exists(txt_or_fn):
+        fn=txt_or_fn
+        with open(fn,encoding='utf-8',errors='replace') as f:
+            txt=f.read()
+    else:
+        fn=''
+        txt=txt_or_fn
+    return (fn,txt.strip())
 
 
 

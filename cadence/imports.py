@@ -153,11 +153,13 @@ NLP_PARSE_TOKENIZE=True
 NLP_PARSE_CONSTITUENCY=True
 NLP_PARSE_DEPPARSE=True
 SHUFFLE_PARAS=False
-LIM_PARAS=10
+LIM_PARAS=None
 
 joyce_path = os.path.join(PATH_TXTS,'joyce_oxen.txt')
 joyce_s = s = 'Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed.'
-
+joyce_para="""
+Valuing himself not a little upon his elegance, being indeed a proper man of his person, this talkative now applied himself to his dress with animadversions of some heat upon the sudden whimsy of the atmospherics while the company lavished their encomiums upon the project he had advanced. The young gentleman, his friend, overjoyed as he was at a passage that had befallen him, could not forbear to tell it his nearest neighbour. Mr Mulligan, now perceiving the table, asked for whom were those loaves and fishes and, seeing the stranger, he made him a civil 290bow and said, Pray, sir, was you in need of any professional assistance we could give? Who, upon his offer, thanked him very heartily, though preserving his proper distance, and replied that he was come there about a lady, now an inmate of Horne's house, that was in an interesting condition, poor lady, from woman's woe (and here he fetched a deep sigh) to know if her happiness had yet taken place. Mr Dixon, to turn the table, took on to ask of Mr Mulligan himself whether his incipient ventripotence, upon which he rallied him, betokened an ovoblastic gestation in the prostatic utricle or male womb or was due, as with the noted physician, 403Mr Austin Meldon, to a wolf in the stomach. For answer Mr Mulligan, in a gale of laughter at his 384smalls, smote himself bravely below the diaphragm, exclaiming with an admirable droll mimic of Mother Grogan (the most excellent creature of her sex though 'tis pity she's a trollop): There's a belly that never bore a bastard. This was so happy a conceit that it renewed the storms of mirth and threw the whole room into the most violent agitations of delight. The spry rattle had run on in the same vein of mimicry but for some larum in the antechamber.
+"""
 
 
 # local imports

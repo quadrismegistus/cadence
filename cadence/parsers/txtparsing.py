@@ -1,6 +1,104 @@
 from ..imports import *
 
 
+def tokenize_sentwords_ll(words_ld,**kwargs):
+    if not len(words_ld): return []
+    listd=defaultdict(list)
+    for word_d in words_ld:
+        listd[word_d['sent_i']].append(word_d['word_str'])
+    olist=[sentl for sent_i,sentl in sorted(listd.items())]
+    return olist
+
+
+def tokenize_sentwords_ll_from_df(words_df,**kwargs):
+    if not len(words_df): return []
+    return [
+        list(sdf.sort_values('word_i').word_str)
+        for si,sdf in sorted(words_df.groupby('sent_i'))
+    ]
+
+
+
+def tokenize_sents_txt(txt,**y): return nltk.sent_tokenize(txt)
+def tokenize_words_txt(txt,**y): return tokenize_nice2(txt)
+# def to_token(toktxt,**y):
+#     #return split_punct(toktxt.lower())[1]
+#     return zero_punc(toktxt).lower()
+
+
+
+
+def tokenize_sentwords_iter(
+        txt,
+        sents=None,
+        lang=DEFAULT_LANG,
+        sep_line=SEP_LINE,
+        sep_para=SEP_STANZA,
+        seps_phrase=SEPS_PHRASE,
+        progress=True,
+        para_i=None,
+        **kwargs):
+    char_i=0
+    line_i=1
+    linepart_i=1
+    linepart_ii=0
+    start_offset=0
+    if sents is None: sents=tokenize_sents_txt(txt)
+    for sent_i, sent in enumerate(sents):
+        tokens=tokenize_words_txt(sent)
+        for tok_i,realtok in enumerate(tokens):
+            prefstr,wordstr1,sufstr=split_punct(realtok)
+            word_str=wordstr1+sufstr
+            word_tok=to_token(word_str)
+            if sep_line in prefstr and realtok.strip(): line_i+=1
+            odx_word=dict(
+                # para_i=para_i,
+                **(dict(para_i=para_i) if para_i is not None else {}),
+                sent_i=sent_i+1,
+                sentpart_i=linepart_i,
+                line_i=line_i,
+                word_i=tok_i+1,
+                word_pref=prefstr,
+                word_str=word_str,
+                word_tok=word_tok,
+            )
+            yield odx_word
+            if set(realtok)&set(seps_phrase): linepart_i+=1
+
+
+def tokenize_paras_ld(txt,sep_para=SEP_PARA, **kwargs):
+    txt=clean_text(txt)
+    paras_txt=txt.split(sep_para)
+    num_paras=len(paras_txt)
+    ld=[]
+    offset=0
+    para_i=0
+    for pi,para_txt in enumerate(paras_txt):
+        if pi: para_txt=sep_para+para_txt
+        para_txt_len=len(para_txt)
+        para_str=para_txt.strip()
+        para_str_len=len(para_str)
+        para_str_noleft=para_txt.lstrip()
+        para_str_noright=para_txt.rstrip()
+        diff_left=para_txt_len - len(para_str_noleft)
+        diff_right=para_txt_len - len(para_str_noright)
+        
+        offset1=offset+diff_left
+        offset2=offset+para_txt_len-diff_right
+
+        if para_str:
+            assert para_str == txt[offset1:offset2]
+            para_i+=1
+            dx={
+                'para_i':para_i,
+                'para_str':para_str,
+                'para_start_char':offset1,
+                'para_end_char':offset2,
+                # 'para_txt':para_txt,
+            }
+            ld.append(dx)
+        offset+=para_txt_len
+    return ld
 
 
 def getcache_df(self, name, iter_func, index=True, cache=True,**kwargs):
@@ -14,18 +112,6 @@ def getcache_df(self, name, iter_func, index=True, cache=True,**kwargs):
     except ValueError:
         pass
     return odf
-
-# loading txt/strings
-def to_fn_txt(txt_or_fn):
-    # load txt
-    if type(txt_or_fn)==str and not '\n' in txt_or_fn and os.path.exists(txt_or_fn):
-        fn=txt_or_fn
-        with open(fn,encoding='utf-8',errors='replace') as f:
-            txt=f.read()
-    else:
-        fn=''
-        txt=txt_or_fn
-    return (fn,txt.strip())
 
 
 ### convenient objs
