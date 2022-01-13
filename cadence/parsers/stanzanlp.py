@@ -42,7 +42,16 @@ def get_nlp(
         
         import stanza
         kwargs2={**dict(verbose=verbose), **kwargs}
-        NLPD[key] = stanza.Pipeline(**kwargs2)
+        try:
+            NLPD[key] = stanza.Pipeline(**kwargs2)
+        except stanza.pipeline.core.ResourcesFileNotFoundError:
+            lang = kwargs.get('lang')
+            stanza.download(lang)
+            try:
+                NLPD[key] = stanza.Pipeline(**kwargs2)
+            except stanza.pipeline.core.ResourcesFileNotFoundError:
+                raise Exception(f'[cadence] Cannot download stanza model for language = "{lang}"')
+        
         NLPD[key].procstr=procstr
         # NLPD[key].processors=processors
     return NLPD[key]
