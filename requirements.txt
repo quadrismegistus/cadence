@@ -3,3 +3,4 @@ pandas
 numpy
 nltk>=3.6.4
 wget
+diskcache
