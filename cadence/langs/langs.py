@@ -1,24 +1,181 @@
 from ..imports import *
-from .english import scan as en_scan
+# from .english import *
+from .english import scan as en_scan, get as en_get
+from .english import get_df
+SYLLABIFY_DF_D={}
+
 CODE2LANG = {
-    'en':en_scan
+    'en':en_scan,
 }
+CODE2LANG_SYLLABIFY={
+    'en':en_get,
+}
+
+def ipa_to_stress(syl_ipa,numeric=True):
+    if not syl_ipa or type(syl_ipa)!=str:
+        return np.nan if numeric else ''
+    elif syl_ipa[0]=="'":
+        return 1.0 if numeric else 'P'
+    elif syl_ipa[0]== "`":
+        return 0.5 if numeric else 'S'
+    else:
+        return 0.0 if numeric else 'U'
+
+
+def get_vowels(sylipa):
+    return [
+        ipa
+        for ipa in sylipa
+        if get_d_ipa().get(ipa,{}).get('syll') == True
+    ]
+
+def syll_is_dipthong(sylipa):
+    return len(get_vowels(sylipa))>1
+
+def syll_ends_with_consonant(sylipa):
+    return get_d_ipa().get(sylipa[-1],{}).get('syll')==False
+
+def syll_is_heavy(sylipa):
+    return syll_ends_with_consonant(sylipa) or syll_is_dipthong(sylipa)
+
+def ipa_to_weight(sylipa,numeric=True):
+    is_heavy = syll_is_heavy(sylipa)
+    if is_heavy:
+        return 1.0 if numeric else 'H'
+    else:
+        return 0.0 if numeric else 'L'
+
+
+def apply_proms_sylls(word_df):
+    df=word_df
+    cols=set(df.columns)
+    if 'syll_ipa' in cols:
+        df['prom_stress']=df['syll_ipa'].apply(ipa_to_stress)
+        df['prom_weight']=df['syll_ipa'].apply(getweight)
+        df['prom_strength']=[
+            x
+            for i,df_word in df.groupby('word_ipa_i')
+            for x in getstrength(df_word.prom_stress)
+        ]
+        df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
+        df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
+        df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
+        df['is_light']=(df['prom_weight']==0).apply(np.int32)
+        df['is_peak']=(df['prom_strength']==1).apply(np.int32)
+        df['is_trough']=(df['prom_strength']==0).apply(np.int32)
+
+SYLL_LD_CACHE={}
+def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
+    global SYLL_LD_CACHE
+    word_tok=to_token(word_str)
+    key=(lang,word_tok)
+    if not key in SYLL_LD_CACHE:
+        ld=CODE2LANG_SYLLABIFY[lang](word_tok, **kwargs)
+
+        # tune ups
+        for dx in ld:
+            if 'syll_ipa' in dx:
+                syll_ipa=dx['syll_ipa']
+                dx['syll_stress']=ipa_to_stress(syll_ipa,numeric=False)
+                dx['syll_weight']=ipa_to_weight(syll_ipa,numeric=False)
+                dx['prom_stress']=ipa_to_stress(syll_ipa,numeric=True)
+                dx['prom_weight']=1.0 if dx['syll_weight']=='H' else 0.0
+        
+        stresses = dict((dxi,dx.get('prom_stress')) for dxi,dx in enumerate(ld))
+        if None not in set(stresses.values()):
+            strengths = getstrength(stresses)
+            for i,strength in enumerate(strengths):
+                ld[i]['prom_strength']=strength
+        
+        SYLL_LD_CACHE[key]=ld
+    return SYLL_LD_CACHE[key]
+
+SYLL_DF_CACHE={}
+def get_syllable_df(word_str,lang=DEFAULT_LANG,**kwargs):
+    global SYLL_DF_CACHE
+    word_tok=to_token(word_str)
+    key=(lang,word_tok)
+    if not key in SYLL_DF_CACHE:
+        odf=pd.DataFrame(get_syllable_ld(word_str,**kwargs))
+        # apply_proms_sylls(odf)
+        SYLL_DF_CACHE[key]=odf
+    return SYLL_DF_CACHE[key]
+
+def syllabify_df(df,**kwargs):
+    df=resetindex(df)
+    cols=set(df.columns)
+    if not 'word_tok' in cols and 'word_str' in cols:
+        df['word_tok']=df.word_str.apply(to_token)
+    dfsyll=pd.concat(
+        get_syllable_df(word_tok,index=False,**kwargs)
+        for word_tok in df.word_tok.unique()
+    )
+    
+    # if 'word_str' in cols: df=df.drop('word_str',1)
+    odf=df.merge(dfsyll,on='word_tok',how='left')
+
+    ## mtree
+    for col in ['prom_pstress', 'prom_lstress', 'prom_tstress', 'prom_pstrength']:
+        if col in cols:
+            odf.loc[
+                ((odf['prom_stress']==0.0) & (odf['word_nsyll']>1)),
+                col
+            ]=np.nan
+    return odf
+
 
 def to_lang(lang_code=None):
     global LANGS
     return LANGS[lang_code]
 
-
 D_IPA=None
 def get_d_ipa(fn=PATH_IPA_FEATS):
     global D_IPA
-    if D_IPA is None: D_IPA=pd.read_csv(fn).set_index('ipa').to_dict()
+    if D_IPA is None: D_IPA=pd.read_csv(fn).set_index('ipa').T.to_dict()
     return D_IPA
 
 
 
+def assign_proms(df):
+    if not len(df): return
+    # set proms
+    df['prom_stress']=pd.to_numeric(df['syll_ipa'].apply(getstress),errors='coerce')
+    df['prom_weight']=pd.to_numeric(df['syll_ipa'].apply(getweight),errors='coerce')
+    # df['syll_stress']=df.prom_stress.apply(lambda x: {1.0:'P', 0.5:'S', 0.0:'U'}.get(x,''))
+    df['syll_weight']=df.prom_weight.apply(lambda x: {1.0:'H', 0.0:'L'}.get(x,''))
+
+    df['prom_strength']=[
+        x
+        for i,df_word in df.groupby('word_ipa_i')
+        for x in getstrength(df_word)
+    ]
+    df['is_stressed']=(df['prom_stress']>0).apply(np.int32)
+    df['is_unstressed']=(df['prom_stress']==0).apply(np.int32)
+    df['is_heavy']=(df['prom_weight']==1).apply(np.int32)
+    df['is_light']=(df['prom_weight']==0).apply(np.int32)
+    df['is_peak']=(df['prom_strength']==1).apply(np.int32)
+    df['is_trough']=(df['prom_strength']==0).apply(np.int32)
+
+
 def to_phons(syll_ipa):
     pass
+
+def to_int(x):
+    try:
+        xint=int(x)
+        if x==xint:
+            return xint
+    except ValueError:
+        pass
+    return x
+
+def nice_int(odf):
+    for col in odf.columns:
+        if col.endswith('_i') or col.startswith('is_'):
+            odf[col]=pd.to_numeric(odf[col], errors='coerce', downcast='integer')
+    return odf
+
+
 
 def line2df(line_txt,
         lang=DEFAULT_LANG,
@@ -82,9 +239,10 @@ def getweight_str(sylipa):
 #     weight='H' if ends_with_cons or has_long_vowel or is_dipthong else 'L'
 #     return [weight for i in range(len(df_syll))]
 
-def getstrength(df_word):
-    stresses=dict(zip(df_word.syll_i,df_word.prom_stress))
-    strengths={}
+# def getstrength(df_word):
+#     stresses=dict(zip(df_word.syll_i,df_word.prom_stress))
+def getstrength(stresses):
+    strengths=[]
     for si,(syll_i,syl) in enumerate(sorted(stresses.items())):
         prv=stresses.get(syll_i-1)
         nxt=stresses.get(syll_i+1)
@@ -114,9 +272,6 @@ def getstrength(df_word):
         else:
             raise Exception("How? -getstrength()")
         #strengths.append(strength)
-        strengths[syll_i]=strength
-    return [
-        strengths.get(syll_i)
-        for syll_i in df_word.syll_i
-    ]
+        strengths.append(strength)
+    return strengths
 

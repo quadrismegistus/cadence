@@ -1,16 +1,97 @@
 from ..imports import *
 
+def concatt(o,index=None):
+    odf=pd.DataFrame()
+    if len(o):
+        odf=pd.concat(o)
+        if index==True:
+            odf=setindex(odf)
+        elif index==False:
+            odf=resetindex(odf)
+    return odf
+
+
+def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='left'):
+    df1=resetindex(df1)
+    df2=resetindex(df2)
+    if df1 is None and df2 is None: return pd.DataFrame()
+    if not len(df1) and not len(df2): return pd.DataFrame()
+    if len(df1) and not len(df2): return df1
+    if len(df2) and not len(df1): return df2
+    
+    df1cols=set(df1.columns)
+    df2cols=set(df2.columns)
+    
+    if set(on) - df2cols: return df1
+    if set(on) - df1cols: return df2
+    
+    df2cols = (df2cols - df1cols) | set(on)
+
+    return df1[df1cols].merge(df2[df2cols],on=on,how=how)
+
+def to_token(toktxt,**y):
+    #return split_punct(toktxt.lower())[1]
+    return zero_punc(toktxt).lower()
+
+
+
+def nice_int_df(odf):
+    for col in odf.columns:
+        if col.endswith('_i') or col.startswith('is_') or col.endswith('_rank'):
+            odf[col]=pd.to_numeric(odf[col], errors='coerce', downcast='integer')
+    return odf
+
+
+def clean_text(txt):
+    return txt.replace('\r\n','\n').replace('\r','\n')
+
+def eprint(*args, **kwargs):
+    print('\n', *args, file=sys.stderr, end='\n', **kwargs)
+
+### convenient objs
+def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
+    return ', '.join(
+        f'{k}={v}'
+        for k,v in kwargs.items()
+        if k not in bad_keys
+    )
+    
+
+def to_blosc(obj):
+    import pickle,blosc
+    binary=pickle.dumps(obj)
+    compressed=blosc.compress(binary)
+    return compressed
+    
+def from_blosc(compressed):
+    import pickle,blosc
+    binary=blosc.decompress(compressed)
+    obj=pickle.loads(binary)
+    return obj
+
+
+def getcol(df,col):
+    if col in set(df.columns):
+        return pd.Series(df[col])
+    elif col in set(df.index.names):
+        return pd.Series(df.index.get_level_values(col))
+    else:
+        return pd.Series()
+
+
 def split_punct(tok):
+    if not tok: return ('','','')
     toks=tokenize_agnostic(tok)
     wordil=[]
     
     try:
         for i,x in enumerate(toks):
-            if any(y.isalpha() for y in x): wordil+=[i]
+            if any(y.isalpha() for y in x):
+                wordil+=[i]
         pref=''.join([
             x
             for i,x in enumerate(toks)
-            if i<wordil[-1]
+            if i<wordil[0]
         ])
         suf=''.join([
             x
@@ -28,7 +109,7 @@ def zero_punc(token):
     return ''.join(x for x in token if x.isalpha())
 
 def tokenize_agnostic(txt):
-    return re.findall(r"[\w']+|[.,!?; -—–\n]", txt)
+    return re.findall(r"[\w']+|[.,!?; -—–'\n]", txt)
     
 def tokenize_fast(line,lower=False):
 	line = line.lower() if lower else line
@@ -57,36 +138,50 @@ def tokenize_nltk(txt,lower=False):
 	# return
 	return tokens
 
-def tokenize_nice(xstr,starters=set("([‘“"),**kwargs):
-    l=tokenize_agnostic(xstr)
-    l2=[]
-    addback=False
-    for x in l:
-        if not x:#.strip():
-            pass
-        elif x[0].isalpha():
-            if addback and len(l2):
-                l2[-1]+=x
-                addback=False
-            else:
-                l2+=[x]
-        else:
-            if x in starters:
-                l2+=[x]
-                addback=True
-            elif len(l2):
-                l2[-1]+=x
-            else:
-                l2+=[x]
-                addback=True
-    return l2
+# def tokenize_nice(xstr,starters=set("([‘“"),**kwargs):
+#     l=tokenize_agnostic(xstr)
+#     l2=[]
+#     addback=False
+#     for x in l:
+#         if not x:#.strip():
+#             pass
+#         elif x[0].isalpha():
+#             if addback and len(l2):
+#                 l2[-1]+=x
+#                 addback=False
+#             else:
+#                 l2+=[x]
+#         else:
+#             if x in starters:
+#                 l2+=[x]
+#                 addback=True
+#             elif len(l2):
+#                 l2[-1]+=x
+#             else:
+#                 l2+=[x]
+#                 addback=True
+#     return l2
 
 
 # def tokenize(txt,*x,**y):
 # 	return tokenize_fast(txt,*x,**y)
+def tokenize_nice_iter2(s,sep=' ',**kwargs):
+    s=s.replace('\r\n','\n')
+    s=s.replace('\r','\n')
+    s=s.replace('\n',' \n ')
+    s=s.replace('\t',' \t ')
+    wnow=''
+    for i,w in enumerate(s.split(sep)):
+        w2=sep+w if i else w
+        if w.strip(): # word
+            word=wnow+w2
+            yield word
+            wnow=''
+        else:
+            wnow+=w2
 
-
-
+def tokenize_nice2(s,**kwargs): return list(tokenize_nice_iter2(s,**kwargs))
+def to_words_str(s,**kwargs): return tokenize_nice(s,**kwargs)
 
 def subfinder(mylist, pattern):
     matches = []
@@ -108,6 +203,7 @@ def detokenize(x):
     return x
 
 def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
+    if not len(df): return df
     df = df[set(df.columns) - set(df.index.names)]
     df = resetindex(df)
 
@@ -115,10 +211,12 @@ def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
     for x in key:
         if not x in set(cols) and x in set(df.columns):
             cols.append(x)
-
+    nice_int_df(df)
     odf=df.set_index(cols)
     if sort: odf=odf.sort_index()
-    odf=odf[[col for col in odf.columns if not col in badcols and col not in key]]
+    odf=odf[
+        sorted([col for col in odf.columns if not col in badcols and col not in key])
+    ]
 
     constraints = [c for c in odf.columns if c.startswith('*')]
     resortcols = ['*total'] + [c for c in constraints if c!='*total']
@@ -126,16 +224,19 @@ def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
     return odf[[c for c in resortcols if c in odf.columns]]
 
 def resetindex(df,badcols={'level_0','index'},**y):
-    cols=set(df.columns)
-    inds=set(df.index.names)
-    both=cols&inds
-    # print(cols)
-    # print(inds)
-    # print(both)
-    newdf=df[cols - both - badcols].reset_index(**y)
-    # print(newdf.columns)
-    # print()
+    cols=list(df.columns)
+    inds=list(df.index.names)
+    both=set(cols)&set(inds)
+    okcols=set(cols) - both - badcols
+    newdf=df[okcols].reset_index(**y)
+    nowcols=list(newdf.columns)
+    newcols=[col for col in LINEKEY if col in set(nowcols) and col not in badcols]
+    newcols+=[col for col in nowcols if col not in set(LINEKEY) and col not in badcols]
+    newdf=newdf[newcols]
+    newdf=nice_int_df(newdf)
     return newdf
+    # if set(newdf.columns) & badcols: return df
+    # return newdf
 
 
 def occurrences(string, sub):
@@ -205,7 +306,7 @@ def pmap_iter(func, objs, args=[], kwargs={}, num_proc=DEFAULT_NUM_PROC, use_thr
     # if parallel
     if not desc: desc=f'Mapping {func.__name__}()'
     if desc: desc=f'{desc} [x{num_proc}]'
-    if num_proc>1 and len(objs)>1:
+    if num_proc>1 and ((type(objs) not in {list,tuple,set}) or len(objs)>1):
 
         # real objects
         objects = [(func,obj,args,kwargs) for obj in objs]
@@ -257,26 +358,6 @@ def index_by_truth(x):
             yield np.nan
 
 
-def do_pmap_group(obj,*args,**kwargs):
-    import pandas as pd
-    import types
-    func,group_df,group_key,group_name = obj
-
-    if type(group_name) not in {list,tuple}:group_name=[group_name]
-    if type(group_df)==str: group_df=pd.read_pickle(group_df)
-    out=func(group_df,*args,**kwargs)
-    if isinstance(out, types.GeneratorType):
-        out=[x for x in out]
-    if type(out)==list:
-        try:
-            out=[x for x in out if type(x) in {pd.DataFrame, pd.Series}]
-            out=pd.concat(out)
-        except ValueError:
-            return out
-    if type(out)==pd.DataFrame:
-        for x,y in zip(group_key,group_name): out[x]=y
-    return out
-
 def joindfs(a,b):
     bcols = set(b.columns) - set(a.columns)
     return a.join(b[bcols])
@@ -287,25 +368,38 @@ def hashstr(x):
 	return hashlib.sha224(str(x).encode('utf-8')).hexdigest()
 
 
-# Use sqlite dictionary
-def get_db(
-        prefix,
-        mode='c',
-        folders=[],
-        autocommit=False,
-        ):
-    if mode=='w': autocommit=True
-    ofnfn=os.path.join(PATH_DATA, f'db.{prefix}.sqlite')
-    odir=os.path.dirname(ofnfn)
-    if not os.path.exists(odir): os.makedirs(odir)
-    if not os.path.exists(ofnfn): mode='c'
-    return SqliteDict(
-        ofnfn,
-        tablename='data',
-        autocommit=autocommit,
-        flag='r' if mode=='r' else 'c',
-        timeout=30
-    )
+# # Use sqlite dictionary
+# def get_db(
+#         prefix,
+#         mode='c',
+#         folders=[],
+#         autocommit=False,
+#         ):
+#     if mode=='w': autocommit=True
+#     ofnfn=os.path.join(PATH_DATA, f'db.{prefix}.sqlite')
+#     odir=os.path.dirname(ofnfn)
+#     if not os.path.exists(odir): os.makedirs(odir)
+#     if not os.path.exists(ofnfn): mode='c'
+#     return SqliteDict(
+#         ofnfn,
+#         tablename='data',
+#         autocommit=autocommit,
+#         flag='r' if mode=='r' else 'c',
+#         timeout=30
+#     )
+
+
+# loading txt/strings
+def to_fn_txt(txt_or_fn):
+    # load txt
+    if type(txt_or_fn)==str and not '\n' in txt_or_fn and os.path.exists(txt_or_fn):
+        fn=txt_or_fn
+        with open(fn,encoding='utf-8',errors='replace') as f:
+            txt=f.read()
+    else:
+        fn=''
+        txt=txt_or_fn
+    return (fn,txt.strip())
 
 
 
@@ -316,17 +410,19 @@ def slices(l,n,strict=True):
         if len(o)>n: o.pop(0)
         if not strict or len(o)==n:
             yield list(o)
-def apply_combos(df,group1,group2,combo_key='combo_i'):
-    # combo of indices?
-    combo_opts = [
-        [x for ii,x in grp.groupby(group2)]
-        for i,grp in df.groupby(group1)
-    ]
 
-    # poss
-    for combo in product(*combo_opts):
-        if not len(combo): continue
-        yield pd.concat(combo)# if len(combo) else pd.DataFrame()
+# def apply_combos(df,group1,group2,combo_key='combo_i'):
+#     # combo of indices?
+#     combo_opts = [
+#         [x for ii,x in grp.groupby(group2)]
+#         for i,grp in df.groupby(group1)
+#     ]
+
+#     # poss
+#     for combo in product(*combo_opts):
+#         if not len(combo): continue
+#         yield pd.concat(combo)# if len(combo) else pd.DataFrame()
+
 def pmap_iter_groups(func,df_grouped,use_cache=False,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
     import os,tempfile,pandas as pd
     from tqdm import tqdm
@@ -362,11 +458,33 @@ def pmap_iter_groups(func,df_grouped,use_cache=False,num_proc=DEFAULT_NUM_PROC,i
         num_proc=num_proc,
         **attrs
     )
+
+
+def do_pmap_group(obj,*args,**kwargs):
+    import pandas as pd
+    import types
+    func,group_df,group_key,group_name = obj
+
+    if type(group_name) not in {list,tuple}:group_name=[group_name]
+    if type(group_df)==str: group_df=pd.read_pickle(group_df)
+    out=func(group_df,*args,**kwargs)
+    if isinstance(out, types.GeneratorType):
+        out=[x for x in out]
+    if type(out)==list:
+        try:
+            out=[x for x in out if type(x) in {pd.DataFrame, pd.Series}]
+            out=pd.concat(out)
+        except ValueError:
+            return out
+    if type(out)==pd.DataFrame:
+        cols1=list(out.columns)
+        for x,y in zip(group_key,group_name): out[x]=y
+        out=out[group_key + cols1]
+    return out
+
+
 def pmap_groups(*x,**y):
     res = list(pmap_iter_groups(*x,**y))
-    # print([type(x) for x in res])
-    # for y in res[-1]:
-        # print(type(y), y)
     resl = []
     for x in res:
         if type(x)==list:
@@ -475,3 +593,31 @@ def get_num_lines(filename):
 
     return numlines
 
+
+
+
+
+
+def read_df(ifn,key='',**attrs):
+	if not os.path.exists(ifn): return
+	import pandas as pd
+	ext = os.path.splitext(ifn.replace('.gz',''))[-1][1:]
+	if ext=='csv':
+		return pd.read_csv(ifn,**attrs)
+	elif ext in {'xls','xlsx'}:
+		return pd.read_excel(ifn,**attrs)
+	elif ext in {'txt','tsv'}:
+		return pd.read_csv(ifn,sep='\t',**attrs)
+	elif ext=='ft':
+		return pd.read_feather(ifn,**attrs)
+	elif ext=='pkl':
+		return pd.read_pickle(ifn,**attrs)
+	elif ext=='h5':
+		return pd.read_hdf(ifn, key=key,**attrs)
+	else:
+		raise Exception(f'[save_df()] What kind of df is this: {ifn}')
+
+
+
+def read_url(url):
+    return requests.get(url).content.decode('utf-8')

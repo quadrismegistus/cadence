@@ -4,6 +4,8 @@ import nltk
 
 
 
+
+
 Pyphen = None
 
 # lang specific constants
@@ -45,8 +47,6 @@ def get_special_cases():
 The only necessary functions
 """
 
-
-
 def scan(line,incl_alt=True,**y):
     o=[
         {
@@ -62,48 +62,27 @@ def tokenize(txt,**y):
     # return tokenize_agnostic(txt,**y)
     return tokenize_nice(txt,**y)
 
+def get_df(token,**kwargs):
+    return pd.DataFrame(get(token,**kwargs))
 
-# def tokenize(txt):
-# 	import nltk
-# 	l=nltk.word_tokenize(txt,language="english")
-# 	l2=[]
-# 	for w in l:
-# 		if l2 and (w.startswith("'") or w.lower() in CONTRACTIONS):
-# 			l2[-1]+=w
-# 		else:
-# 			l2+=[w]
-# 	return l2
-
-
-def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
+def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
     # not real?
     token_nice=token
-    token = zero_punc(token).lower()
-    if not token:# or not token_alpha:
-        return [{
-            'word_ipa_i':0,
-            'syll_i':0,
-            'word_str':token,
-            'word_ipa':'',
-            'syll_ipa':'',
-            'syll_str':token,
-        }]
-
-
+    # token = zero_punc(token).lower()
+    if not token: return []
     # get ipas
     cache = get_cache()
-#     tokenl=token.lower()
+    tokenl=token.lower()
     if token in cache:
         ipas=cache[token]
-#     elif tokenl in cache:
-#         ipas=cache[tokenl]
+    elif tokenl in cache:
+        ipas=cache[tokenl]
     else:
         ipas=tts(token)
         if ipas:
             cache[token]=ipas
             if cache_new:
                 write_to_cache(token,ipas[0])
-
     ipas = ipas[:1] if not incl_alt else ipas
     sd=get_special_cases()
     if token in sd['maybestressed']:
@@ -134,15 +113,17 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True):
         is_funcword_now = int(is_funcword and num_sylls==1 and ipa[0]!="'")
 
         for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
-            results_ld.append({
+            rdx={
                 'word_ipa_i':ipa_i+1,
                 'syll_i':si+1,
-                'word_str':token_nice,
+                'word_tok':tokenl,
                 'word_ipa':ipa,
+                'word_nsyll':num_sylls,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
-                'is_funcword':is_funcword_now
-            })
+                'word_isfunc':is_funcword_now
+            }
+            results_ld.append(rdx)
     return results_ld
 
 

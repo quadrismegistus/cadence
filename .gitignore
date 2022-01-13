@@ -1,10 +1,16 @@
 # Byte-compiled / optimized / DLL files
+
+backup
+*.dc
+*.db
+
 __pycache__/
 *.py[cod]
 *$py.class
-
+.DS_Store
 # C extensions
 *.so
+*-Copy*.*ipynb
 
 # Distribution / packaging
 .Python
