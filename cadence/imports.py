@@ -17,8 +17,6 @@ from itertools import product
 pd.options.display.max_columns=False
 import re,nltk
 import logging
-logging.Logger.manager.loggerDict['sqlitedict'].disabled=True
-
 from functools import partial
 import diskcache as dc
 import requests
