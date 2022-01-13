@@ -416,3 +416,13 @@ class SentModel(ParaModel):
             self._mtree_df=mtree.get_stats(**self.kwargs(kwargs)) if mtree is not None else pd.DataFrame()
         return self._mtree_df#.assign(sent_i=self.i)
     
+    def grid(self,**kwargs):
+        import plotnine as p9
+        p9.options.figure_size=(11,5)
+        figdf=resetindex(self.mtree_df(**kwargs))
+        figdf['prom_tstress']+=0.1
+        figdf['prom_tstress']=figdf['prom_tstress'].fillna(0)
+        return p9.ggplot(
+            figdf,
+            p9.aes(x='word_i',y='prom_tstress',label='word_str')
+        ) + p9.geom_col(alpha=.25) + p9.geom_text(size=9,angle=45) + p9.theme_void()

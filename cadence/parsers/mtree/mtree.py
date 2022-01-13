@@ -86,6 +86,12 @@ class CadenceMetricalTree(MetricalTree):
         self._phrasal_stress_peak=np.nan
         self._phrasal_stress_valley=np.nan
         self._pstrength=np.nan
+        self._stress_num_binary=1.0
+        self._stress_num=1.0
+        self._seg = None
+        self._nsyll = np.nan
+        self._nstress = np.nan
+        
 
         if self._preterm:
             word_tok=to_token(str(self[0]))
@@ -197,7 +203,7 @@ class CadenceMetricalTree(MetricalTree):
             max1s = max([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]) - min1s
             # sent1 = ' '.join([preterm[0] for preterm in preterms])
             # sentlen1 = len(preterms)
-            
+
             for j,preterm in enumerate(preterms):
                 data['word_i'].append(j+1)
                 data['word_str'].append(preterm[0])
@@ -209,5 +215,5 @@ class CadenceMetricalTree(MetricalTree):
                 data['mtree_ishead'].append(preterm._phrasal_head)
             return pd.DataFrame(data)
         except Exception as e:
-            # eprint('!!',e,'!!')
+            eprint('!!',e,'!!')
             return pd.DataFrame()
