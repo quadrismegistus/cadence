@@ -6,3 +6,4 @@ wget
 diskcache
 stanza
 blosc
+svgling

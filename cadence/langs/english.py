@@ -147,6 +147,7 @@ def get_cache(source_paths=[CMU_DICT_FN,CACHE_DICT_FN]):
 
 def tts(token):
     espeak_ipa=espeak2ipa(token)
+    if espeak_ipa is None: return []
     cmu=espeak2cmu(espeak_ipa)
     cmu_sylls = syllabify_cmu(cmu)
     ipa = cmusylls2ipa(cmu_sylls)
@@ -270,25 +271,40 @@ def add_elisions(_ipa):
 
 
 
+import shutil
+ERROR_SHOWN=False
+ERROR_MSG="""
+[cadence] A word unknown to the pronunciation dictionary ("{{WORD}}") cannot be syllabified because espeak text-to-speech software is not installed. It is highly recommend you install this software.
+
+To install:
+
+    * On Linux, type into the terminal:
+        apt-get install espeak
+    
+    * On Mac:
+        (1) Install homebrew if not already installed. Paste into Terminal app:
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        (2) Type into the Terminal app:
+            brew install espeak
+    
+    * On Windows:
+        Download and install from http://espeak.sourceforge.net/download.html.
+"""
 
 def espeak2ipa(token):
+    global ERROR_SHOWN
+    if not shutil.which('espeak'):
+        eprint(ERROR_MSG.replace('{{WORD}}',token))
+        ERROR_SHOWN=True
+        return None
+    
     token=''.join(x for x in token if x.isalpha())
     CMD=f'espeak -q -x {token}'
-#     print(CMD)
-    #CMD='espeak --ipa -q -x '+token.replace("'","\\'").replace('"','\\"')
-    #print CMD
     try:
-        # @HACK FOR MPI
-        #for k in os.environ.keys():
-        #	if k.startswith('OMPI_') or k.startswith('PMIX_'):
-        #		del os.environ[k]
-        ##
-
         res=subprocess.check_output(CMD.split()).strip()
-        #print '>> espeak = ',[res]
         return res.decode("utf-8")
     except (OSError,subprocess.CalledProcessError) as e:
-        #print "!!",e
         return None
 
 def tts2ipa(token,TTS_ENGINE=None):

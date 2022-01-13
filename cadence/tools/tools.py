@@ -46,7 +46,7 @@ def clean_text(txt):
     return txt.replace('\r\n','\n').replace('\r','\n')
 
 def eprint(*args, **kwargs):
-    print('\n', *args, file=sys.stderr, end='\n', **kwargs)
+    print(*args, file=sys.stderr, end='\n', **kwargs)
 
 ### convenient objs
 def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):

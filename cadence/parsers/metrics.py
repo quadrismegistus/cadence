@@ -190,10 +190,13 @@ def parse_unit_combos(
         **kwargs):
     o=[]
     for dfcombo in iter_combos(dfunit):
-        ok_parses = parse_combo(dfcombo,**kwargs)
-        dfcombo_join = dfcombo[['sent_i','word_i','word_ipa_i','syll_i','combo_i']]
-        ok_parses2 = ok_parses.join(dfcombo_join)
-        o.append(ok_parses2)
+        try:
+            ok_parses = parse_combo(dfcombo,**kwargs)
+            dfcombo_join = dfcombo[['sent_i','word_i','word_ipa_i','syll_i','combo_i']]
+            ok_parses2 = ok_parses.join(dfcombo_join)
+            o.append(ok_parses2)
+        except KeyError:
+            pass
     odf=pd.concat(o) if len(o) else pd.DataFrame()
     if len(odf):
         odf=final_bounding(odf)

@@ -110,6 +110,7 @@ def syllabify_df(df,**kwargs):
         get_syllable_df(word_tok,index=False,**kwargs)
         for word_tok in df.word_tok.unique()
     )
+    if not len(dfsyll): return pd.DataFrame()
     
     # if 'word_str' in cols: df=df.drop('word_str',1)
     odf=df.merge(dfsyll,on='word_tok',how='left')

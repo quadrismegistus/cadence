@@ -18,8 +18,11 @@ def apply_combos(df,group1,group2,**kwargs):
         yield odf.set_index('slot_i')
 
 def iter_combos(txtdf,num_proc=1,**kwargs):
-    for dfi,dfcombo in enumerate(apply_combos(resetindex(txtdf), 'word_i', 'word_ipa_i',**kwargs)):
-        yield dfcombo.assign(combo_i=dfi+1)
+    try:
+        for dfi,dfcombo in enumerate(apply_combos(resetindex(txtdf), 'word_i', 'word_ipa_i',**kwargs)):
+            yield dfcombo.assign(combo_i=dfi+1)
+    except KeyError:
+        yield pd.DataFrame()
 
 
 

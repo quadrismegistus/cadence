@@ -332,8 +332,11 @@ class ParaModel(TextModel):
 
     def iter_units(self,**kwargs):
         dfdata = self.data(index=False, sylls=True, **self.kwargs(kwargs))
-        divide_parse_units(dfdata,**self.kwargs(kwargs))
-        yield from (g for i,g in dfdata.groupby('unit_i'))
+        try:
+            divide_parse_units(dfdata,**self.kwargs(kwargs))
+            yield from (g for i,g in dfdata.groupby('unit_i'))
+        except KeyError:
+            yield pd.DataFrame()
     
     def units(self,index=True,**kwargs):
         o=list(self.iter_units(**self.kwargs(kwargs)))
