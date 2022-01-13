@@ -192,15 +192,15 @@ class CadenceMetricalTree(MetricalTree):
             max1p = max([preterm.pstress() for preterm in preterms if not np.isnan(preterm.pstress())]) - min1p
             min1s = float(min([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]))
             max1s = max([preterm.stress() for preterm in preterms if not np.isnan(preterm.stress())]) - min1s
-            sent1 = ' '.join([preterm[0] for preterm in preterms])
-            sentlen1 = len(preterms)
+            # sent1 = ' '.join([preterm[0] for preterm in preterms])
+            # sentlen1 = len(preterms)
             
             for j,preterm in enumerate(preterms):
                 data['word_i'].append(j+1)
                 data['word_str'].append(preterm[0])
                 # data['mtree_pstress'].append(preterm.pstress())
                 data['prom_lstress'].append(preterm.lstress()+1)
-                data['prom_pstress'].append((preterm.stress()-min1p)/max1p if max1p else np.nan)
+                data['prom_pstress'].append((preterm.pstress()-min1p)/max1p if max1p else np.nan)
                 data['prom_tstress'].append((preterm.stress()-min1s)/max1s if max1s else np.nan)
                 data['prom_pstrength'].append(preterm._pstrength)
                 data['mtree_ishead'].append(preterm._phrasal_head)

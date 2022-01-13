@@ -1,5 +1,16 @@
 from ..imports import *
 
+def concatt(o,index=None):
+    odf=pd.DataFrame()
+    if len(o):
+        odf=pd.concat(o)
+        if index==True:
+            odf=setindex(odf)
+        elif index==False:
+            odf=resetindex(odf)
+    return odf
+
+
 def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='left'):
     df1=resetindex(df1)
     df2=resetindex(df2)
@@ -26,7 +37,7 @@ def to_token(toktxt,**y):
 
 def nice_int_df(odf):
     for col in odf.columns:
-        if col.endswith('_i') or col.startswith('is_'):
+        if col.endswith('_i') or col.startswith('is_') or col.endswith('_rank'):
             odf[col]=pd.to_numeric(odf[col], errors='coerce', downcast='integer')
     return odf
 
@@ -213,16 +224,19 @@ def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
     return odf[[c for c in resortcols if c in odf.columns]]
 
 def resetindex(df,badcols={'level_0','index'},**y):
-    cols=set(df.columns)
-    inds=set(df.index.names)
-    both=cols&inds
-    # print(cols)
-    # print(inds)
-    # print(both)
-    newdf=df[cols - both - badcols].reset_index(**y)
-    # print(newdf.columns)
-    # print()
+    cols=list(df.columns)
+    inds=list(df.index.names)
+    both=set(cols)&set(inds)
+    okcols=set(cols) - both - badcols
+    newdf=df[okcols].reset_index(**y)
+    nowcols=list(newdf.columns)
+    newcols=[col for col in LINEKEY if col in set(nowcols) and col not in badcols]
+    newcols+=[col for col in nowcols if col not in set(LINEKEY) and col not in badcols]
+    newdf=newdf[newcols]
+    newdf=nice_int_df(newdf)
     return newdf
+    # if set(newdf.columns) & badcols: return df
+    # return newdf
 
 
 def occurrences(string, sub):
@@ -396,17 +410,19 @@ def slices(l,n,strict=True):
         if len(o)>n: o.pop(0)
         if not strict or len(o)==n:
             yield list(o)
-def apply_combos(df,group1,group2,combo_key='combo_i'):
-    # combo of indices?
-    combo_opts = [
-        [x for ii,x in grp.groupby(group2)]
-        for i,grp in df.groupby(group1)
-    ]
 
-    # poss
-    for combo in product(*combo_opts):
-        if not len(combo): continue
-        yield pd.concat(combo)# if len(combo) else pd.DataFrame()
+# def apply_combos(df,group1,group2,combo_key='combo_i'):
+#     # combo of indices?
+#     combo_opts = [
+#         [x for ii,x in grp.groupby(group2)]
+#         for i,grp in df.groupby(group1)
+#     ]
+
+#     # poss
+#     for combo in product(*combo_opts):
+#         if not len(combo): continue
+#         yield pd.concat(combo)# if len(combo) else pd.DataFrame()
+
 def pmap_iter_groups(func,df_grouped,use_cache=False,num_proc=DEFAULT_NUM_PROC,iter=False,**attrs):
     import os,tempfile,pandas as pd
     from tqdm import tqdm

@@ -2,22 +2,34 @@ from ..imports import *
 from .txtparsing import *
 from .mtree import *
 from .stanzanlp import *
+from .metrics import *
 
 
 def Text(*args,**kwargs):
     return TextModel(*args,**kwargs)
 
+def Prose(*args,**kwargs):
+    kwargs={**kwargs, **dict(linebreaks=False, phrasebreaks=True)}
+    return Text(*args,**kwargs)
+def Verse(*args,**kwargs):
+    kwargs={**kwargs, **dict(linebreaks=True, phrasebreaks=False)}
+    return Text(*args,**kwargs)
+def ProseVerse(*args,**kwargs):
+    kwargs={**kwargs, **dict(linebreaks=True, phrasebreaks=True)}
+    return Text(*args,**kwargs)
+
 def Para(txt, *args, path_db=PATH_DB, force=False, para_i=None, **kwargs):
-    _id=hashstr(txt)
+    txt=txt.strip()
+    _id=get_para_key(txt, kwargs)
     if not force:
         with dc.Cache(path_db) as db:
             if _id in db:
-                # print(f'found {_id} in db')
+                # print(f'found paragraph in db')
                 pdoc=pickle.loads(from_blosc(db[_id]))
                 pdoc.i=para_i
                 return pdoc
 
-    pdoc=ParaModel(txt,*args,path_db=path_db,force=force,**kwargs)
+    pdoc=ParaModel(txt,*args,path_db=path_db,**kwargs)
     pdoc.i=para_i
     return pdoc
 
@@ -25,8 +37,8 @@ def Sent(txt, nlp_sent_obj=None, **kwargs):
     return SentModel(txt, nlp_sent_obj=nlp_sent_obj, **kwargs)
 
 
-
-
+def get_para_key(txt, kwargs):
+    return (hashstr(txt), kwargs_key(kwargs))
 
 ###
 # TEXT
@@ -43,18 +55,31 @@ class TextModel(object):
         # paras
         self._paras=dict(
             (para_d['para_i'],para_d)
-            for para_d in tokenize_paras_ld(self.txt, **kwargs)
+            for para_d in tokenize_paras_ld(self.txt, **self.kwargs(kwargs))
         )
         self.__paras_i=set(self._paras.keys())
         self._paras_i=sorted(list(self.__paras_i))
-        self._paras_i=self.paras_i(shuffle_paras=shuffle_paras,lim_paras=lim_paras,progress=False,**kwargs)
-        
+        self._paras_i=self.paras_i(shuffle_paras=shuffle_paras,lim_paras=lim_paras,progress=False,**self.kwargs(kwargs))
+        self._num_paras=len(self._paras)
+
+    def __repr__(self):
+        return f'<Text: “{self.para(1).fsent_str}...” ({self.num_paras} paras)>'
     
+    def kwargs(self,kwargs):
+        return {**self._kwargs, **kwargs}
+
     def get(self,para_i,sent_i):
         obj=self.para(para_i)
         if sent_i: obj=obj.sent(sent_i)
         return obj
         
+
+    """
+    PARA MANAGEMENT
+    """
+
+    @property
+    def num_paras(self): return len(self._paras)
     
     def paras_i(self,
             para_i=[],
@@ -76,45 +101,93 @@ class TextModel(object):
         return para_i_l
     
     def paras_d(self,*args,**kwargs):
-        return [self._paras[para_i] for para_i in self.paras_i(*args,**kwargs)]    
+        return [self._paras[para_i] for para_i in self.paras_i(*args,**self.kwargs(kwargs))]    
     
     def paras_df(self,*args,**kwargs):
-        return pd.DataFrame(self.paras_d(*args,**kwargs)).set_index('para_i')
+        return pd.DataFrame(self.paras_d(*args,**self.kwargs(kwargs))).set_index('para_i')
     
     def iter_paras(self,*args,**kwargs):
-        for para_i in self.paras_i(*args,**kwargs):
-            yield self.para(para_i,**kwargs)
+        for para_i in self.paras_i(*args,**self.kwargs(kwargs)):
+            yield self.para(para_i,**self.kwargs(kwargs))
     
     def para(self,para_i=1,**kwargs):
         if not para_i in self._docs:
+            if not para_i in self._paras: return
             txt=self._paras[para_i]['para_str']
-            self._docs[para_i]=Para(txt, para_i=para_i, **kwargs)
+            self._docs[para_i]=Para(txt, para_i=para_i, **self.kwargs(kwargs))
         return self._docs[para_i]
-    
     def paras(self,*args,**kwargs):
-        return list(self.iter_paras(*args,**kwargs))
+        return list(self.iter_paras(*args,**self.kwargs(kwargs)))
+
+    @property
+    def num_stanzas(self): return self.num_paras
+    def stanzas_i(self,**kwargs): return self.paras_i(**kwargs)
+    def stanzas_d(self,**kwargs): return self.paras_d(**kwargs)
+    def stanzas_df(self,**kwargs): return self.paras_df(**kwargs)
+    def iter_stanzas(self,**kwargs): return self.iter_paras(**kwargs)
+    def stanza(self,**kwargs): return self.para(**kwargs)
+    def stanzas(self,**kwargs): return self.paras(**kwargs)
     
     #############################################
     ### Data
     #############################################
 
-    def iter_data(self,index=True,**kwargs):
+    def iter_data(self,data_type='data',index=True,**kwargs):
         for para_i in self.paras_i(**kwargs):
-            yield self.get_data(para_i,index=index,**kwargs)
-    def get_data(self,para_i,index=True,**kwargs):
-        odf=self.para(para_i).data(index=False,**kwargs).assign(para_i=para_i)
-        return setindex(odf) if index else odf
-    def data(self,para_i=None,**kwargs):
-        if type(para_i)==int: return self.get_data(para_i,**kwargs)
-        o=list(self.iter_data(**kwargs))
-        return pd.concat(o) if len(o) else pd.DataFrame()
+            yield self.get_data(para_i,data_type=data_type,index=index,**self.kwargs(kwargs))
+    def get_data(self,para_i,data_type='data',index=True,**kwargs):
+        paras=[self.para(para_i,**kwargs)] if para_i else self.paras(**kwargs)
+        o=[]
+        for para in paras:
+            if para is None: continue
+            if hasattr(para,data_type):
+                func=getattr(para,data_type)
+                odf=func(index=index,**self.kwargs(kwargs))
+                odf['para_i']=para.i
+                o.append(odf)
+        return concatt(o,index=index)
+
+    #############################################
+    ### Data types
+    #############################################
+    def words(self,para_i=None,**kwargs): return self.get_data(para_i,'words',**kwargs)
+    @property
+    def num_words(self): return sum(para.num_words for para in self.paras())
     
+    def sents(self,para_i=None,**kwargs):
+        sents=[sent for para in self.paras(para_i,**kwargs) for sent in para.sents(**kwargs)]
+        return sents
+    def sent(self,sent_i,para_i=None,**kwargs):
+        if type(sent_i)==int:
+            sents=self.sents(para_i,**kwargs)
+            sent_i-=1
+            if sent_i<len(sents): return sents[sent_i]
+        elif type(sent_i) in {tuple,list}:
+            para_i,sent_i=sent_i
+            para=self.para(para_i,**kwargs)
+            if para is not None:
+                return para.sent(sent_i,**kwargs)
+    @property
+    def num_sents(self): return sum(para.num_sents for para in self.paras())
+    @property
+    def fsent_str(self): return self.para(1).fsent_str
+    @property
+    def lsent_str(self): return self.para(1).lsent_str
+
+    def sylls(self,para_i=None,**kwargs): return self.get_data(para_i,'sylls',**kwargs)
+    def syntax(self,para_i=None,**kwargs): return self.get_data(para_i,'syntax',**kwargs)
+    def mtrees(self,para_i=None,**kwargs): return self.get_data(para_i,'mtrees',**kwargs)
+    def data(self,para_i=None,**kwargs): return self.get_data(para_i,'data',**kwargs)
+    def parse(self,para_i=None,**kwargs): return self.get_data(para_i,'parse',**kwargs)
+    def parses(self,para_i=None,**kwargs): return self.get_data(para_i,'parses',**kwargs)
 
 
-class ParaModel(object):
-    def __init__(self,txt,path_db=PATH_DB,**kwargs):
+
+class ParaModel(TextModel):
+    def __init__(self,txt,path_db=PATH_DB,i=None,**kwargs):
         self.txt=txt
-        self._id=hashstr(txt)
+        self._parses=None
+        self._id=get_para_key(txt, kwargs)
         self._sents_str=tokenize_sents_txt(txt)
         self._words=None
         self._sylls=None
@@ -124,10 +197,14 @@ class ParaModel(object):
         self._mtrees_obj=None
         self._path_db=path_db
         self._sents=None
+        self._kwargs=kwargs
+        self.i=i
 
     def __repr__(self):
         istr=f' #{self.i}' if self.i else ''
-        return f'<Paragraph{istr}: “{self.fsent_str}...” ({self.num_sents} sents, {self.num_words} words)>'.replace('\n',' ')
+        return f'<Paragraph/Stanza{istr}: “{self.fsent_str}...” ({self.num_sents} sents, {self.num_words} words)>'.replace('\n',' ')
+
+    
 
     ####################################
     ## WORDS
@@ -135,9 +212,9 @@ class ParaModel(object):
 
     def words(self,index=True,**kwargs):
         if self._words is None:
-            iterr=tokenize_sentwords_iter(self.txt,sents=self._sents_str,**kwargs)
+            iterr=tokenize_sentwords_iter(self.txt,sents=self._sents_str,**self.kwargs(kwargs))
             self._words=pd.DataFrame(iterr)
-        return setindex(self._words) if index else self._words
+        return setindex(self._words) if index else resetindex(self._words)
 
     @property
     def num_words(self): return len(self.words(index=False))
@@ -156,12 +233,12 @@ class ParaModel(object):
             for si,sent_str in enumerate(self._sents_str):
                 sent_i=si+1
                 nlp_sent_obj = sentobjs[si] if si<len(sentobjs) else None
-                sentobj = Sent(sent_str, i=sent_i, nlp_sent_obj=nlp_sent_obj, **kwargs)
+                sentobj = Sent(sent_str, i=sent_i, nlp_sent_obj=nlp_sent_obj, **self.kwargs(kwargs))
                 self._sents.append(sentobj)
         return self._sents
     
     def sent(self,sent_i,**kwargs):
-        sents=self.sents(**kwargs)
+        sents=self.sents(**self.kwargs(kwargs))
         si=sent_i-1
         return sents[si] if si<len(sents) else None
     
@@ -177,12 +254,12 @@ class ParaModel(object):
     ####################################
 
     def syllabify(self,df,index=False,**kwargs):
-        odf=syllabify_df(df=df,**kwargs)
-        return setindex(odf) if index else odf
+        odf=syllabify_df(df=df,**self.kwargs(kwargs))
+        return setindex(odf) if index else resetindex(odf)
 
     def sylls(self,df=None,index=True,**kwargs):
         if df is None: df=self.words(index=False)
-        return self.syllabify(df,index=index,**kwargs)
+        return self.syllabify(df,index=index,**self.kwargs(kwargs))
 
     ####################################
     ## NLP DOCS
@@ -191,7 +268,7 @@ class ParaModel(object):
     def doc(self,**kwargs):
         if self._doc is None:
             sentwords_ll=tokenize_sentwords_ll_from_df(self.words(index=False))
-            self._doc=get_nlp_doc(sentwords_ll,**kwargs)
+            self._doc=get_nlp_doc(sentwords_ll,**self.kwargs(kwargs))
         return self._doc
 
     ####################################
@@ -201,8 +278,8 @@ class ParaModel(object):
     def syntax(self,index=True,**kwargs):
         if self._syntax is None:
             doc=self.doc()
-            self._syntax=get_nlp_feats_df(doc, **kwargs)
-        return setindex(self._syntax) if index else self._syntax
+            self._syntax=get_nlp_feats_df(doc, **self.kwargs(kwargs))
+        return setindex(self._syntax) if index else resetindex(self._syntax)
 
     ####################################
     ## Mtrees
@@ -211,11 +288,11 @@ class ParaModel(object):
     def mtrees(self,index=True,**kwargs):
         if self._mtrees is None:
             o=[
-                sent.mtree_df(**kwargs).assign(sent_i=sent.i)
-                for sent in self.sents(**kwargs)
+                sent.mtree_df(**self.kwargs(kwargs)).assign(sent_i=sent.i)
+                for sent in self.sents(**self.kwargs(kwargs))
             ]
             self._mtrees=pd.concat(o) if len(o) else pd.DataFrame()
-        return setindex(self._mtrees) if index else self._mtrees
+        return setindex(self._mtrees) if index else resetindex(self._mtrees)
 
     ####################################
     ## Combined
@@ -229,12 +306,12 @@ class ParaModel(object):
             save=True,
             **kwargs):
 
-        odf = self.words(index=False,**kwargs)
-        if syntax: odf=safe_merge(odf,self.syntax(index=False,**kwargs))
-        if mtree: odf=safe_merge(odf,self.mtrees(index=False,**kwargs))
-        if sylls: odf=self.syllabify(df=odf,**kwargs)
+        odf = self.words(index=False,**self.kwargs(kwargs))
+        if syntax: odf=safe_merge(odf,self.syntax(index=False,**self.kwargs(kwargs)))
+        if mtree: odf=safe_merge(odf,self.mtrees(index=False,**self.kwargs(kwargs)))
+        if sylls: odf=self.syllabify(df=odf,**self.kwargs(kwargs))
         if save: self.save()
-        return setindex(odf) if index else odf
+        return setindex(odf) if index else resetindex(odf)
 
 
     ####################################
@@ -249,23 +326,88 @@ class ParaModel(object):
 
 
 
+    ####################################
+    ## Units
+    ####################################
 
-class SentModel(object):
-    def __init__(self,txt,i=None,nlp_sent_obj=None):
+    def iter_units(self,**kwargs):
+        dfdata = self.data(index=False, sylls=True, **self.kwargs(kwargs))
+        divide_parse_units(dfdata,**self.kwargs(kwargs))
+        yield from (g for i,g in dfdata.groupby('unit_i'))
+    
+    def units(self,index=True,**kwargs):
+        o=list(self.iter_units(**self.kwargs(kwargs)))
+        odf=pd.concat(o) if len(o) else pd.DataFrame()
+        return setindex(odf) if index and len(odf) else resetindex(odf)
+
+    ####################################
+    ## Combos
+    ####################################
+
+    def iter_combos(self,**kwargs):
+        for dfunit in self.iter_units(**self.kwargs(kwargs)):
+            for dfcombo in iter_combos(dfunit,**self.kwargs(kwargs)):
+                yield dfcombo
+
+    ####################################
+    ## Units
+    ####################################
+        
+    def parse_iter(self,index=True,force=False,num_proc=1,**kwargs):
+        if force or self._parses is None:
+            units=list(self.iter_units(**self.kwargs(kwargs)))
+            oiterr=pmap_iter(
+                parse_unit_combos,
+                units,
+                num_proc=num_proc,
+                desc='Metrically parsing line units'
+            )
+        else:
+            oiterr=(g for i,g in sorted(self._parses.groupby('unit_i')))
+        for g in oiterr: yield setindex(g) if index else resetindex(g)
+        
+    
+    def parse(self,index=True,incl_data=True,force=False,**kwargs):
+        if force or self._parses is None:
+            o=[]
+            oiterr=self.parse_iter(force=force,**self.kwargs(kwargs))
+            for dfunit_parsed in oiterr:
+                o.append(dfunit_parsed)
+            if len(o):
+                odf=pd.concat(o)
+                self._parses=odf
+        odf=self._parses
+        if len(odf):
+            if incl_data:
+                data=self.data(**self.kwargs(kwargs))
+                odf=safe_merge(odf, data, on=['sent_i','word_i','word_ipa_i','syll_i'])
+            return setindex(odf) if index else resetindex(odf)
+        return pd.DataFrame()
+    def parses(self,**kwargs): return self.parse(**kwargs)
+
+
+
+class SentModel(ParaModel):
+    def __init__(self,txt,i=None,nlp_sent_obj=None,**kwargs):
         self.txt=txt
         self.i=i
         self.nlp=nlp_sent_obj
         self._mtree=None
         self._mtree_df=None
+        self._kwargs=kwargs
+
+    def __repr__(self):
+        txt=self.txt.replace("\n"," ")
+        return f'<Sentence #{self.i}: {txt}>'
     
     def mtree(self,**kwargs):
         if self._mtree is None:
-            self._mtree=get_mtree(self.nlp,**kwargs)
+            self._mtree=get_mtree(self.nlp,**self.kwargs(kwargs))
         return self._mtree
     
     def mtree_df(self,**kwargs):
         if self._mtree_df is None:
-            mtree=self.mtree(**kwargs)
-            self._mtree_df=mtree.get_stats(**kwargs) if mtree is not None else pd.DataFrame()
+            mtree=self.mtree(**self.kwargs(kwargs))
+            self._mtree_df=mtree.get_stats(**self.kwargs(kwargs)) if mtree is not None else pd.DataFrame()
         return self._mtree_df#.assign(sent_i=self.i)
     

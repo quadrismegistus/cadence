@@ -34,6 +34,8 @@ ENGINE=ENGINE_PROSODIC
 DEFAULT_PARSE_MAXSEC=30
 DEFAULT_LINE_LIM=None
 DEFAULT_PROCESSORS={'tokenize':'combined'}
+MAX_SYLL_IN_PARSE_UNIT=14
+MIN_SYLL_IN_PARSE_UNIT=None
 
 MIN_WORDS_IN_PHRASE=2
 MAX_WORDS_IN_PHRASE=15
@@ -62,6 +64,14 @@ PATH_DB_PARSE=os.path.join(PATH_DATA,'db_parse.dc')
 PATH_DB=os.path.join(PATH_DATA,'db.dc')
 DBSEP='____'
 
+METER_MAX_S=2
+METER_MAX_W=2
+
+
+LINEBREAKS=False
+PHRASEBREAKS=True
+
+
 INCL_ALT=True
 DEFAULT_NUM_PROC=1
 #mp.cpu_count()//2# - 1
@@ -78,11 +88,17 @@ LINEKEY=[
     'id',
     'para_i','stanza_i',
     'para_start_char','para_end_char',
+
+
+
     'sent_i'] + [
         f'sent_depth{i}' for i in range(1,10)
     ] + [
         # 'word_i',
     'sentpart_i',
+
+    'unit_i',
+
     'linepart_i','linepart_str','linepart_end_str',
 
     'line_i','line_str',
@@ -91,6 +107,7 @@ LINEKEY=[
 
     
     'combo_stress','combo_ipa','combo_i',
+    'slot_i',
     
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
@@ -112,11 +129,11 @@ PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
 
 DEFAULT_CONSTRAINTS = {
-    '*w/peak',
-    '*w/stressed',
-    '*s/unstressed',
-    '*f-res',
-    '*w-res'
+    'w_peak',
+    'w_stressed',
+    's_unstressed',
+    'di_unresolved_across',
+    'di_unresolved_within',
 }
 
 NUM_BOUNDED_TO_STORE = 10

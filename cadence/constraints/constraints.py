@@ -4,35 +4,92 @@ from ..imports import *
 All constraints take the entire dataframe
 """
 
-def no_stressed_weaks(df_mpos):
-    return np.multiply(df_mpos.is_w , df_mpos.is_stressed)
+def w_stressed(df, is_s):
+    return (1-is_s) * df.prom_stress.values
+def w_stressed_l(df, is_s):
+    return (1-is_s) * df.prom_lstress.values
+def w_stressed_p(df, is_s):
+    return (1-is_s) * df.prom_pstress.values
+def w_stressed_t(df, is_s):
+    return (1-is_s) * df.prom_tstress.values
 
-def no_unstressed_strongs(df_mpos):
-    return np.multiply(df_mpos.is_s, df_mpos.is_unstressed)
-    
-def no_weak_peaks(df_mpos):
-    return np.multiply(df_mpos.is_w, df_mpos.is_peak)
-def no_strong_troughs(df_mpos):
-    return np.multiply(df_mpos.is_s, df_mpos.is_trough)
-
-def w_resolution(df_mpos,weight=1):
-    if len(set(df_mpos.word_i))<2: return np.nan # only applies to word-boundaries    
-    # does this apply to weak positions?
-    if df_mpos.parse_syll.iloc[0]=='w': return np.nan # cannot apply to strong positions
-
-    firstsyll_islight=df_mpos.iloc[0].is_light
-    firstsyll_isstressed=df_mpos.iloc[0].is_stressed
-    if not (firstsyll_islight and firstsyll_isstressed): return weight
-    return 0
-
-def f_resolution(df_mpos,weight=1):
-    if len(set(df_mpos.word_i))<2: return np.nan # only applies to word-boundaries
-    if df_mpos.parse_pos.iloc[0]=='ss': return weight # cannot apply to strong positions
-    if sum(df_mpos.is_funcword)!=len(df_mpos): return weight
-    return 0
+def s_unstressed(df, is_s):
+    return is_s * (1-df.prom_stress.values)
+def s_unstressed_l(df, is_s):
+    return is_s * (1-df.prom_lstress.values)
+def s_unstressed_p(df, is_s):
+    return is_s * (1-df.prom_pstress.values)
+def s_unstressed_t(df, is_s):
+    return is_s * (1-df.prom_tstress.values)
 
 
-def no_window(s,badwindow=(1,1)):
+def w_peak(df, is_s):
+    return (1-is_s) * df.prom_strength.values
+def w_peak_p(df, is_s):
+    return (1-is_s) * df.prom_pstrength.values
+def s_trough(df, is_s):
+    return is_s * (1-df.prom_strength.values)
+def s_trough_p(df, is_s):
+    return is_s * (1-df.prom_pstrength.values)
+
+
+def is_disyllab_pos(is_s):
+    return np.array([
+        float(is_s[i] and ((i and is_s[i-1]) or (i+1<len(is_s) and is_s[i+1])))
+        for i in range(len(is_s))
+    ])
+
+def di_unresolved_across(df,is_s):
+    o=[np.nan] # need to start with non-viol since this applies only to second position of disyllab
+    for i in range(1,len(df)):
+        # for every 2 consecutive sylls...
+        s1=is_s[i-1]
+        s2=is_s[i]
+        if s1!=s2:
+            # not disyllabic
+            o.append(np.nan)
+        else:
+            row1,row2=df.iloc[i-1],df.iloc[i]
+            if (row1.sent_i, row1.word_i) == (row2.sent_i, row2.word_i):
+                # disyllabic position is within not across words
+                o.append(np.nan)
+            else:
+                if s1 and s2:
+                    # disyllabic strong position immediately violates
+                    o.append(1.0)
+                else:
+                    if not row1.word_isfunc or not row2.word_isfunc:
+                        o.append(1.0)
+                    else:
+                        o.append(0.0)
+    return o
+
+def di_unresolved_within(df,is_s):
+    o=[np.nan] # need to start with non-viol since this applies only to second position of disyllab
+    for i in range(1,len(df)):
+        # for every 2 consecutive sylls...
+        s1=is_s[i-1]
+        s2=is_s[i]
+        if s1!=s2:
+            # not disyllabic
+            o.append(np.nan)
+        else:
+            row1,row2=df.iloc[i-1],df.iloc[i]
+            if (row1.sent_i, row1.word_i) != (row2.sent_i, row2.word_i):
+                # disyllabic position is across not wihtin words
+                o.append(np.nan)
+            else:
+                # disyllabic position within word
+                # first position mist be light and stressed
+                if not (row1.prom_weight==0 and row1.prom_stress>0):
+                    o.append(1.0)
+                else:
+                    o.append(0.0)
+    return o
+
+
+
+def bad_window(s,badwindow=(1,1)):
     wlen=len(badwindow)
     l=[]
     window=[]
@@ -42,35 +99,39 @@ def no_window(s,badwindow=(1,1)):
         if len(window)>=wlen:window.pop(0)
     return l
 
-def no_clash(dfparse):
-    return no_window(dfparse.is_stressed,badwindow=(1,1))
-def no_lapse(dfparse):
-    return no_window(dfparse.is_stressed,badwindow=(0,0,0))
-def no_nonalt(dfparse):
-    ww=no_window(dfparse.is_w,badwindow=(1,1))
-    ss=no_window(dfparse.is_s,badwindow=(1,1))
-    return [1 if x or y else 0 for x,y in zip(ww,ss)]
-def no_trochsub(dfparse):
-    x=int(dfparse.is_s.iloc[0]==1)
-    return [x]+[0 for y in range(len(dfparse)-1)]
-
-def apply_posthoc_constraints(dfparse):
-    dfparse['*clash']=[
-        x
-        for pi,pdf in dfparse.groupby('parse_i')
-        for x in no_clash(pdf)
-    ]
-    dfparse['*lapse']=[
-        x
-        for pi,pdf in dfparse.groupby('parse_i')
-        for x in no_lapse(pdf)
-    ]
-    dfparse['*nonalt']=[
-        x
-        for pi,pdf in dfparse.groupby('parse_i')
-        for x in no_nonalt(pdf)
-    ]
+def clash(df, is_s):
+    is_stressed=[int(x>0) for x in df.prom_stress]
+    return no_window(is_stressed,badwindow=(1,1))
+def lapse(df, is_s):
+    is_stressed=[int(x>0) for x in df.prom_stress]
+    return bad_window(is_stressed,badwindow=(0,0,0))
 
 
-    dfparse[TOTALCOL]=dfparse[[col for col in dfparse.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
 
+
+
+CONSTRAINTL = [
+    w_stressed,
+    w_stressed_l,
+    w_stressed_p,
+    w_stressed_t,
+    
+    s_unstressed,
+    s_unstressed_l,
+    s_unstressed_p,
+    s_unstressed_t,
+
+    w_peak,
+    w_peak_p,
+
+    s_trough,
+    s_trough_p,
+    
+    di_unresolved_across,
+    di_unresolved_within,
+
+    clash,
+    lapse
+]
+
+CONSTRAINTD=dict((func.__name__,func) for func in CONSTRAINTL)

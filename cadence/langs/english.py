@@ -3,15 +3,7 @@ from .lexconvert import convert as lexconvert
 import nltk
 
 
-def ipa_to_stress(syl_ipa,numeric=True):
-    if not syl_ipa or type(syl_ipa)!=str:
-        return np.nan if numeric else ''
-    elif syl_ipa[0]=="'":
-        return 1.0 if numeric else 'P'
-    elif syl_ipa[0]== "`":
-        return 0.5 if numeric else 'S'
-    else:
-        return 0.0 if numeric else 'U'
+
 
 
 Pyphen = None
@@ -121,19 +113,17 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
         is_funcword_now = int(is_funcword and num_sylls==1 and ipa[0]!="'")
 
         for si,(syll_ipa,syll_text) in enumerate(zip(sylls_ipa, sylls_text)):
-            results_ld.append({
+            rdx={
                 'word_ipa_i':ipa_i+1,
                 'syll_i':si+1,
-                # 'word_str':token_nice,
                 'word_tok':tokenl,
                 'word_ipa':ipa,
                 'word_nsyll':num_sylls,
                 'syll_ipa':syll_ipa,
                 'syll_str':syll_text,
-                'syll_stress':ipa_to_stress(syll_ipa,numeric=False),
-                'prom_stress':ipa_to_stress(syll_ipa,numeric=True),
                 'word_isfunc':is_funcword_now
-            })
+            }
+            results_ld.append(rdx)
     return results_ld
 
 

@@ -1,6 +1,31 @@
 from ..imports import *
 
 
+
+
+def apply_combos(df,group1,group2,**kwargs):
+    # combo of indices?
+    combo_opts = [
+        [x for ii,x in grp.groupby(group2)]
+        for i,grp in df.groupby(group1)
+    ]
+
+    # poss
+    for combo in product(*combo_opts):
+        if not len(combo): continue
+        odf=pd.concat(combo)
+        odf['slot_i']=[i+1 for i in range(len(odf))]
+        yield odf.set_index('slot_i')
+
+def iter_combos(txtdf,num_proc=1,**kwargs):
+    for dfi,dfcombo in enumerate(apply_combos(resetindex(txtdf), 'word_i', 'word_ipa_i',**kwargs)):
+        yield dfcombo.assign(combo_i=dfi+1)
+
+
+
+
+
+
 def tokenize_sentwords_ll(words_ld,**kwargs):
     if not len(words_ld): return []
     listd=defaultdict(list)
@@ -19,13 +44,34 @@ def tokenize_sentwords_ll_from_df(words_df,**kwargs):
 
 
 
-def tokenize_sents_txt(txt,**y): return nltk.sent_tokenize(txt)
-def tokenize_words_txt(txt,**y): return tokenize_nice2(txt)
-# def to_token(toktxt,**y):
-#     #return split_punct(toktxt.lower())[1]
-#     return zero_punc(toktxt).lower()
 
+def tokenize_sents_txt(txt,**y):
+    sents=nltk.sent_tokenize(txt)
+    lastoffset=0
+    osents=[]
+    
+    for sent in sents:
+        offset = txt.find(sent,lastoffset)
+        newpref=txt[lastoffset:offset]
+        #print([newpref,offset,lastoffset,sent])
+        lastoffset=offset + len(sent)
+        newsent=newpref + sent
+        osents.append(newsent)
+    return osents
 
+def tokenize_words_txt(txt):
+    l=tokenize_nice2(txt)
+    o=[]
+    o0=''
+    for x in l:
+        if zero_punc(x):
+            o+=[o0 + x]
+            o0=''
+        elif o:
+            o[-1]+=x
+        else:
+            o0+=x
+    return o
 
 
 def tokenize_sentwords_iter(
@@ -482,8 +528,7 @@ def get_info_byline(txtdf):
 
 
 
-sonnet="""
-How heavy do I journey on the way,
+sonnet="""How heavy do I journey on the way,
 When what I seek, my weary travel's end,
 Doth teach that ease and that repose to say
 'Thus far the miles are measured from thy friend!'
@@ -496,9 +541,8 @@ That sometimes anger thrusts into his hide;
 Which heavily he answers with a groan,
 More sharp to me than spurring to his side;
 For that same groan doth put this in my mind;
-My grief lies onward and my joy behind.
-"""
-
+My grief lies onward and my joy behind."""
+sonnet1="How heavy do I journey on the way,"
 
 
 
