@@ -16,11 +16,9 @@ from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
 import re,nltk
-from sqlitedict import SqliteDict
 import logging
 logging.Logger.manager.loggerDict['sqlitedict'].disabled=True
 
-from parmapper import parmap
 from functools import partial
 import diskcache as dc
 import requests
