@@ -2,10 +2,8 @@
 
 # sys imports
 import os,sys
-sys.path.append('/home/ryan/github/prosodic')
 import warnings
 warnings.filterwarnings('ignore')
-import prosodic as p
 from string import punctuation
 
 from tqdm import tqdm
