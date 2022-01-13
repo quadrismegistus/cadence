@@ -498,24 +498,24 @@ def pmap_groups(*x,**y):
 def check_basic_config():
     # check basic config
     try:
-        if not os.path.exists(PATH_HOME): os.makedirs(PATH_HOME)
+        if not os.path.exists(PATH_HOME):
+            os.makedirs(PATH_HOME)
+            print(f'[cadence] Created directory {PATH_HOME} to store data within')
     except Exception:
         pass
     if not os.path.exists(PATH_DATA): os.makedirs(PATH_DATA)
     if not os.path.exists(os.path.join(PATH_DATA,'en')):
         zipfn=os.path.join(PATH_HOME,'data_cadence.zip')
         download(DATA_URL, zipfn)
-        unzip(zipfn, PATH_HOME)
+        unzip(zipfn, PATH_HOME, progress=False)
     try:
         nltk.word_tokenize('testing')
     except LookupError:
-        nltk.download('punkt')
+        nltk.download('punkt',quiet=True)
     try:
         nltk.corpus.stopwords.words('english')
     except LookupError:
-        nltk.download('stopwords')
-
-
+        nltk.download('stopwords',quiet=True)
 
 
 ### utils
@@ -528,7 +528,7 @@ def printm(x):
 
 
 
-def download_wget(url, save_to, **attrs):
+def download_wget(url, save_to, verbose=True, **attrs):
     import wget
     save_to_dir,save_to_fn=os.path.split(save_to)
     if save_to_dir:
@@ -538,9 +538,9 @@ def download_wget(url, save_to, **attrs):
     os.rename(fn,save_to_fn)
     # print('\n>> saved:',save_to)
 
-def download(url,save_to,force=False,desc=''):
+def download(url,save_to,force=False,desc='',verbose=True):
     here=os.getcwd()
-    download_wget(url,save_to,desc=desc)
+    download_wget(url,save_to,desc=desc,verbose=verbose)
     os.chdir(here)
 
 
