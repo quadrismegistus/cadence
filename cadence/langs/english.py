@@ -12,7 +12,7 @@ Pyphen = None
 PATH_LANG_DATA=os.path.join(PATH_DATA,'en')
 CMU_DICT_FN=os.path.join(PATH_LANG_DATA,'cmudict.txt')
 CMU_DICT={}
-CACHE_DICT_FN=os.path.join(PATH_LANG_DATA,'tts-cache2.txt')
+CACHE_DICT_FN=os.path.join(PATH_LANG_DATA,'tts-cache.txt')
 CACHE_DICT_F=None
 CACHE=defaultdict(list)
 ORTH_CACHE=defaultdict(list)
@@ -154,41 +154,11 @@ def tts(token):
     return [ipa] if ipa else []
 
 
-# loading dicts
-def load_cmu(fn=CMU_DICT_FN,config={}):
-    global CMU_DICT
-    fns=[fn]
-    if config.get('en_TTS_cache',False):
-        fns+=[CACHE_DICT_FN]
 
-    for fn in fns:
-        #print '>> loading words from:',fn
-        if os.path.exists(fn):
-            with open(fn,encoding='utf-8') as f:
-                for ln in f:
-                    ln=ln.strip()
-                    if not ln or ln.count('\t')!=1: continue
-                    word,ipa=ln.split('\t')[:2]
-                    word=word.strip()
-                    ipa=ipa.strip().split()[0]
-                    if not word in CMU_DICT: CMU_DICT[word]=[]
-                    CMU_DICT[word]+=[ipa]
-    return CMU_DICT
 
 def write_to_cache(token,ipa):
     with open(CACHE_DICT_FN,'a+',encoding='utf-8') as of:
         of.write(f'{token}\t{ipa}\n')
-    #pass
-#     tokenl=token.lower()
-#     global CACHE_DICT_F
-#     if not CACHE_DICT_F:
-#         CACHE_DICT_F=open(CACHE_DICT_FN,'a+',encoding='utf-8')
-
-#     CACHE_DICT_F.write(tokenl+'\t'+ipa+'\n')
-#     if not tokenl in CMU_DICT:
-#         CMU_DICT[tokenl]=[]
-#     CMU_DICT[tokenl]+=[ipa]
-#     return CMU_DICT
 
 
 def add_elisions(_ipa):

@@ -96,7 +96,10 @@ def get_processors(
 def get_nlp_doc(doc_ll_or_txt,nlp=None,**kwargs):
     if nlp is None: nlp=get_nlp(**kwargs)
     try:
-        return nlp(doc_ll_or_txt)
+        doc=nlp(doc_ll_or_txt)
+        # fix
+        fix_nlp_doc_constituency_bug(doc)
+        return doc
     except Exception as e:
         # eprint(f'!! NLP Parser error: {e}')
         pass
@@ -140,6 +143,23 @@ def get_nlp_doc_wordfeat_df(doc,**kwargs):
             ld.append(dx)
     return pd.DataFrame(ld).fillna('')
 
+def fix_nlp_doc_constituency_bug(doc,**kwargs):
+    sentd_orig={}
+    sents = doc.sentences
+    for sent_i,sent in enumerate(sents):
+        sent.i=sent_i+1
+        sentd_orig[get_sent_id_tokens(sent)] = sent
+    for sent_i,sent in enumerate(sents):
+        if hasattr(sent,'constituency'):
+            sent_id_constituency=get_sent_id_constituency(sent)
+            if sent_id_constituency not in sentd_orig: continue
+            sent_orig=sentd_orig[sent_id_constituency]
+            if hasattr(sent_orig,'constituency'):
+                sent.constituency,sent_orig.constituency = sent_orig.constituency,sent.constituency
+    
+    doc.sentences = sents
+
+
 def get_nlp_doc_constituency_df(doc,**kwargs):
     if doc is None: return pd.DataFrame()
     ## Constituency?
@@ -157,22 +177,13 @@ def get_nlp_doc_constituency_df(doc,**kwargs):
 
     for sent_i, sent in enumerate(sents):
         if hasattr(sent,'constituency'):
-            if sentd_orig is None:
-                sentd_orig=dict((get_sent_id_tokens(sent), sent) for sent in sents)
-            sent_id_constituency=get_sent_id_constituency(sent)
-            if sent_id_constituency not in sentd_orig: continue
-            sent_orig=sentd_orig[sent_id_constituency]        
-            
             senttree=recurse_tree(sent.constituency, node_i=0, path=[])
             for word_i,word_constituency_path in enumerate(senttree):
                 word_constituency_path_str='('.join(word_constituency_path)
                 word_constituency_path_nolvl=[xx.split('-',1)[-1] for xx in word_constituency_path]
-                
-
-
                 constituency_depth=len(word_constituency_path)
                 dx={
-                    'sent_i': sent_i+1,
+                    'sent_i': sent.i,
                     'word_i': word_i+1,
                     'word_depth':constituency_depth,
                     # 'word_constituency':word_constituency_path_str,
@@ -189,6 +200,7 @@ def get_nlp_doc_constituency_df(doc,**kwargs):
                 #     dx[f'sent_depth{wci-1}']=wcpathstr
                 ld.append(dx)
     return pd.DataFrame(ld).fillna('')
+
 
 def get_nlp_feats_df(doc,**kwargs):
     df_feats=get_nlp_doc_wordfeat_df(doc,**kwargs)

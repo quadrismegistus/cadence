@@ -97,7 +97,7 @@ class TextModel(object):
         if reset_paras: para_i_l=sorted(list(self.__paras_i))
         if shuffle_paras: random.shuffle(para_i_l)
         if lim_paras: para_i_l=para_i_l[:lim_paras]
-        if progress: para_i_l=tqdm(para_i_l,desc=desc)
+        if progress and len(para_i_l)>1: para_i_l=tqdm(para_i_l,desc=desc)
         return para_i_l
     
     def paras_d(self,*args,**kwargs):
