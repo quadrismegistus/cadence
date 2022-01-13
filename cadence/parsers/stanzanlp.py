@@ -15,7 +15,7 @@ def get_nlp(
         depparse=NLP_PARSE_DEPPARSE,
 
         processors=[],
-        verbose=False,
+        verbose=True,
         **kwargs
         ):
     global NLPD
