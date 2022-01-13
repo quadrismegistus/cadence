@@ -2,6 +2,14 @@ from ..imports import *
 
 
 
+def iter_combos(txtdf,num_proc=1,**kwargs):
+    try:
+        txtdf=resetindex(txtdf)
+        txtdf=txtdf[txtdf.word_tok!=""]
+        for dfi,dfcombo in enumerate(apply_combos(txtdf, 'word_i', 'word_ipa_i',**kwargs)):
+            yield dfcombo.assign(combo_i=dfi+1)
+    except KeyError:
+        yield pd.DataFrame()
 
 def apply_combos(df,group1,group2,**kwargs):
     # combo of indices?
@@ -17,23 +25,13 @@ def apply_combos(df,group1,group2,**kwargs):
         odf['slot_i']=[i+1 for i in range(len(odf))]
         yield odf.set_index('slot_i')
 
-def iter_combos(txtdf,num_proc=1,**kwargs):
-    try:
-        for dfi,dfcombo in enumerate(apply_combos(resetindex(txtdf), 'word_i', 'word_ipa_i',**kwargs)):
-            yield dfcombo.assign(combo_i=dfi+1)
-    except KeyError:
-        yield pd.DataFrame()
-
-
-
-
 
 
 def tokenize_sentwords_ll(words_ld,**kwargs):
     if not len(words_ld): return []
     listd=defaultdict(list)
     for word_d in words_ld:
-        listd[word_d['sent_i']].append(word_d['word_str'])
+        listd[word_d['sent_i']].append(word_d['word_str'].strip())
     olist=[sentl for sent_i,sentl in sorted(listd.items())]
     return olist
 
@@ -41,7 +39,7 @@ def tokenize_sentwords_ll(words_ld,**kwargs):
 def tokenize_sentwords_ll_from_df(words_df,**kwargs):
     if not len(words_df): return []
     return [
-        list(sdf.sort_values('word_i').word_str)
+        [w.strip() for w in sdf.sort_values('word_i').word_str]
         for si,sdf in sorted(words_df.groupby('sent_i'))
     ]
 
@@ -62,20 +60,72 @@ def tokenize_sents_txt(txt,**y):
         osents.append(newsent)
     return osents
 
+# def tokenize_words_txt(txt):
+#     l=tokenize_nice2(txt)
+#     o=[]
+#     o0=''
+#     for x in l:
+#         if zero_punc(x):
+#             o+=[o0 + x]
+#             o0=''
+#         elif o:
+#             o[-1]+=x
+#         else:
+#             o0+=x
+#     return o
+
 def tokenize_words_txt(txt):
-    l=tokenize_nice2(txt)
+    l=tokenize_agnostic(txt)
     o=[]
-    o0=''
+    x0=''
     for x in l:
-        if zero_punc(x):
-            o+=[o0 + x]
-            o0=''
-        elif o:
-            o[-1]+=x
+        if not x.strip():
+            x0+=x
         else:
-            o0+=x
+            o+=[x0 + x]
+            x0=''
+        # if o and not x.strip():# and not o[-1].strip():
+        #     o[-1]+=x
+        # else:
+        #     o+=[x]
     return o
 
+# def tokenize_sentwords_iter(
+#         txt,
+#         sents=None,
+#         lang=DEFAULT_LANG,
+#         sep_line=SEP_LINE,
+#         sep_para=SEP_STANZA,
+#         seps_phrase=SEPS_PHRASE,
+#         progress=True,
+#         para_i=None,
+#         **kwargs):
+#     char_i=0
+#     line_i=1
+#     linepart_i=1
+#     linepart_ii=0
+#     start_offset=0
+#     if sents is None: sents=tokenize_sents_txt(txt)
+#     for sent_i, sent in enumerate(sents):
+#         tokens=tokenize_words_txt(sent)
+#         for tok_i,realtok in enumerate(tokens):
+#             prefstr,wordstr1,sufstr=split_punct(realtok)
+#             word_str=wordstr1+sufstr
+#             word_tok=to_token(word_str)
+#             if sep_line in prefstr and realtok.strip(): line_i+=1
+#             odx_word=dict(
+#                 # para_i=para_i,
+#                 **(dict(para_i=para_i) if para_i is not None else {}),
+#                 sent_i=sent_i+1,
+#                 sentpart_i=linepart_i,
+#                 line_i=line_i,
+#                 word_i=tok_i+1,
+#                 word_pref=prefstr,
+#                 word_str=word_str,
+#                 word_tok=word_tok,
+#             )
+#             yield odx_word
+#             if set(realtok)&set(seps_phrase): linepart_i+=1
 
 def tokenize_sentwords_iter(
         txt,
@@ -95,11 +145,10 @@ def tokenize_sentwords_iter(
     if sents is None: sents=tokenize_sents_txt(txt)
     for sent_i, sent in enumerate(sents):
         tokens=tokenize_words_txt(sent)
-        for tok_i,realtok in enumerate(tokens):
-            prefstr,wordstr1,sufstr=split_punct(realtok)
-            word_str=wordstr1+sufstr
+        for tok_i,word_str in enumerate(tokens):
             word_tok=to_token(word_str)
-            if sep_line in prefstr and realtok.strip(): line_i+=1
+            if sep_line in word_str: line_i+=1
+            is_punc=int(not any(x.isalpha() for x in word_str))
             odx_word=dict(
                 # para_i=para_i,
                 **(dict(para_i=para_i) if para_i is not None else {}),
@@ -107,12 +156,12 @@ def tokenize_sentwords_iter(
                 sentpart_i=linepart_i,
                 line_i=line_i,
                 word_i=tok_i+1,
-                word_pref=prefstr,
                 word_str=word_str,
                 word_tok=word_tok,
+                word_ispunc=is_punc
             )
             yield odx_word
-            if set(realtok)&set(seps_phrase): linepart_i+=1
+            if set(word_str)&set(seps_phrase): linepart_i+=1
 
 
 def tokenize_paras_ld(txt,sep_para=SEP_PARA, **kwargs):

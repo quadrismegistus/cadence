@@ -11,7 +11,7 @@ def concatt(o,index=None):
     return odf
 
 
-def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='left'):
+def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='outer'):
     df1=resetindex(df1)
     df2=resetindex(df2)
     if df1 is None and df2 is None: return pd.DataFrame()
@@ -31,7 +31,7 @@ def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='left'):
 
 def to_token(toktxt,**y):
     #return split_punct(toktxt.lower())[1]
-    return zero_punc(toktxt).lower()
+    return zero_punc(toktxt.strip()).lower()
 
 
 

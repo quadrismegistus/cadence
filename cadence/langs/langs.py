@@ -71,24 +71,38 @@ def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
     key=(lang,word_tok)
     if not key in SYLL_LD_CACHE:
         ld=CODE2LANG_SYLLABIFY[lang](word_tok, **kwargs)
-
-        # tune ups
-        for dx in ld:
-            if 'syll_ipa' in dx:
-                syll_ipa=dx['syll_ipa']
-                dx['syll_stress']=ipa_to_stress(syll_ipa,numeric=False)
-                dx['syll_weight']=ipa_to_weight(syll_ipa,numeric=False)
-                dx['prom_stress']=ipa_to_stress(syll_ipa,numeric=True)
-                dx['prom_weight']=1.0 if dx['syll_weight']=='H' else 0.0
-        
-        stresses = dict((dxi,dx.get('prom_stress')) for dxi,dx in enumerate(ld))
-        if None not in set(stresses.values()):
-            strengths = getstrength(stresses)
-            for i,strength in enumerate(strengths):
-                ld[i]['prom_strength']=strength
+        if not ld:
+            # ld=[{
+            #     'word_ipa_i':0,
+            #     'syll_i':0,
+            #     'word_tok':"",
+            #     'word_ipa':"",
+            #     'word_nsyll':0,
+            #     'syll_ipa':"",
+            #     'syll_str':"",
+            #     'word_isfunc':np.nan
+            # }]
+            pass
+        else:
+            # tune ups
+            for dx in ld:
+                if 'syll_ipa' in dx:
+                    syll_ipa=dx['syll_ipa']
+                    dx['syll_stress']=ipa_to_stress(syll_ipa,numeric=False)
+                    dx['syll_weight']=ipa_to_weight(syll_ipa,numeric=False)
+                    dx['prom_stress']=ipa_to_stress(syll_ipa,numeric=True)
+                    dx['prom_weight']=1.0 if dx['syll_weight']=='H' else 0.0
+            
+            stresses = dict((dxi,dx.get('prom_stress')) for dxi,dx in enumerate(ld))
+            if None not in set(stresses.values()):
+                strengths = getstrength(stresses)
+                for i,strength in enumerate(strengths):
+                    ld[i]['prom_strength']=strength
         
         SYLL_LD_CACHE[key]=ld
     return SYLL_LD_CACHE[key]
+
+
 
 SYLL_DF_CACHE={}
 def get_syllable_df(word_str,lang=DEFAULT_LANG,**kwargs):
@@ -106,6 +120,7 @@ def syllabify_df(df,**kwargs):
     cols=set(df.columns)
     if not 'word_tok' in cols and 'word_str' in cols:
         df['word_tok']=df.word_str.apply(to_token)
+    df=df[df.word_tok!=""]
     dfsyll=pd.concat(
         get_syllable_df(word_tok,index=False,**kwargs)
         for word_tok in df.word_tok.unique()

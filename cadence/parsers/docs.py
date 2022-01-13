@@ -309,7 +309,9 @@ class ParaModel(TextModel):
         odf = self.words(index=False,**self.kwargs(kwargs))
         if syntax: odf=safe_merge(odf,self.syntax(index=False,**self.kwargs(kwargs)))
         if mtree: odf=safe_merge(odf,self.mtrees(index=False,**self.kwargs(kwargs)))
-        if sylls: odf=self.syllabify(df=odf,**self.kwargs(kwargs))
+        if sylls:
+            odf_sylls=self.syllabify(df=odf,**self.kwargs(kwargs))
+            odf=safe_merge(odf,odf_sylls)
         if save: self.save()
         return setindex(odf) if index else resetindex(odf)
 
@@ -383,7 +385,7 @@ class ParaModel(TextModel):
         if len(odf):
             if incl_data:
                 data=self.data(**self.kwargs(kwargs))
-                odf=safe_merge(odf, data, on=['sent_i','word_i','word_ipa_i','syll_i'])
+                odf=safe_merge(odf, data, on=['sent_i','word_i','word_ipa_i','syll_i'],how='left')
             return setindex(odf) if index else resetindex(odf)
         return pd.DataFrame()
     def parses(self,**kwargs): return self.parse(**kwargs)

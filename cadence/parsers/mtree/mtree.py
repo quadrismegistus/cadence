@@ -45,8 +45,9 @@ def get_mtree(sent,**kwargs):
         depobj=DependencyTree.fromstring(tree_str)
         metrobj=CadenceMetricalTree.convert(depobj)
         return metrobj
-    except (IndexError,KeyError,AttributeError,ValueError) as e:
-        # print('!!',e)
+    #except (IndexError,KeyError,AttributeError,ValueError) as e:
+    except AssertionError as e:
+        print('!!',e)
         pass
 
 
@@ -89,27 +90,29 @@ class CadenceMetricalTree(MetricalTree):
         if self._preterm:
             word_tok=to_token(str(self[0]))
             sylls_df=get_syllable_df(word_tok,**kwargs)
-            self._num_variants=sylls_df.word_ipa_i.max()
-            self._is_ambig=self._num_variants>1
-            
-            # go for least stressed possible
-            sylgrps = [g for i,g in sylls_df.groupby('word_ipa_i')]
-            sylgrps.sort(key=lambda g: g.prom_stress.sum())
-            sylls_df1=sylgrps[0]
-            
-            self._nsyll=sylls_df1.syll_i.max()
-            self._seg='.'.join(sylls_df1.syll_ipa)
-            self._nstress=len([x for x in sylls_df1.prom_stress if x>0])
-            
-            # ambig?
-            self._stress_num=sylls_df1.prom_stress.max()
-            if allow_ambig and self._nsyll==1 and self._is_ambig:
-                self._stress_num=.5
-                self._lstress=self._stress_num - 1.0
-                self._stress_num_binary = 1.0
-            else:
-                self._stress_num_binary = 1.0 if self._stress_num>0 else 0.0
-                self._lstress=self._stress_num_binary - 1.0
+            if len(sylls_df):
+                self._num_variants=sylls_df.word_ipa_i.max()
+                self._is_ambig=self._num_variants>1
+                
+                # go for least stressed possible
+                sylgrps = [g for i,g in sylls_df.groupby('word_ipa_i')]
+                sylgrps.sort(key=lambda g: g.prom_stress.sum())
+                sylls_df1=sylgrps[0]
+                
+                self._nsyll=sylls_df1.syll_i.max()
+                self._seg='.'.join(sylls_df1.syll_ipa)
+                self._nstress=len([x for x in sylls_df1.prom_stress if x>0])
+                
+                # ambig?
+                self._stress_num=sylls_df1.prom_stress.max()
+                if allow_ambig and self._nsyll==1 and self._is_ambig:
+                    self._stress_num=.5
+                    self._lstress=self._stress_num - 1.0
+                    self._stress_num_binary = 1.0
+                else:
+                    self._stress_num_binary = 1.0 if self._stress_num>0 else 0.0
+                    self._lstress=self._stress_num_binary - 1.0
+
 
     def lstress(self): return self._lstress
     def pstress(self): return self._pstress
