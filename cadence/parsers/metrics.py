@@ -105,6 +105,44 @@ def get_poss_parses(n,maxS=METER_MAX_S,maxW=METER_MAX_W):
         POSSPARSED[key]=dfpars
     return POSSPARSED[key]
 
+# def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
+#     dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
+#     bounded={}
+#     dfpars=get_poss_parses(len(dfcombo))
+#     scored={}
+#     for nsyll,nsylldf in sorted(dfpars.groupby('nsyll')):
+#         if nsyll<min_nsyll: continue
+#         scored={}
+#         for meter in nsylldf.meter:
+#             exclude=False
+#             for bmeter in bounded:
+#                 if meter.startswith(bmeter):
+#                     exclude=True
+#                     break
+#             if exclude: continue
+#             scored[meter] = apply_constraints(dfcombo, meter, **kwargs)
+#         for mtr1 in scored:
+#             for mtr2 in scored:
+#                 if mtr1>=mtr2: continue
+#                 s1=scored[mtr1].sum()
+#                 s2=scored[mtr2].sum()
+#                 s1_ever_better_than_s2 = any(s1<s2)
+#                 s2_ever_better_than_s1 = any(s2<s1)
+#                 if s1_ever_better_than_s2 and not s2_ever_better_than_s1:
+#                     # s1 bounds s2
+#                     bounded[mtr2]=mtr1
+#                 elif s2_ever_better_than_s1 and not s1_ever_better_than_s2:
+#                     # s2 bounds s1
+#                     bounded[mtr1]=mtr2
+    
+#     o=[]
+#     for mtr,mdf in scored.items():
+#         mdf['slot_meter']=list(mtr.replace('|',''))
+#         odf=mdf.join(dfcombo_orig[[]],how='outer')
+#         odf['parse']=format_parse_str(mtr)
+#         o.append(odf)
+#     return concatt(o)
+
 def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
     dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
     bounded={}
@@ -124,15 +162,18 @@ def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
         for mtr1 in scored:
             for mtr2 in scored:
                 if mtr1>=mtr2: continue
+                if mtr1[-2:]!=mtr2[-2:]: continue
                 s1=scored[mtr1].sum()
                 s2=scored[mtr2].sum()
                 s1_ever_better_than_s2 = any(s1<s2)
                 s2_ever_better_than_s1 = any(s2<s1)
                 if s1_ever_better_than_s2 and not s2_ever_better_than_s1:
                     # s1 bounds s2
+                    # eprint(mtr1,'bounds',mtr2)
                     bounded[mtr2]=mtr1
                 elif s2_ever_better_than_s1 and not s1_ever_better_than_s2:
                     # s2 bounds s1
+                    # eprint(mtr2,'bounds',mtr1)
                     bounded[mtr1]=mtr2
     
     o=[]
@@ -142,7 +183,6 @@ def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
         odf['parse']=format_parse_str(mtr)
         o.append(odf)
     return concatt(o)
-
 
 def format_parse_str(pstr):
     return pstr.replace('|','').replace('s','S')
@@ -165,7 +205,7 @@ def get_constraints(constraints=DEFAULT_CONSTRAINTS):
 
 def apply_constraints(df, mtr, constraints=DEFAULT_CONSTRAINTS, allow_partial=False, **kwargs):
     if type(mtr)==str:
-        mtr=mtr.replace('|','')
+        mtr=mtr.replace('|','').lower()
         is_s=np.array([float(x=='s') for x in mtr])
     else:
         is_s=mtr
