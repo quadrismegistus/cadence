@@ -65,18 +65,19 @@ def apply_proms_sylls(word_df):
         df['is_trough']=(df['prom_strength']==0).apply(np.int32)
 
 SYLL_LD_CACHE={}
-def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
+def get_syllable_ld(word_str,lang=DEFAULT_LANG,force=False,**kwargs):
     global SYLL_LD_CACHE
-    word_tok=to_token(word_str)
-    key=(lang,word_tok)
-    if not key in SYLL_LD_CACHE:
-        ld=CODE2LANG_SYLLABIFY[lang](word_tok, **kwargs)
+    key=(lang,word_str.strip())
+    if force or not key in SYLL_LD_CACHE:
+        # print('looking up:',key)
+        ld=CODE2LANG_SYLLABIFY[lang](word_str.strip(), **kwargs)
         # is_punc=not any(x.isalpha() for x in word_str)
         if not ld:
             ld=[{
                 'word_ipa_i':0,
                 'syll_i':0,
-                'word_tok':word_tok,
+                'word_str':word_str,
+                'word_tok':to_token(word_str),
                 'word_ipa':"",
                 'word_nsyll':0,
                 'syll_ipa':"",
@@ -87,50 +88,45 @@ def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
         else:
             # tune ups
             for dx in ld:
-                if 'syll_ipa' in dx:
-                    syll_ipa=dx['syll_ipa']
-                    dx['syll_stress']=ipa_to_stress(syll_ipa,numeric=False)
-                    dx['syll_weight']=ipa_to_weight(syll_ipa,numeric=False)
-                    dx['prom_stress']=ipa_to_stress(syll_ipa,numeric=True)
-                    dx['prom_weight']=1.0 if dx['syll_weight']=='H' else 0.0
+                syll_ipa=dx['syll_ipa']
+                dx['syll_stress']=ipa_to_stress(syll_ipa,numeric=False)
+                dx['syll_weight']=ipa_to_weight(syll_ipa,numeric=False)
+                dx['prom_stress']=ipa_to_stress(syll_ipa,numeric=True)
+                dx['prom_weight']=1.0 if dx['syll_weight']=='H' else 0.0
             
             stresses = dict((dxi,dx.get('prom_stress')) for dxi,dx in enumerate(ld))
             if None not in set(stresses.values()):
                 strengths = getstrength(stresses)
                 for i,strength in enumerate(strengths):
                     ld[i]['prom_strength']=strength
-        
         SYLL_LD_CACHE[key]=ld
-    return SYLL_LD_CACHE[key]
+    return [
+        {**dx, **{'word_str':word_str}}
+        for dx in SYLL_LD_CACHE[key]
+    ]
 
 
 
 SYLL_DF_CACHE={}
-def get_syllable_df(word_str,lang=DEFAULT_LANG,**kwargs):
+def get_syllable_df(word_str,lang=DEFAULT_LANG,force=False,**kwargs):
     global SYLL_DF_CACHE
-    word_tok=to_token(word_str)
-    key=(lang,word_tok)
-    if not key in SYLL_DF_CACHE:
-        odf=pd.DataFrame(get_syllable_ld(word_str,**kwargs))
-        # apply_proms_sylls(odf)
+    key=(lang,word_str)
+    if force or not key in SYLL_DF_CACHE:
+        # print('df looking up')
+        odf=pd.DataFrame(get_syllable_ld(word_str,force=force,**kwargs))
         SYLL_DF_CACHE[key]=odf
     return SYLL_DF_CACHE[key]
+
 
 def syllabify_df(df,**kwargs):
     df=resetindex(df)
     cols=set(df.columns)
-    if not 'word_tok' in cols and 'word_str' in cols:
-        df['word_tok']=df.word_str.apply(to_token)
-    # df=df[df.word_tok!=""]
     dfsyll=pd.concat(
-        get_syllable_df(word_tok,index=False,**kwargs)
-        for word_tok in df.word_tok.unique()
+        get_syllable_df(word_str,index=False,force=False,**kwargs)
+        for word_str in df.word_str.unique()
     )
     if not len(dfsyll): return pd.DataFrame()
-    
-    # if 'word_str' in cols: df=df.drop('word_str',1)
-    odf=df.merge(dfsyll,on='word_tok',how='left')
-
+    odf=df.merge(dfsyll,on='word_str',how='left')
     ## mtree
     for col in ['prom_pstress', 'prom_lstress', 'prom_tstress', 'prom_pstrength']:
         if col in cols:

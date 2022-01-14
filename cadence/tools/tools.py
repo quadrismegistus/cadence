@@ -2,6 +2,7 @@ from ..imports import *
 
 def concatt(o,index=None):
     odf=pd.DataFrame()
+    o=list(o)
     if len(o):
         odf=pd.concat(o)
         if index==True:

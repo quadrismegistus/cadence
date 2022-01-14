@@ -95,9 +95,10 @@ class CadenceMetricalTree(MetricalTree):
         
 
         if self._preterm:
-            word_tok=to_token(str(self[0]))
+            word_str=str(self[0])
+            word_tok=to_token(word_str)
             if word_tok:
-                sylls_df=get_syllable_df(word_tok,**kwargs)
+                sylls_df=get_syllable_df(word_str,**kwargs)
                 if len(sylls_df):
                     self._num_variants=sylls_df.word_ipa_i.max()
                     self._is_ambig=self._num_variants>1

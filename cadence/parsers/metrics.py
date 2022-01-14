@@ -106,7 +106,7 @@ def get_poss_parses(n,maxS=METER_MAX_S,maxW=METER_MAX_W):
     return POSSPARSED[key]
 
 def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
-    dfcombo=dfcombo_orig[dfcombo_orig.word_tok!=""]
+    dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
     bounded={}
     dfpars=get_poss_parses(len(dfcombo))
     scored={}
@@ -191,7 +191,8 @@ def parse_unit_combos(
         index=False,
         **kwargs):
     o=[]
-    for dfcombo in iter_combos(dfunit):
+    for ci,dfcombo in enumerate(iter_combos(dfunit)):
+        # print(ci,'...')
         try:
             ok_parses = parse_combo(dfcombo,**kwargs)
             dfcombo_join = dfcombo[[col for col in dfcombo.columns if col in set(LINEKEY)]]
@@ -305,7 +306,58 @@ def to_lines(dfparses,totalcol=TOTALCOL,rankcol=PARSERANKCOL, agg=sum, only_best
     
 
 
-
+accentd={
+    'a':'á',
+    'e':'é',
+    'i':'í',
+    'o':'ó',
+    'u':'ú',
+    'y':'ý',
+}
+for k,v in list(accentd.items()): accentd[k.upper()]=v.upper()
+        
+def parse_markdown(dfparse,accent_stresses=False):
+    dfp=resetindex(dfparse)
+    dfp=dfp[dfp.parse_rank==1]
+    mdline=[]
+    for l,dflp in sorted(dfp.groupby('unit_i')):
+        mdrow=[]
+        for w,dfword in sorted(dflp.groupby('word_i')):
+            mdword=[]
+            for s,dfsyll in sorted(dfword.groupby('syll_i')):
+                row=dfsyll.iloc[0]
+                #wpref,w,wsuf = split_punct(row.syll_str)
+                md=w=row.syll_str
+                
+                if row.syll_stress in {"P","S"}:
+                    if accent_stresses:
+                        w2=[]
+                        accented=False
+                        numvowels=len([y for y in w if y in accentd])
+                        for x in w:
+                            if not accented and x in accentd:
+                                if numvowels<2 or x!='y':
+                                    x=accentd[x]
+                                    accented=True
+                            w2+=[x]
+                        md=w=''.join(w2)
+                    else:
+                        md=f'<b>{md}</b>'
+                    
+                if row.slot_meter=='s': md=f'<u>{md}</u>'
+                if row['*total']>0:
+                    md=f'<font style="color:darkred">{md}</font>'
+                #md=f'{wpref}{md}{wsuf}'
+                is_punc=not any(x.isalpha() for x in row.syll_str)
+                mdword+=[md]
+            mdrow.append('.'.join(mdword))
+            if not is_punc: mdrow[-1]=' '+mdrow[-1]
+        mdline.append(''.join(mdrow))
+    
+    # spltr='\n * '
+    # o=spltr + spltr.join(mdline)#.replace('</u> <u>',' ')
+    o=' | '.join(mdline)#.replace('</u> <u>',' ')
+    return o
 
 
 

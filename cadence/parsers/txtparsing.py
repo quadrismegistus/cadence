@@ -109,7 +109,7 @@ def tokenize_sentwords_iter(
     for sent_i, sent in enumerate(sents):
         tokens=tokenize_words_txt(sent)
         for tok_i,word_str in enumerate(tokens):
-            word_tok=to_token(word_str)
+            # word_tok=to_token(word_str)
             if sep_line in word_str: line_i+=1
             is_punc=int(not any(x.isalpha() for x in word_str))
             odx_word=dict(
@@ -120,7 +120,7 @@ def tokenize_sentwords_iter(
                 line_i=line_i,
                 word_i=tok_i+1,
                 word_str=word_str,
-                word_tok=word_tok,
+                # word_tok=word_tok,
                 word_ispunc=is_punc
             )
             yield odx_word

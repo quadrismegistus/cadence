@@ -374,7 +374,7 @@ class ParaModel(TextModel):
         return kwargs_key(kwargs)
 
 
-    def parse_iter(self,index=True,force=False,num_proc=None,incl_data=True,by_line=True,**kwargs):
+    def parse_iter(self,index=True,force=False,num_proc=None,incl_data=True,by_line=False,verbose=True,progress=True,**kwargs):
         if num_proc is None: num_proc = mp.cpu_count()//2
         key=self.get_parse_key(kwargs)
         if force or not key in self._parses:
@@ -384,31 +384,40 @@ class ParaModel(TextModel):
                 units,
                 num_proc=num_proc,
                 desc='Metrically parsing line units',
-                kwargs=self.kwargs(kwargs)
+                kwargs=self.kwargs(kwargs),
+                progress=progress if not verbose else False
             )
         else:
             oiterr=(g for i,g in sorted(self._parses[key].groupby('unit_i')))
         o=[]
         for odf in oiterr:
             if not len(odf): continue
+            if verbose: printm(parse_markdown(odf))
             o.append(odf)
             if by_line: odf=to_lines(odf,**kwargs)
             odf=setindex(odf) if index else resetindex(odf)
             yield odf
         self._parses[key]=concatt(o)
     
-    def parse(self,index=True,incl_data=True,force=False,by_line=True,**kwargs):
+    def parse(self,index=True,incl_data=True,force=False,by_line=False,verbose=True,**kwargs):
         key=self.get_parse_key(kwargs)
+        parsed=False
         if force or not key in self._parses:
             o=[]
             kwargs=self.kwargs(kwargs)
             if 'by_line' in kwargs: del kwargs['by_line']
+            kwargs['verbose']=verbose
             oiterr=self.parse_iter(force=force,by_line=False,**kwargs)
             list(oiterr)
             if not key in self._parses: return pd.DataFrame()
+            parsed=True
         
         odf=self._parses[key]
         if not len(odf): return pd.DataFrame()
+
+        if verbose and not parsed:
+            for i,g in odf.groupby('unit_i'):
+                printm(parse_markdown(g))
 
         if incl_data:
             data=self.data(**self.kwargs(kwargs))

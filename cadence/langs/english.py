@@ -72,30 +72,31 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
     if not token: return []
     # get ipas
     cache = get_cache()
-    tokenl=token.lower()
+    # tokenl=token.lower()
+    tokenl=to_token(token)
     if token in cache:
         ipas=cache[token]
     elif tokenl in cache:
         ipas=cache[tokenl]
     else:
-        ipas=tts(token)
+        ipas=tts(tokenl)
         if ipas:
-            cache[token]=ipas
+            cache[tokenl]=ipas
             if cache_new:
-                write_to_cache(token,ipas[0])
+                write_to_cache(tokenl,ipas[0])
     ipas = ipas[:1] if not incl_alt else ipas
     sd=get_special_cases()
-    if token in sd['maybestressed']:
+    if tokenl in sd['maybestressed']:
         if len(ipas)<2:
             ipa=ipas[0]
             ipax="'"+ipa if ipa[0].isalpha() else ipa[1:]
             ipas.append(ipax)
-    elif token in sd['unstressed']:
+    elif tokenl in sd['unstressed']:
         ipa=ipas[0]
         ipax=ipa if ipa[0].isalpha() else ipa[1:]
         ipas=[ipax]
 
-    is_funcword=token in sd['functionwords']
+    is_funcword=tokenl in sd['functionwords']
 
     # get orths
     results = set()
@@ -116,6 +117,7 @@ def get(token,config={},toprint=False,incl_alt=True,cache_new=True,**kwargs):
             rdx={
                 'word_ipa_i':ipa_i+1,
                 'syll_i':si+1,
+                # 'word_str':token_nice,
                 'word_tok':tokenl,
                 'word_ipa':ipa,
                 'word_nsyll':num_sylls,
