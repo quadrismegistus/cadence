@@ -5,7 +5,7 @@ from ..imports import *
 def iter_combos(txtdf,num_proc=1,**kwargs):
     try:
         txtdf=resetindex(txtdf)
-        txtdf=txtdf[txtdf.word_tok!=""]
+        # txtdf=txtdf[txtdf.word_tok!=""]
         for dfi,dfcombo in enumerate(apply_combos(txtdf, 'word_i', 'word_ipa_i',**kwargs)):
             yield dfcombo.assign(combo_i=dfi+1)
     except KeyError:
@@ -89,43 +89,6 @@ def tokenize_words_txt(txt):
         # else:
         #     o+=[x]
     return o
-
-# def tokenize_sentwords_iter(
-#         txt,
-#         sents=None,
-#         lang=DEFAULT_LANG,
-#         sep_line=SEP_LINE,
-#         sep_para=SEP_STANZA,
-#         seps_phrase=SEPS_PHRASE,
-#         progress=True,
-#         para_i=None,
-#         **kwargs):
-#     char_i=0
-#     line_i=1
-#     linepart_i=1
-#     linepart_ii=0
-#     start_offset=0
-#     if sents is None: sents=tokenize_sents_txt(txt)
-#     for sent_i, sent in enumerate(sents):
-#         tokens=tokenize_words_txt(sent)
-#         for tok_i,realtok in enumerate(tokens):
-#             prefstr,wordstr1,sufstr=split_punct(realtok)
-#             word_str=wordstr1+sufstr
-#             word_tok=to_token(word_str)
-#             if sep_line in prefstr and realtok.strip(): line_i+=1
-#             odx_word=dict(
-#                 # para_i=para_i,
-#                 **(dict(para_i=para_i) if para_i is not None else {}),
-#                 sent_i=sent_i+1,
-#                 sentpart_i=linepart_i,
-#                 line_i=line_i,
-#                 word_i=tok_i+1,
-#                 word_pref=prefstr,
-#                 word_str=word_str,
-#                 word_tok=word_tok,
-#             )
-#             yield odx_word
-#             if set(realtok)&set(seps_phrase): linepart_i+=1
 
 def tokenize_sentwords_iter(
         txt,

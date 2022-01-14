@@ -57,10 +57,10 @@ def find_phrasal_heads(self):
             numsubs=len(subtree)
             firstsub,lastsub=subtree[0],subtree[-1]
             if numsubs>1 and not subtree._preterm and lastsub._preterm:
-                lastsub._phrasal_head=1
+                if lastsub._word_tok: lastsub._phrasal_head=1
                 # print('phrasal head', str(subtree))
                 for sub in subtree[:-1]:
-                    sub._phrasal_head=0
+                    if sub._word_tok: sub._phrasal_head=0
                     # print('not phrasal head', str(sub))
             find_phrasal_heads(subtree)
 
@@ -91,33 +91,40 @@ class CadenceMetricalTree(MetricalTree):
         self._seg = None
         self._nsyll = np.nan
         self._nstress = np.nan
+        self._word_tok=''
         
 
         if self._preterm:
             word_tok=to_token(str(self[0]))
-            sylls_df=get_syllable_df(word_tok,**kwargs)
-            if len(sylls_df):
-                self._num_variants=sylls_df.word_ipa_i.max()
-                self._is_ambig=self._num_variants>1
-                
-                # go for least stressed possible
-                sylgrps = [g for i,g in sylls_df.groupby('word_ipa_i')]
-                sylgrps.sort(key=lambda g: g.prom_stress.sum())
-                sylls_df1=sylgrps[0]
-                
-                self._nsyll=sylls_df1.syll_i.max()
-                self._seg='.'.join(sylls_df1.syll_ipa)
-                self._nstress=len([x for x in sylls_df1.prom_stress if x>0])
-                
-                # ambig?
-                self._stress_num=sylls_df1.prom_stress.max()
-                if allow_ambig and self._nsyll==1 and self._is_ambig:
-                    self._stress_num=.5
-                    self._lstress=self._stress_num - 1.0
-                    self._stress_num_binary = 1.0
-                else:
-                    self._stress_num_binary = 1.0 if self._stress_num>0 else 0.0
-                    self._lstress=self._stress_num_binary - 1.0
+            if word_tok:
+                sylls_df=get_syllable_df(word_tok,**kwargs)
+                if len(sylls_df):
+                    self._num_variants=sylls_df.word_ipa_i.max()
+                    self._is_ambig=self._num_variants>1
+                    self._word_tok=word_tok
+                    
+                    # go for least stressed possible
+                    sylgrps = [g for i,g in sylls_df.groupby('word_ipa_i')]
+                    sylgrps.sort(key=lambda g: g.prom_stress.sum())
+                    sylls_df1=sylgrps[0]
+                    
+                    self._nsyll=sylls_df1.syll_i.max()
+                    self._seg='.'.join(sylls_df1.syll_ipa)
+                    self._nstress=len([x for x in sylls_df1.prom_stress if x>0])
+                    
+                    # ambig?
+                    self._stress_num=sylls_df1.prom_stress.max()
+                    if allow_ambig and self._nsyll==1 and self._is_ambig:
+                        self._stress_num=.5
+                        self._lstress=self._stress_num - 1.0
+                        self._stress_num_binary = 1.0
+                    else:
+                        self._stress_num_binary = 1.0 if self._stress_num>0 else 0.0
+                        self._lstress=self._stress_num_binary - 1.0
+            else:
+                self._stress_num_binary=np.nan
+                self._stress_num=np.nan
+                self._word_tok=''
 
 
     def lstress(self): return self._lstress
@@ -214,6 +221,6 @@ class CadenceMetricalTree(MetricalTree):
                 data['prom_pstrength'].append(preterm._pstrength)
                 data['mtree_ishead'].append(preterm._phrasal_head)
             return pd.DataFrame(data)
-        except Exception as e:
-            eprint('!!',e,'!!')
+        except ValueError as e:
+            # eprint('!!',e,'!!')
             return pd.DataFrame()

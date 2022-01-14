@@ -71,18 +71,19 @@ def get_syllable_ld(word_str,lang=DEFAULT_LANG,**kwargs):
     key=(lang,word_tok)
     if not key in SYLL_LD_CACHE:
         ld=CODE2LANG_SYLLABIFY[lang](word_tok, **kwargs)
+        # is_punc=not any(x.isalpha() for x in word_str)
         if not ld:
-            # ld=[{
-            #     'word_ipa_i':0,
-            #     'syll_i':0,
-            #     'word_tok':"",
-            #     'word_ipa':"",
-            #     'word_nsyll':0,
-            #     'syll_ipa':"",
-            #     'syll_str':"",
-            #     'word_isfunc':np.nan
-            # }]
-            pass
+            ld=[{
+                'word_ipa_i':0,
+                'syll_i':0,
+                'word_tok':word_tok,
+                'word_ipa':"",
+                'word_nsyll':0,
+                'syll_ipa':"",
+                'syll_str':word_str,# if is_punc else 
+                'word_isfunc':np.nan
+            }]
+            # pass
         else:
             # tune ups
             for dx in ld:
@@ -120,7 +121,7 @@ def syllabify_df(df,**kwargs):
     cols=set(df.columns)
     if not 'word_tok' in cols and 'word_str' in cols:
         df['word_tok']=df.word_str.apply(to_token)
-    df=df[df.word_tok!=""]
+    # df=df[df.word_tok!=""]
     dfsyll=pd.concat(
         get_syllable_df(word_tok,index=False,**kwargs)
         for word_tok in df.word_tok.unique()

@@ -5,22 +5,22 @@ All constraints take the entire dataframe
 """
 
 def w_stressed(df, is_s):
-    return (1-is_s) * df.prom_stress.values
+    return (1-is_s) * np.array([1.0 if x>0.0 else 0.0 for x in df.prom_stress])
 def w_stressed_l(df, is_s):
-    return (1-is_s) * df.prom_lstress.values
+    return (1-is_s) * np.array([1.0 if x>0.0 else 0.0 for x in df.prom_lstress])
 def w_stressed_p(df, is_s):
-    return (1-is_s) * df.prom_pstress.values
+    return (1-is_s) * np.array([1.0 if x>0.0 else 0.0 for x in df.prom_pstress])
 def w_stressed_t(df, is_s):
-    return (1-is_s) * df.prom_tstress.values
+    return (1-is_s) * np.array([1.0 if x>0.0 else 0.0 for x in df.prom_tstress])
 
 def s_unstressed(df, is_s):
-    return is_s * (1-df.prom_stress.values)
+    return is_s * np.array([1.0 if x==0.0 else 0.0 for x in df.prom_stress])
 def s_unstressed_l(df, is_s):
-    return is_s * (1-df.prom_lstress.values)
+    return is_s * np.array([1.0 if x==0.0 else 0.0 for x in df.prom_lstress])
 def s_unstressed_p(df, is_s):
-    return is_s * (1-df.prom_pstress.values)
+    return is_s * np.array([1.0 if x==0.0 else 0.0 for x in df.prom_pstress])
 def s_unstressed_t(df, is_s):
-    return is_s * (1-df.prom_tstress.values)
+    return is_s * np.array([1.0 if x==0.0 else 0.0 for x in df.prom_tstress])
 
 
 def w_peak(df, is_s):
@@ -39,7 +39,7 @@ def is_disyllab_pos(is_s):
         for i in range(len(is_s))
     ])
 
-def di_unresolved_across(df,is_s):
+def unres_across(df,is_s):
     o=[np.nan] # need to start with non-viol since this applies only to second position of disyllab
     for i in range(1,len(df)):
         # for every 2 consecutive sylls...
@@ -64,7 +64,7 @@ def di_unresolved_across(df,is_s):
                         o.append(0.0)
     return o
 
-def di_unresolved_within(df,is_s):
+def unres_within(df,is_s):
     o=[np.nan] # need to start with non-viol since this applies only to second position of disyllab
     for i in range(1,len(df)):
         # for every 2 consecutive sylls...
@@ -127,8 +127,8 @@ CONSTRAINTL = [
     s_trough,
     s_trough_p,
     
-    di_unresolved_across,
-    di_unresolved_within,
+    unres_across,
+    unres_within,
 
     clash,
     lapse

@@ -84,6 +84,8 @@ LINEKEY=[
     'para_start_char','para_end_char',
 
 
+    'unit_i',
+    'parse_rank','is_troch','parse_i','parse','parse_str',
 
     'sent_i'] + [
         f'sent_depth{i}' for i in range(1,10)
@@ -91,17 +93,14 @@ LINEKEY=[
         # 'word_i',
     'sentpart_i',
 
-    'unit_i',
 
     'linepart_i','linepart_str','linepart_end_str',
 
     'line_i','line_str',
-    
-    PARSERANKCOL,'is_troch','parse_i','parse','parse_str',
 
     
     'combo_stress','combo_ipa','combo_i',
-    'slot_i',
+    'slot_i','slot_meter','syll_str_parse',
     
     'parse_is_bounded','parse_bounded_by',
     'parse_pos_i','parse_pos',
@@ -126,8 +125,8 @@ DEFAULT_CONSTRAINTS = {
     'w_peak',
     'w_stressed',
     's_unstressed',
-    'di_unresolved_across',
-    'di_unresolved_within',
+    'unres_across',
+    'unres_within',
 }
 
 NUM_BOUNDED_TO_STORE = 10

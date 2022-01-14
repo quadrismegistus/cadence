@@ -49,11 +49,12 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, end='\n', **kwargs)
 
 ### convenient objs
-def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc'}):
+def kwargs_key(kwargs,bad_keys={'num_proc','progress','desc','by_line','only_best'},good_keys={}):
     return ', '.join(
         f'{k}={v}'
         for k,v in kwargs.items()
-        if k not in bad_keys
+        if not bad_keys or k not in bad_keys
+        and not good_keys or k in good_keys
     )
     
 

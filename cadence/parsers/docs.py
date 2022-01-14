@@ -21,10 +21,11 @@ def ProseVerse(*args,**kwargs):
 def Para(txt, *args, path_db=PATH_DB, force=False, para_i=None, **kwargs):
     txt=txt.strip()
     _id=get_para_key(txt, kwargs)
+    #print('Para Key =',_id)
     if not force:
         with dc.Cache(path_db) as db:
             if _id in db:
-                # print(f'found paragraph in db')
+                # eprint(f'[cadence] Found paragraph cached in db, loading...')
                 pdoc=pickle.loads(from_blosc(db[_id]))
                 pdoc.i=para_i
                 return pdoc
@@ -114,6 +115,7 @@ class TextModel(object):
         if not para_i in self._docs:
             if not para_i in self._paras: return
             txt=self._paras[para_i]['para_str']
+            #print('Making new paragraph',para_i,self.kwargs(kwargs),'...')
             self._docs[para_i]=Para(txt, para_i=para_i, **self.kwargs(kwargs))
         return self._docs[para_i]
     def paras(self,*args,**kwargs):
@@ -180,13 +182,16 @@ class TextModel(object):
     def data(self,para_i=None,**kwargs): return self.get_data(para_i,'data',**kwargs)
     def parse(self,para_i=None,**kwargs): return self.get_data(para_i,'parse',**kwargs)
     def parses(self,para_i=None,**kwargs): return self.get_data(para_i,'parses',**kwargs)
+    def parse_iter(self,**kwargs):
+        for para in self.paras(**kwargs):
+            yield from para.parse_iter(**kwargs)
 
 
 
 class ParaModel(TextModel):
     def __init__(self,txt,path_db=PATH_DB,i=None,**kwargs):
         self.txt=txt
-        self._parses=None
+        self._parses={}
         self._id=get_para_key(txt, kwargs)
         self._sents_str=tokenize_sents_txt(txt)
         self._words=None
@@ -309,9 +314,7 @@ class ParaModel(TextModel):
         odf = self.words(index=False,**self.kwargs(kwargs))
         if syntax: odf=safe_merge(odf,self.syntax(index=False,**self.kwargs(kwargs)))
         if mtree: odf=safe_merge(odf,self.mtrees(index=False,**self.kwargs(kwargs)))
-        if sylls:
-            odf_sylls=self.syllabify(df=odf,**self.kwargs(kwargs))
-            odf=safe_merge(odf,odf_sylls)
+        if sylls: odf=self.syllabify(df=odf,**self.kwargs(kwargs))
         if save: self.save()
         return setindex(odf) if index else resetindex(odf)
 
@@ -358,36 +361,62 @@ class ParaModel(TextModel):
     ## Units
     ####################################
         
-    def parse_iter(self,index=True,force=False,num_proc=1,**kwargs):
-        if force or self._parses is None:
+    def get_parse_key(self,kwargs,good_keys={'constraints'}):
+        kwargs=dict((k,v) for k,v in kwargs.items() if k in good_keys)
+        if not 'constraints' in kwargs or not kwargs['constraints']:
+            kwargs['constraints']=DEFAULT_CONSTRAINTS
+        else:
+            kwargs['constraints']=[
+                func if type(func)==str else func.__name__
+                for func in kwargs['constraints']
+            ]
+        kwargs['constraints']=sorted(list(kwargs['constraints']))
+        return kwargs_key(kwargs)
+
+
+    def parse_iter(self,index=True,force=False,num_proc=None,incl_data=True,by_line=True,**kwargs):
+        if num_proc is None: num_proc = mp.cpu_count()//2
+        key=self.get_parse_key(kwargs)
+        if force or not key in self._parses:
             units=list(self.iter_units(**self.kwargs(kwargs)))
             oiterr=pmap_iter(
                 parse_unit_combos,
                 units,
                 num_proc=num_proc,
-                desc='Metrically parsing line units'
+                desc='Metrically parsing line units',
+                kwargs=self.kwargs(kwargs)
             )
         else:
-            oiterr=(g for i,g in sorted(self._parses.groupby('unit_i')))
-        for g in oiterr: yield setindex(g) if index else resetindex(g)
-        
+            oiterr=(g for i,g in sorted(self._parses[key].groupby('unit_i')))
+        o=[]
+        for odf in oiterr:
+            if not len(odf): continue
+            o.append(odf)
+            if by_line: odf=to_lines(odf,**kwargs)
+            odf=setindex(odf) if index else resetindex(odf)
+            yield odf
+        self._parses[key]=concatt(o)
     
-    def parse(self,index=True,incl_data=True,force=False,**kwargs):
-        if force or self._parses is None:
+    def parse(self,index=True,incl_data=True,force=False,by_line=True,**kwargs):
+        key=self.get_parse_key(kwargs)
+        if force or not key in self._parses:
             o=[]
-            oiterr=self.parse_iter(force=force,**self.kwargs(kwargs))
-            for dfunit_parsed in oiterr:
-                o.append(dfunit_parsed)
-            if len(o):
-                odf=pd.concat(o)
-                self._parses=odf
-        odf=self._parses
-        if len(odf):
-            if incl_data:
-                data=self.data(**self.kwargs(kwargs))
-                odf=safe_merge(odf, data, on=['sent_i','word_i','word_ipa_i','syll_i'],how='left')
-            return setindex(odf) if index else resetindex(odf)
-        return pd.DataFrame()
+            kwargs=self.kwargs(kwargs)
+            if 'by_line' in kwargs: del kwargs['by_line']
+            oiterr=self.parse_iter(force=force,by_line=False,**kwargs)
+            list(oiterr)
+            if not key in self._parses: return pd.DataFrame()
+        
+        odf=self._parses[key]
+        if not len(odf): return pd.DataFrame()
+
+        if incl_data:
+            data=self.data(**self.kwargs(kwargs))
+            odf=safe_merge(odf, data, on=['sent_i','word_i','word_ipa_i','syll_i'],how='left')
+        odf=setindex(odf) if index else resetindex(odf)
+        if by_line: odf=to_lines(odf,**kwargs)
+        return odf
+        
     def parses(self,**kwargs): return self.parse(**kwargs)
 
 
