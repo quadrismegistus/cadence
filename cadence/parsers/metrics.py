@@ -143,13 +143,13 @@ def get_poss_parses(n,maxS=METER_MAX_S,maxW=METER_MAX_W):
 #         o.append(odf)
 #     return concatt(o)
 
-def parse_combo(dfcombo_orig,min_nsyll=4,**kwargs):
+def parse_combo(dfcombo_orig,min_nsyll=None,**kwargs):
     dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
     bounded={}
     dfpars=get_poss_parses(len(dfcombo))
     scored={}
     for nsyll,nsylldf in sorted(dfpars.groupby('nsyll')):
-        if nsyll<min_nsyll: continue
+        if min_nsyll and nsyll<min_nsyll: continue
         scored={}
         for meter in nsylldf.meter:
             exclude=False
