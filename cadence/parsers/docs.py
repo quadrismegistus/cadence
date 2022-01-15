@@ -259,7 +259,8 @@ class ParaModel(TextModel):
     ####################################
 
     def syllabify(self,df,index=False,**kwargs):
-        odf=syllabify_df(df=df,**self.kwargs(kwargs))
+        kwargs=self.kwargs(kwargs)
+        odf=syllabify_df(df=df,**kwargs)
         return setindex(odf) if index else resetindex(odf)
 
     def sylls(self,df=None,index=True,**kwargs):

@@ -68,7 +68,7 @@ SYLL_LD_CACHE={}
 def get_syllable_ld(word_str,lang=DEFAULT_LANG,force=False,**kwargs):
     global SYLL_LD_CACHE
     key=(lang,word_str.strip())
-    if force or not key in SYLL_LD_CACHE:
+    if not key in SYLL_LD_CACHE:
         # print('looking up:',key)
         ld=CODE2LANG_SYLLABIFY[lang](word_str.strip(), **kwargs)
         # is_punc=not any(x.isalpha() for x in word_str)
@@ -111,7 +111,7 @@ SYLL_DF_CACHE={}
 def get_syllable_df(word_str,lang=DEFAULT_LANG,force=False,**kwargs):
     global SYLL_DF_CACHE
     key=(lang,word_str)
-    if force or not key in SYLL_DF_CACHE:
+    if not key in SYLL_DF_CACHE:
         # print('df looking up')
         odf=pd.DataFrame(get_syllable_ld(word_str,force=force,**kwargs))
         SYLL_DF_CACHE[key]=odf
@@ -122,7 +122,7 @@ def syllabify_df(df,**kwargs):
     df=resetindex(df)
     cols=set(df.columns)
     dfsyll=pd.concat(
-        get_syllable_df(word_str,index=False,force=False,**kwargs)
+        get_syllable_df(word_str,index=False,**kwargs)
         for word_str in df.word_str.unique()
     )
     if not len(dfsyll): return pd.DataFrame()
