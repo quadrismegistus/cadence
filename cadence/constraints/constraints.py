@@ -56,9 +56,12 @@ def unres_across(df,is_s):
             else:
                 if s1 and s2:
                     # disyllabic strong position immediately violates
+                    # o[-1]=1.0  # prev position too?
                     o.append(1.0)
+                    
                 else:
                     if not row1.word_isfunc or not row2.word_isfunc:
+                        # o[-1]=1.0  # prev position too?
                         o.append(1.0)
                     else:
                         o.append(0.0)
@@ -82,6 +85,7 @@ def unres_within(df,is_s):
                 # disyllabic position within word
                 # first position mist be light and stressed
                 if not (row1.prom_weight==0 and row1.prom_stress>0):
+                    # o[-1]=1.0  # prev position too?
                     o.append(1.0)
                 else:
                     o.append(0.0)

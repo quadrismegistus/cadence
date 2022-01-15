@@ -28,7 +28,7 @@ ENGINE=ENGINE_PROSODIC
 DEFAULT_PARSE_MAXSEC=30
 DEFAULT_LINE_LIM=None
 DEFAULT_PROCESSORS={'tokenize':'combined'}
-MAX_SYLL_IN_PARSE_UNIT=14
+MAX_SYLL_IN_PARSE_UNIT=12
 MIN_SYLL_IN_PARSE_UNIT=None
 
 MIN_WORDS_IN_PHRASE=2
@@ -121,13 +121,21 @@ PARSELINEKEY = LINEKEY[:LINEKEY.index('parse_pos_i')]
 PARSESYLLKEY=LINEKEY
 TOTALCOL='*total'
 
-DEFAULT_CONSTRAINTS = {
+DEFAULT_CONSTRAINTS = [
     'w_peak',
     'w_stressed',
     's_unstressed',
     'unres_across',
     'unres_within',
-}
+]
+DEFAULT_CONSTRAINTS_P = [
+    'w_peak',
+    'w_stressed',
+    's_unstressed',
+    'unres_across',
+    'unres_within',
+    'w_stressed_t'
+]
 
 NUM_BOUNDED_TO_STORE = 10
 
@@ -172,6 +180,9 @@ Valuing himself not a little upon his elegance, being indeed a proper man of his
 """
 
 
+en_prose_taylor="""Prayer is the peace of our spirit, the stillness of our thoughts, the evenness of recollection, the seat of meditation, the rest of our cares and the calm of our tempest. Prayer is the issue of a quiet mind, of untroubled thoughts; it is the daughter of charity and the sister of meekness; and he that prays to God with an angry — that is a troubled and discomposed —spirit, is like him that retires into a battle to meditate and sets up his closet in the outquarters of an army and chooses a frontier garrison to be wise in. Anger is a perfect alienation of the mind from prayer, and therefore is contrary to that attention which presents our prayers in a right [ line to God. For so have I seen a lark rising from his bed of grass, soaring upwards and singing as he rises and hopes to get to Heaven and climb above the clouds; but the poor bird was beaten back with the loud sighings of an eastern wind and his motion made irregular and inconstant, descending more at every breath of the tempest than it could recover by the vibration and frequent weighing of his wings; till the little creature was forced to sit down and pant and stay till the storm was over; and then it made a prosperous flight and did rise and sing as if it had learned music and motion from an angel as he passed sometimes through the air about his ministries here below. So is the prayer of a good man; when his affairs have required business, and his business was matter of discipline, and his discipline was to pass upon a sinning person, or had a design of charity, his duty met with infirmities of a man and anger was its instrument, and the instrument became stronger than the prime agent and raised a tempest and overruled the man; and then his prayer was broken and his thoughts troubled."""
+
+
 # local imports
 from .tools import *
 from .langs import *
@@ -182,4 +193,7 @@ from .cadence import *
 
 # check
 check_basic_config()
+
+
+
 

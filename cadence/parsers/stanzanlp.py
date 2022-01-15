@@ -38,10 +38,10 @@ def get_nlp(
     key=kwargs_key(kwargs)
 
     if not key in NLPD:
-        # eprint('Loading NLP model:',kwargs)
+        eprint('Loading NLP model:',kwargs)
         
         import stanza
-        kwargs2={**dict(verbose=verbose), **kwargs}
+        kwargs2={**dict(verbose=False), **kwargs}
         try:
             NLPD[key] = stanza.Pipeline(**kwargs2)
         except stanza.pipeline.core.ResourcesFileNotFoundError:

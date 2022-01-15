@@ -294,13 +294,17 @@ def df_bounds_df(df1,df2):
 
 def rank_parses(odf,**kwargs):
     odf[TOTALCOL]=odf[[col for col in odf.columns if col.startswith('*') and col!=TOTALCOL]].sum(axis=1)
-    # odf['is_troch']=odf['parse'].apply(lambda x: int(x and x[0]=='s'))
-    newrankdf=odf[['parse_i',TOTALCOL]].groupby('parse_i').sum().sort_values(TOTALCOL).reset_index()
-    newrankdf['ranks_int']=pd.Series(list(range(len(newrankdf))))+1
+    odf['is_troch']=odf['parse'].apply(lambda x: int(x and x[0].lower()=='s'))
+    newrankdf=odf[['parse_i',TOTALCOL,'is_troch']].groupby(['parse_i','is_troch']).sum().reset_index().sort_values([TOTALCOL,'is_troch'])
+    newrankdf['ranks_int']=list(range(len(newrankdf)))
+    # newrankdf['ranks_int']+=1
     newrank=dict(zip(newrankdf.parse_i, newrankdf.ranks_int))
-    odf['parse_rank']=odf.parse_i.apply(lambda x: int(newrank.get(x,0)))
+    # display(newrankdf)
+    odf['parse_rank']=odf.parse_i.apply(lambda x: int(newrank.get(x,0))+1)
     odf['num_parses']=odf['parse_rank'].max()
-    odf=odf.drop('parse_i',1)
+    # odf=odf.drop('parse_i',1)
+    # odf=odf.drop('is_troch',1)
+    # display(odf)
     return odf
 
 
@@ -323,7 +327,8 @@ def to_lines(dfparses,totalcol=TOTALCOL,rankcol=PARSERANKCOL, agg=sum, only_best
     for mx in medians:
         if mx in rcols:
             aggfunc[mx]=np.median
-    lgby=['para_i','unit_i','sent_i','sentpart_i','line_i']
+    # lgby=['para_i','unit_i','sent_i','sentpart_i','line_i']
+    lgby=['para_i','unit_i']
     lgby+=['parse_rank','parse','parse_str']
     # if not only_best:
     #     lgby+=['parse_rank','parse','parse_str']
