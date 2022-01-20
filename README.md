@@ -777,16 +777,6 @@ sentence.grid()
     
 
 
-
-
-
-    <ggplot: (742276690)>
-
-
-
-### Parse text
-
-
 ```python
 # Parse lines (verse)
 sonnet.parse()
