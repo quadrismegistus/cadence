@@ -30,7 +30,6 @@ If you're on mac and don't have brew installed, do so [here](https://brew.sh/).
 ```python
 # this should work following installation
 import cadence as cd
-!rm -rf {cd.PATH_DB}
 ```
 
 ### Load texts
