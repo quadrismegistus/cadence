@@ -7,3 +7,4 @@ diskcache
 stanza
 blosc
 svgling
+ftfy

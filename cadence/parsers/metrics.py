@@ -226,6 +226,31 @@ def apply_constraints(df, mtr, constraints=DEFAULT_CONSTRAINTS, allow_partial=Fa
 # PARSING UNITS
 ###
 
+def format_syll_str_parse(syll, mtr, total):
+    # if total:
+        # syll=format(FACE_ITAL, syll)
+    # else:
+        # syll=format(STYLE_SANS, syll)
+    if mtr=='w' and not total:
+        return format(FACE_PLAIN | STYLE_SANS, syll)
+    elif mtr=='w' and total:
+        return format(FACE_ITAL | STYLE_SANS, syll)
+    elif mtr=='s' and not total:
+        return format(FACE_BOLD | STYLE_SANS, syll)
+    elif mtr=='s' and total:
+        return format(FACE_BOLD|FACE_ITAL | STYLE_SANS, syll)
+    return syll
+
+def format_word_parse_str(dfparse):
+    o=[]
+    for wi,wdf in dfparse.groupby('word_i'):
+        word_str=wdf.word_str.iloc[0]
+        word_ispunc=not any(x.isalpha() for x in word_str)
+        word_fmt = ''.join(wdf.syll_str_parse)
+        if not word_ispunc: o.append(' ')
+        o.append(word_fmt)
+    return ''.join(o).strip()
+
 def parse_unit_combos(
         dfunit,
         index=False,
@@ -249,19 +274,17 @@ def parse_unit_combos(
         parse_id=dict((x,i+1) for i,x in enumerate(parse_il))
         odf['parse_i']=[parse_id[tup] for tup in zip(odf.parse, odf.combo_i)]
         odf=rank_parses(odf)
-        odf['syll_str_parse']=[x.upper() if y=='s' else x.lower() for x,y in zip(odf.syll_str, odf.slot_meter)]
-        odf['syll_str_parse']=['*'+x if y else x for x,y in zip(odf.syll_str_parse, odf['*total'])]
-        
+        #odf['syll_str_parse']=[x.upper() if y=='s' else x.lower() for x,y in zip(odf.syll_str, odf.slot_meter)]
+        # odf['syll_str_parse']=['*'+x if y else x for x,y in zip(odf.syll_str_parse, odf['*total'])]
+        # odf['syll_str_parse']=['*'+x if y else x for x,y in zip(odf.syll_str, odf['*total'])]
+        # odf['syll_str_parse']=[format_syll_str_parse(xsyll,xmtr) for xsyll,xmtr in zip(odf.syll_str_parse, odf.slot_meter)]
+        odf['syll_str_parse']=[format_syll_str_parse(xsyll,xmtr,xtotal) for xsyll,xmtr,xtotal in zip(odf.syll_str, odf.slot_meter, odf['*total'])]
+
         parse_str_d={}
-        for i,pdf in odf.groupby('parse_rank'):    
-            parse_str=' '.join(
-                '.'.join(wdf.syll_str_parse)
-                for wi,wdf in pdf.groupby('word_i')
-            )
+        for i,pdf in odf.groupby('parse_rank'):
+            parse_str=format_word_parse_str(pdf)
             parse_str_d[i]=parse_str
-        
         odf['parse_str']=odf.parse_rank.apply(lambda x: parse_str_d.get(x,''))
-        # odf=odf.drop('syll_str',1)
         odf=setindex(odf) if index else resetindex(odf)
     return odf
 
@@ -395,7 +418,8 @@ def parse_markdown(dfparse,accent_stresses=False):
                 #md=f'{wpref}{md}{wsuf}'
                 is_punc=not any(x.isalpha() for x in row.syll_str)
                 mdword+=[md]
-            mdrow.append('.'.join(mdword))
+            # mdrow.append('.'.join(mdword))
+            mdrow.append(''.join(mdword))
             if not is_punc: mdrow[-1]=' '+mdrow[-1]
         mdline.append(''.join(mdrow))
     

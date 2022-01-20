@@ -44,7 +44,9 @@ def nice_int_df(odf):
 
 
 def clean_text(txt):
-    return txt.replace('\r\n','\n').replace('\r','\n')
+    txt=txt.replace('\r\n','\n').replace('\r','\n')
+    txt=fix_text(txt)
+    return txt
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, end='\n', **kwargs)
@@ -401,7 +403,8 @@ def to_fn_txt(txt_or_fn):
     else:
         fn=''
         txt=txt_or_fn
-    return (fn,txt.strip())
+    txt=clean_text(txt.strip())
+    return (fn,txt)
 
 
 

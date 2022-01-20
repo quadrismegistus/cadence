@@ -1,4 +1,5 @@
 from ..imports import *
+from .lexconvert import pipeThroughEspeak
 from .lexconvert import convert as lexconvert
 import nltk
 
@@ -272,12 +273,21 @@ def espeak2ipa(token):
         return None
     
     token=''.join(x for x in token if x.isalpha())
-    CMD=f'espeak -q -x {token}'
+    res = pipeThroughEspeak(token.encode('utf-8'))
     try:
-        res=subprocess.check_output(CMD.split()).strip()
-        return res.decode("utf-8")
-    except (OSError,subprocess.CalledProcessError) as e:
+        return res.decode('utf-8').strip()
+    except Exception as e:
         return None
+
+    # CMD=f'espeak -q -x {token}'
+    # try:
+    #     # res=subprocess.check_output(CMD, shell=True).strip()
+    #     p = subprocess.Popen(command, stdout=subprocess.PIPE, stdin=infile)
+    #  text = p.stdout.read()
+
+    #     return res.decode("utf-8")
+    # except (OSError,subprocess.CalledProcessError) as e:
+    #     return None
 
 def tts2ipa(token,TTS_ENGINE=None):
     if TTS_ENGINE=='espeak':

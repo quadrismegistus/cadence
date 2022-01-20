@@ -38,7 +38,7 @@ def get_nlp(
     key=kwargs_key(kwargs)
 
     if not key in NLPD:
-        eprint('Loading NLP model:',kwargs)
+        # eprint('Loading NLP model:',kwargs)
         
         import stanza
         kwargs2={**dict(verbose=False), **kwargs}

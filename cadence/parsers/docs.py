@@ -380,20 +380,37 @@ class ParaModel(TextModel):
         key=self.get_parse_key(kwargs)
         if force or not key in self._parses:
             units=list(self.iter_units(**self.kwargs(kwargs)))
+            num_units=len(units)
             oiterr=pmap_iter(
                 parse_unit_combos,
                 units,
                 num_proc=num_proc,
-                desc='Metrically parsing line units',
+                
                 kwargs=self.kwargs(kwargs),
-                progress=progress if not verbose else False
+                progress=False#progress if not verbose else False
             )
         else:
+            num_units=self._parses[key]['unit_i'].nunique()
             oiterr=(g for i,g in sorted(self._parses[key].groupby('unit_i')))
         o=[]
+
+        oiterr=tqdm(
+            oiterr,
+            disable=not progress,
+            desc='Metrically parsing line units',
+            total=num_units,
+            position=0
+        )
+
         for odf in oiterr:
             if not len(odf): continue
-            if verbose: printm(parse_markdown(odf))
+            parse_str=odf.parse_str.iloc[0]
+            unit_i=odf.unit_i.iloc[0]
+            pref=f'[{unit_i}/{num_units}]'
+            pref=format(STYLE_SANS, pref)
+            ostr=f'{pref} {parse_str}'
+            oiterr.set_description(ostr)
+            if verbose and IS_INTERACTIVE: display(Markdown(parse_markdown(odf)))
             o.append(odf)
             if by_line: odf=to_lines(odf,**kwargs)
             odf=setindex(odf) if index else resetindex(odf)

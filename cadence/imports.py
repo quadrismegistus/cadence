@@ -6,12 +6,22 @@ import warnings
 warnings.filterwarnings('ignore')
 from string import punctuation
 
-from tqdm import tqdm
+def is_interactive():
+    import __main__ as main
+    return not hasattr(main, '__file__')
+
+IS_INTERACTIVE=is_interactive()
+
+if IS_INTERACTIVE:
+    from tqdm.notebook import tqdm
+else:
+    from tqdm import tqdm
+
 import pandas as pd,numpy as np,random,json,pickle,shutil
 from collections import defaultdict,Counter
 import subprocess,multiprocessing as mp
 # mp.set_start_method('spawn')
-mp.set_start_method('fork')
+# mp.set_start_method('fork')
 from pprint import pprint
 from itertools import product
 pd.options.display.max_columns=False
@@ -20,6 +30,9 @@ import logging
 from functools import partial
 import diskcache as dc
 import requests
+from ftfy import fix_text
+from IPython.display import Markdown
+
 
 # constants
 ENGINE_PROSODIC='prosodic'
