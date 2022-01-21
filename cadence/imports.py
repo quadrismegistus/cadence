@@ -7,8 +7,12 @@ warnings.filterwarnings('ignore')
 from string import punctuation
 
 def is_interactive():
-    import __main__ as main
-    return not hasattr(main, '__file__')
+    try:
+        __IPYTHON__
+        import __main__ as main
+        return not hasattr(main, '__file__')
+    except NameError:
+        return False
 
 IS_INTERACTIVE=is_interactive()
 

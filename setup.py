@@ -19,7 +19,7 @@ print(requirements)
 
 setup(
     name="cadences",
-    version="0.3.1",
+    version="0.3.3",
     url="https://github.com/quadrismegistus/cadence",
     license='MIT',
 
