@@ -20,12 +20,18 @@ pip install -U git+https://github.com/quadrismegistus/cadence
 
 #### 2. Insteall espeak (TTS)
 
-Install espeak, free TTS software, to 'sound out' unknown words. See [here](http://espeak.sourceforge.net/download.html) for all downloads. For Mac or Linux, you can use:
-```
-apt-get install espeak     # linux
-brew install espeak        # mac
-```
-If you're on mac and don't have brew installed, do so [here](https://brew.sh/).
+Install espeak, free TTS software, to 'sound out' unknown words. See [here](http://espeak.sourceforge.net/download.html) for all downloads.
+
+* On Linux, type into the terminal:
+        ```apt-get install espeak```
+    
+* On Mac:
+  * Install [homebrew](brew.sh) if not already installed.
+
+  * Type into the Terminal app: `brew install espeak`
+    
+* On Windows:
+        Download and install from http://espeak.sourceforge.net/download.html.
 
 
 ```python
