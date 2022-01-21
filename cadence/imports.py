@@ -31,7 +31,6 @@ from functools import partial
 import diskcache as dc
 import requests
 from ftfy import fix_text
-from IPython.display import Markdown
 
 
 # constants

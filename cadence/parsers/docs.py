@@ -410,7 +410,7 @@ class ParaModel(TextModel):
             pref=format(STYLE_SANS, pref)
             ostr=f'{pref} {parse_str}'
             oiterr.set_description(ostr)
-            if verbose and IS_INTERACTIVE: display(Markdown(parse_markdown(odf)))
+            if verbose and IS_INTERACTIVE: printm(parse_markdown(odf))
             o.append(odf)
             if by_line: odf=to_lines(odf,**kwargs)
             odf=setindex(odf) if index else resetindex(odf)
