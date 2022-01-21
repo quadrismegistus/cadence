@@ -433,7 +433,7 @@ class ParaModel(TextModel):
         odf=self._parses[key]
         if not len(odf): return pd.DataFrame()
 
-        if verbose and not parsed:
+        if verbose and IS_INTERACTIVE and not parsed:
             for i,g in odf.groupby('unit_i'):
                 printm(parse_markdown(g))
 
