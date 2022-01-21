@@ -813,11 +813,11 @@ sonnet.parse()
 ```
 
 
- How can <u><b>I</b></u> <font style="color:darkred"><u><b>then</b></u></font> re<u><b>turn</b></u> in <u><b>hap</b></u>py <u><b>plight</b></u>,
+ How can <u><b>I</b></u> <u><b>then</b></u> re<u><b>turn</b></u> in <u><b>hap</b></u>py <u><b>plight</b></u>,
 
 
 
- That <font style="color:darkred"><u>am</u></font> de<u><b>barred</b></u> the <u><b>be</b></u>ne<font style="color:darkred"><u>fit</u></font> of <u><b>rest</b></u>?
+ That <u>am</u> de<u><b>barred</b></u> the <u><b>be</b></u>ne<u>fit</u> of <u><b>rest</b></u>?
 
 
 
@@ -829,23 +829,23 @@ sonnet.parse()
 
 
 
- And <u><b>each</b></u>, though <u><b>e</b></u>ne<font style="color:darkred"><u>mies</u></font> to <u><b>eit</b></u>her's <u><b>reign</b></u>,
+ And <u><b>each</b></u>, though <u><b>e</b></u>ne<u>mies</u> to <u><b>eit</b></u>her's <u><b>reign</b></u>,
 
 
 
- Do <u><b>in</b></u> con<u><b>sent</b></u> <font style="color:darkred"><b>shake</b></font> <u><b>hands</b></u> to <u><b>tor</b></u>ture <font style="color:darkred"><u>me</u></font>,
+ Do <u><b>in</b></u> con<u><b>sent</b></u> <b>shake</b> <u><b>hands</b></u> to <u><b>tor</b></u>ture <u>me</u>,
 
 
 
- The <font style="color:darkred"><u>one</u></font> by <u><b>toil</b></u>, the <u><b>ot</b></u>her <font style="color:darkred"><u>to</u></font> com<u><b>plain</b></u>
+ The <u>one</u> by <u><b>toil</b></u>, the <u><b>ot</b></u>her <u>to</u> com<u><b>plain</b></u>
 
 
 
- How <u><b>far</b></u> I <u><b>toil</b></u>, <font style="color:darkred"><b>still</b></font> <u><b>fart</b></u>her <font style="color:darkred"><u>off</u></font> from thee.
+ How <u><b>far</b></u> I <u><b>toil</b></u>, <b>still</b> <u><b>fart</b></u>her <u>off</u> from thee.
 
 
 
- I <u><b>tell</b></u> the <u><b>day</b></u>, to <u><b>please</b></u> him thou <u><b>art</b></u> <font style="color:darkred"><b>bright</b></font>,
+ I <u><b>tell</b></u> the <u><b>day</b></u>, to <u><b>please</b></u> him thou <u><b>art</b></u> <b>bright</b>,
 
 
 
@@ -857,7 +857,7 @@ sonnet.parse()
 
 
 
- When <u><b>spar</b></u>kling <u><b>stars</b></u> <font style="color:darkred"><u><b>twi</b></u></font>re <u><b>not</b></u> thou <u><b>gildst</b></u> the <u><b>e</b></u>ven.
+ When <u><b>spar</b></u>kling <u><b>stars</b></u> <u><b>twi</b></u>re <u><b>not</b></u> thou <u><b>gildst</b></u> the <u><b>e</b></u>ven.
 
 
 
@@ -865,7 +865,7 @@ sonnet.parse()
 
 
 
- And <u><b>night</b></u> doth <u><b>nigh</b></u>tly <u><b>make</b></u> <font style="color:darkred"><b>grief's</b></font> <u><b>length</b></u> <font style="color:darkred"><b>seem</b></font> <u><b>stron</b></u>ger.
+ And <u><b>night</b></u> doth <u><b>nigh</b></u>tly <u><b>make</b></u> <b>grief's</b> <u><b>length</b></u> <b>seem</b> <u><b>stron</b></u>ger.
 
 
 
@@ -1607,11 +1607,11 @@ prose.parse()
 
 
 
- Is <u><b>it</b></u> that by <font style="color:darkred"><u>its</u></font> in<u><b>de</b></u>fi<font style="color:darkred"><u>ni</u></font>teness <font style="color:darkred">it</font> <u><b>sha</b></u><u><b>dows</b></u> <font style="color:darkred"><b>forth</b></font>
+ Is <u><b>it</b></u> that by <u>its</u> in<u><b>de</b></u>fi<u>ni</u>teness it <u><b>sha</b></u><u><b>dows</b></u> <b>forth</b>
 
 
 
- the <u><b>hear</b></u>tless <u><b>voids</b></u> and <font style="color:darkred">im</font><u><b>men</b></u>si<font style="color:darkred"><u>ties</u></font> of the <u><b>u</b></u>ni<u><b>verse</b></u>,
+ the <u><b>hear</b></u>tless <u><b>voids</b></u> and im<u><b>men</b></u>si<u>ties</u> of the <u><b>u</b></u>ni<u><b>verse</b></u>,
 
 
 
@@ -1619,11 +1619,11 @@ prose.parse()
 
 
 
- <u><b>stabs</b></u> us <font style="color:darkred"><u>from</u></font> be<u><b>hind</b></u> with the <u><b>thought</b></u> of <font style="color:darkred">an</font><u><b>ni</b></u>hi<u><b>la</b></u>tion,
+ <u><b>stabs</b></u> us <u>from</u> be<u><b>hind</b></u> with the <u><b>thought</b></u> of an<u><b>ni</b></u>hi<u><b>la</b></u>tion,
 
 
 
- <u><b>when</b></u> be<u><b>hol</b></u>ding <font style="color:darkred">the</font> <u><b>white</b></u> <font style="color:darkred"><u><b>depths</b></u></font> of the <u><b>mil</b></u>ky <u><b>way</b></u>?
+ <u><b>when</b></u> be<u><b>hol</b></u>ding the <u><b>white</b></u> <u><b>depths</b></u> of the <u><b>mil</b></u>ky <u><b>way</b></u>?
 
 
 
@@ -1635,15 +1635,15 @@ prose.parse()
 
 
 
- much a <u><b>co</b></u>lour <font style="color:darkred"><u>as</u></font> the <u><b>vi</b></u>si<font style="color:darkred">ble</font> <u><b>a</b></u>bsence <font style="color:darkred">of</font> <u><b>co</b></u>lour;
+ much a <u><b>co</b></u>lour <u>as</u> the <u><b>vi</b></u>sible <u><b>a</b></u>bsence of <u><b>co</b></u>lour;
 
 
 
- and <u><b>at</b></u> the <u><b>same</b></u> <font style="color:darkred"><u><b>time</b></u></font> the <u><b>con</b></u>crete <font style="color:darkred"><u>of</u></font> all <u><b>co</b></u>lours;
+ and <u><b>at</b></u> the <u><b>same</b></u> <u><b>time</b></u> the <u><b>con</b></u>crete <u>of</u> all <u><b>co</b></u>lours;
 
 
 
- is <u><b>it</b></u> for these <u><b>rea</b></u>sons <u><b>that</b></u> there <u><b>is</b></u> such a <u><b>dumb</b></u> <font style="color:darkred"><u><b>blan</b></u></font>kness,
+ is <u><b>it</b></u> for these <u><b>rea</b></u>sons <u><b>that</b></u> there <u><b>is</b></u> such a <u><b>dumb</b></u> <u><b>blan</b></u>kness,
 
 
 
@@ -1651,15 +1651,15 @@ prose.parse()
 
 
 
- in a <u><b>wide</b></u> <font style="color:darkred"><b>lands</b></font><u><b>cape</b></u> of <u><b>snows</b></u>:
+ in a <u><b>wide</b></u> <b>lands</b><u><b>cape</b></u> of <u><b>snows</b></u>:
 
 
 
- a <u><b>co</b></u>lour<font style="color:darkred">less</font>,
+ a <u><b>co</b></u>lourless,
 
 
 
- all- <u><b>co</b></u>lour <font style="color:darkred"><u>of</u></font> at<u><b>he</b></u>ism <font style="color:darkred">from</font> <u><b>which</b></u> we <u><b>shrink</b></u>?
+ all- <u><b>co</b></u>lour <u>of</u> at<u><b>he</b></u>ism from <u><b>which</b></u> we <u><b>shrink</b></u>?
 
 
 
