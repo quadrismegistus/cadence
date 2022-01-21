@@ -33,6 +33,7 @@ Install espeak, free TTS software, to 'sound out' unknown words. See [here](http
 * On Windows:
         Download and install from http://espeak.sourceforge.net/download.html.
 
+### Load cadence
 
 ```python
 # this should work following installation
@@ -42,6 +43,7 @@ import cadence as cd
 ### Load texts
 
 ```python
+# verse
 sonnetXIV = """
 How can I then return in happy plight,
 That am debarred the benefit of rest?
@@ -58,6 +60,17 @@ When sparkling stars twire not thou gildst the even.
 But day doth daily draw my sorrows longer,
 And night doth nightly make grief’s length seem stronger.
 """
+
+# prose
+melville="""Is it that by its indefiniteness it shadows forth the
+heartless voids and immensities of the universe, and thus stabs us
+from behind with the thought of annihilation, when beholding
+the white depths of the milky way? Or is it, that as in
+essence whiteness is not so much a colour as the visible absence
+of colour; and at the same time the concrete of all colours;
+is it for these reasons that there is such a dumb blankness,
+full of meaning, in a wide landscape of snows: a colourless,
+all-colour of atheism from which we shrink?"""
 ```
 
 
@@ -65,6 +78,10 @@ And night doth nightly make grief’s length seem stronger.
 # These are identical
 sonnet = cd.Verse(sonnetXIV)
 sonnet = cd.Text(sonnetXIV, linebreaks=True, phrasebreaks=False)
+
+# So are these
+prose = cd.Prose(melville)
+prose = cd.Text(melville, linebreaks=False, phrasebreaks=True)
 ```
 
 ### Available features
@@ -763,19 +780,23 @@ sentence = sonnet.sent(1)
 sentence.mtree()
 ```
 
-
-
-
-    
 ![svg](README_files/README_10_0.svg)
     
+```python
+# Show sentence tree for prose
+prose.sent(1).mtree()
+```
+
+    
+![svg](README_files/README_17_0.svg)
+    
+
 
 
 
 
 ```python
 # Stress grid of sentence inferred from syntactic tree
-# using metricaltree
 sentence.grid()
 ```
 
@@ -790,10 +811,6 @@ sentence.grid()
 # Parse lines (verse)
 sonnet.parse()
 ```
-
-
-    Metrically parsing line units:   0%|          | 0/14 [00:00<?, ?it/s]
-
 
 
  How can <u><b>I</b></u> <font style="color:darkred"><u><b>then</b></u></font> re<u><b>turn</b></u> in <u><b>hap</b></u>py <u><b>plight</b></u>,
@@ -1583,46 +1600,10 @@ sonnet.parse()
 
 
 
-## Prose
-
-
 ```python
-melville="""Is it that by its indefiniteness it shadows forth the heartless voids
-and immensities of the universe, and thus stabs us from behind with the thought of annihilation,
-when beholding the white depths of the milky way? Or is it, that as in essence
-whiteness is not so much a colour as the visible absence of colour; and at the same time the concrete of all colours;
-is it for these reasons that there is such a dumb blankness, full of meaning,
-in a wide landscape of snows: a colourless, all-colour of atheism from which we shrink?"""
+# Parse prose
+prose.parse()
 ```
-
-
-```python
-# So are these
-text = cd.Text(melville, linebreaks=False, phrasebreaks=True)
-text = cd.Prose(melville)
-```
-
-
-```python
-text.sent(1).mtree()
-```
-
-
-
-
-    
-![svg](README_files/README_17_0.svg)
-    
-
-
-
-
-```python
-text.parse()
-```
-
-
-    Metrically parsing line units:   0%|          | 0/14 [00:00<?, ?it/s]
 
 
 
