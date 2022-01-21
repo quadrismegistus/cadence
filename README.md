@@ -813,59 +813,59 @@ sonnet.parse()
 ```
 
 
- How can <u><b>I</b></u> <u><b>then</b></u> re<u><b>turn</b></u> in <u><b>hap</b></u>py <u><b>plight</b></u>,
+ How can <i><b>I</b></i> <i><b>then</b></i> re<i><b>turn</b></i> in <i><b>hap</b></i>py <i><b>plight</b></i>,
 
 
 
- That <u>am</u> de<u><b>barred</b></u> the <u><b>be</b></u>ne<u>fit</u> of <u><b>rest</b></u>?
+ That <i>am</i> de<i><b>barred</b></i> the <i><b>be</b></i>ne<i>fit</i> of <i><b>rest</b></i>?
 
 
 
- When <u><b>day's</b></u> op<u><b>pres</b></u>sion <u><b>is</b></u> not <u><b>eased</b></u> by <u><b>night</b></u>,
+ When <i><b>day's</b></i> op<i><b>pres</b></i>sion <i><b>is</b></i> not <i><b>eased</b></i> by <i><b>night</b></i>,
 
 
 
- But <u><b>day</b></u> by <u><b>night</b></u> and <u><b>night</b></u> by <u><b>day</b></u> op<u><b>pressed</b></u>,
+ But <i><b>day</b></i> by <i><b>night</b></i> and <i><b>night</b></i> by <i><b>day</b></i> op<i><b>pressed</b></i>,
 
 
 
- And <u><b>each</b></u>, though <u><b>e</b></u>ne<u>mies</u> to <u><b>eit</b></u>her's <u><b>reign</b></u>,
+ And <i><b>each</b></i>, though <i><b>e</b></i>ne<i>mies</i> to <i><b>eit</b></i>her's <i><b>reign</b></i>,
 
 
 
- Do <u><b>in</b></u> con<u><b>sent</b></u> <b>shake</b> <u><b>hands</b></u> to <u><b>tor</b></u>ture <u>me</u>,
+ Do <i><b>in</b></i> con<i><b>sent</b></i> <b>shake</b> <i><b>hands</b></i> to <i><b>tor</b></i>ture <i>me</i>,
 
 
 
- The <u>one</u> by <u><b>toil</b></u>, the <u><b>ot</b></u>her <u>to</u> com<u><b>plain</b></u>
+ The <i>one</i> by <i><b>toil</b></i>, the <i><b>ot</b></i>her <i>to</i> com<i><b>plain</b></i>
 
 
 
- How <u><b>far</b></u> I <u><b>toil</b></u>, <b>still</b> <u><b>fart</b></u>her <u>off</u> from thee.
+ How <i><b>far</b></i> I <i><b>toil</b></i>, <b>still</b> <i><b>fart</b></i>her <i>off</i> from thee.
 
 
 
- I <u><b>tell</b></u> the <u><b>day</b></u>, to <u><b>please</b></u> him thou <u><b>art</b></u> <b>bright</b>,
+ I <i><b>tell</b></i> the <i><b>day</b></i>, to <i><b>please</b></i> him thou <i><b>art</b></i> <b>bright</b>,
 
 
 
- And <u><b>dost</b></u> him <u><b>grace</b></u> when <u><b>clouds</b></u> do <u><b>blot</b></u> the <u><b>heaven</b></u>:
+ And <i><b>dost</b></i> him <i><b>grace</b></i> when <i><b>clouds</b></i> do <i><b>blot</b></i> the <i><b>heaven</b></i>:
 
 
 
- So <u><b>flat</b></u>ter <u><b>I</b></u> the <u><b>swart</b></u>- com<u><b>ple</b></u>xiond <u><b>night</b></u>,
+ So <i><b>flat</b></i>ter <i><b>I</b></i> the <i><b>swart</b></i>- com<i><b>ple</b></i>xiond <i><b>night</b></i>,
 
 
 
- When <u><b>spar</b></u>kling <u><b>stars</b></u> <u><b>twi</b></u>re <u><b>not</b></u> thou <u><b>gildst</b></u> the <u><b>e</b></u>ven.
+ When <i><b>spar</b></i>kling <i><b>stars</b></i> <i><b>twi</b></i>re <i><b>not</b></i> thou <i><b>gildst</b></i> the <i><b>e</b></i>ven.
 
 
 
- But <u><b>day</b></u> doth <u><b>dai</b></u>ly <u><b>draw</b></u> my <u><b>sor</b></u>rows <u><b>lon</b></u>ger,
+ But <i><b>day</b></i> doth <i><b>dai</b></i>ly <i><b>draw</b></i> my <i><b>sor</b></i>rows <i><b>lon</b></i>ger,
 
 
 
- And <u><b>night</b></u> doth <u><b>nigh</b></u>tly <u><b>make</b></u> <b>grief's</b> <u><b>length</b></u> <b>seem</b> <u><b>stron</b></u>ger.
+ And <i><b>night</b></i> doth <i><b>nigh</b></i>tly <i><b>make</b></i> <b>grief's</b> <i><b>length</b></i> <b>seem</b> <i><b>stron</b></i>ger.
 
 
 
@@ -1607,59 +1607,59 @@ prose.parse()
 
 
 
- Is <u><b>it</b></u> that by <u>its</u> in<u><b>de</b></u>fi<u>ni</u>teness it <u><b>sha</b></u><u><b>dows</b></u> <b>forth</b>
+ Is <i><b>it</b></i> that by <i>its</i> in<i><b>de</b></i>fi<i>ni</i>teness it <i><b>sha</b></i><i><b>dows</b></i> <b>forth</b>
 
 
 
- the <u><b>hear</b></u>tless <u><b>voids</b></u> and im<u><b>men</b></u>si<u>ties</u> of the <u><b>u</b></u>ni<u><b>verse</b></u>,
+ the <i><b>hear</b></i>tless <i><b>voids</b></i> and im<i><b>men</b></i>si<i>ties</i> of the <i><b>u</b></i>ni<i><b>verse</b></i>,
 
 
 
- and <u><b>thus</b></u>
+ and <i><b>thus</b></i>
 
 
 
- <u><b>stabs</b></u> us <u>from</u> be<u><b>hind</b></u> with the <u><b>thought</b></u> of an<u><b>ni</b></u>hi<u><b>la</b></u>tion,
+ <i><b>stabs</b></i> us <i>from</i> be<i><b>hind</b></i> with the <i><b>thought</b></i> of an<i><b>ni</b></i>hi<i><b>la</b></i>tion,
 
 
 
- <u><b>when</b></u> be<u><b>hol</b></u>ding the <u><b>white</b></u> <u><b>depths</b></u> of the <u><b>mil</b></u>ky <u><b>way</b></u>?
+ <i><b>when</b></i> be<i><b>hol</b></i>ding the <i><b>white</b></i> <i><b>depths</b></i> of the <i><b>mil</b></i>ky <i><b>way</b></i>?
 
 
 
- Or <u><b>is</b></u> it,
+ Or <i><b>is</b></i> it,
 
 
 
- <u><b>that</b></u> as in <u><b>es</b></u>sence <u><b>whi</b></u>teness <u><b>is</b></u> not so
+ <i><b>that</b></i> as in <i><b>es</b></i>sence <i><b>whi</b></i>teness <i><b>is</b></i> not so
 
 
 
- much a <u><b>co</b></u>lour <u>as</u> the <u><b>vi</b></u>sible <u><b>a</b></u>bsence of <u><b>co</b></u>lour;
+ much a <i><b>co</b></i>lour <i>as</i> the <i><b>vi</b></i>sible <i><b>a</b></i>bsence of <i><b>co</b></i>lour;
 
 
 
- and <u><b>at</b></u> the <u><b>same</b></u> <u><b>time</b></u> the <u><b>con</b></u>crete <u>of</u> all <u><b>co</b></u>lours;
+ and <i><b>at</b></i> the <i><b>same</b></i> <i><b>time</b></i> the <i><b>con</b></i>crete <i>of</i> all <i><b>co</b></i>lours;
 
 
 
- is <u><b>it</b></u> for these <u><b>rea</b></u>sons <u><b>that</b></u> there <u><b>is</b></u> such a <u><b>dumb</b></u> <u><b>blan</b></u>kness,
+ is <i><b>it</b></i> for these <i><b>rea</b></i>sons <i><b>that</b></i> there <i><b>is</b></i> such a <i><b>dumb</b></i> <i><b>blan</b></i>kness,
 
 
 
- <u><b>full</b></u> of <u><b>mea</b></u>ning,
+ <i><b>full</b></i> of <i><b>mea</b></i>ning,
 
 
 
- in a <u><b>wide</b></u> <b>lands</b><u><b>cape</b></u> of <u><b>snows</b></u>:
+ in a <i><b>wide</b></i> <b>lands</b><i><b>cape</b></i> of <i><b>snows</b></i>:
 
 
 
- a <u><b>co</b></u>lourless,
+ a <i><b>co</b></i>lourless,
 
 
 
- all- <u><b>co</b></u>lour <u>of</u> at<u><b>he</b></u>ism from <u><b>which</b></u> we <u><b>shrink</b></u>?
+ all- <i><b>co</b></i>lour <i>of</i> at<i><b>he</b></i>ism from <i><b>which</b></i> we <i><b>shrink</b></i>?
 
 
 
