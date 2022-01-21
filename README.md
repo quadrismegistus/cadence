@@ -3,7 +3,8 @@
 A rhythm analysis toolkit, gathering multiple parsing engines:
 * ~~[Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.~~
   * Cadence now uses its own metrical parser, a rewritten version of Prosodic's.
-* [MetricalTree](https://github.com/tdozat/Metrics) for syntactic parsing and phrasal stress assignment.
+* [Stanza](https://github.com/stanfordnlp/stanza) for syntactic parsing.
+* [MetricalTree](https://github.com/tdozat/Metrics) for sentence rhythm/phrasal stress assignment based on Stanza's syntactic parses.
 
 ## Quickstart
 
