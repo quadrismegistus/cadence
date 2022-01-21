@@ -1,8 +1,9 @@
 # Cadence
 
 A rhythm analysis toolkit, gathering multiple parsing engines:
-* [Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.
-* Cadence itself for slower but exhaustive, MaxEnt-able metrical scansion.
+* ~~[Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.~~
+  * Cadence now uses its own metrical parser, a rewritten version of Prosodic's.
+* [MetricalTree](https://github.com/tdozat/Metrics) for syntactic parsing and phrasal stress assignment.
 
 ## Quickstart
 
@@ -34,7 +35,6 @@ import cadence as cd
 
 ### Load texts
 
-
 ```python
 sonnetXIV = """
 How can I then return in happy plight,
@@ -61,6 +61,7 @@ sonnet = cd.Verse(sonnetXIV)
 sonnet = cd.Text(sonnetXIV, linebreaks=True, phrasebreaks=False)
 ```
 
+### Available features
 
 ```python
 # Tokenize
@@ -747,6 +748,7 @@ sonnet.syntax()
 </div>
 
 
+### Sentence-level information from MetricalTree
 
 
 ```python
@@ -776,6 +778,7 @@ sentence.grid()
 ![png](README_files/README_11_0.png)
     
 
+### Metrical parsing
 
 ```python
 # Parse lines (verse)
