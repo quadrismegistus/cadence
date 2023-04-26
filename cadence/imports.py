@@ -32,7 +32,7 @@ pd.options.display.max_columns=False
 import re,nltk
 import logging
 log = logging.getLogger()
-from functools import partial
+from functools import partial, cached_property
 import diskcache as dc
 import requests
 from ftfy import fix_text

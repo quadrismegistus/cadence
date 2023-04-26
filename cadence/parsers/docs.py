@@ -458,6 +458,7 @@ class SentModel(ParaModel):
         self.nlp=nlp_sent_obj
         self._mtree=None
         self._mtree_df=None
+        self._btree=None
         self._kwargs=kwargs
 
     def __repr__(self):
@@ -468,6 +469,12 @@ class SentModel(ParaModel):
         if self._mtree is None:
             self._mtree=get_mtree(self.nlp,**self.kwargs(kwargs))
         return self._mtree
+
+    @cached_property    
+    def btree(self,**kwargs):
+        from .rhythmics import prom_tree
+        return prom_tree(self.nlp.constituency)
+
     
     def mtree_df(self,**kwargs):
         if self._mtree_df is None:

@@ -166,6 +166,8 @@ def tokenize_nltk(txt,lower=False):
 #                 addback=True
 #     return l2
 
+def tokenize_nice(x,**kwargs):
+    return tokenize_agnostic(x)
 
 # def tokenize(txt,*x,**y):
 # 	return tokenize_fast(txt,*x,**y)
