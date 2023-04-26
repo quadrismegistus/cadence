@@ -26,9 +26,12 @@ def Para(txt, *args, path_db=PATH_DB, force=False, para_i=None, **kwargs):
         with dc.Cache(path_db) as db:
             if _id in db:
                 # eprint(f'[cadence] Found paragraph cached in db, loading...')
-                pdoc=pickle.loads(from_blosc(db[_id]))
-                pdoc.i=para_i
-                return pdoc
+                try:
+                    pdoc=pickle.loads(from_blosc(db[_id]))
+                    pdoc.i=para_i
+                    return pdoc
+                except Exception as e:
+                    log.error(e)
 
     pdoc=ParaModel(txt,*args,path_db=path_db,**kwargs)
     pdoc.i=para_i
@@ -472,13 +475,13 @@ class SentModel(ParaModel):
             self._mtree_df=mtree.get_stats(**self.kwargs(kwargs)) if mtree is not None else pd.DataFrame()
         return self._mtree_df#.assign(sent_i=self.i)
     
-    def grid(self,**kwargs):
+    def grid(self,prom_type='tstress',**kwargs):
         import plotnine as p9
         p9.options.figure_size=(11,5)
         figdf=resetindex(self.mtree_df(**kwargs))
-        figdf['prom_tstress']+=0.1
-        figdf['prom_tstress']=figdf['prom_tstress'].fillna(0)
+        figdf[f'prom_{prom_type}']+=0.1
+        figdf[f'prom_{prom_type}']=figdf[f'prom_{prom_type}'].fillna(0)
         return p9.ggplot(
             figdf,
-            p9.aes(x='word_i',y='prom_tstress',label='word_str')
+            p9.aes(x='word_i',y=f'prom_{prom_type}',label='word_str')
         ) + p9.geom_col(alpha=.25) + p9.geom_text(size=9,angle=45) + p9.theme_void()

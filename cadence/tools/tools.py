@@ -28,7 +28,7 @@ def safe_merge(df1,df2,on=['sent_i','word_i'],badcols={'word_str'},how='outer'):
     
     df2cols = (df2cols - df1cols) | set(on)
 
-    return df1[df1cols].merge(df2[df2cols],on=on,how=how)
+    return df1[list(df1cols)].merge(df2[list(df2cols)],on=on,how=how)
 
 def to_token(toktxt,**y):
     #return split_punct(toktxt.lower())[1]
@@ -208,7 +208,7 @@ def detokenize(x):
 
 def setindex(df,key=LINEKEY,badcols={'index','level_0'},sort=True):
     if not len(df): return df
-    df = df[set(df.columns) - set(df.index.names)]
+    df = df[list(set(df.columns) - set(df.index.names))]
     df = resetindex(df)
 
     cols=[]
@@ -232,7 +232,7 @@ def resetindex(df,badcols={'level_0','index'},**y):
     inds=list(df.index.names)
     both=set(cols)&set(inds)
     okcols=set(cols) - both - badcols
-    newdf=df[okcols].reset_index(**y)
+    newdf=df[list(okcols)].reset_index(**y)
     nowcols=list(newdf.columns)
     newcols=[col for col in LINEKEY if col in set(nowcols) and col not in badcols]
     newcols+=[col for col in nowcols if col not in set(LINEKEY) and col not in badcols]
