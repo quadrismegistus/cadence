@@ -32,7 +32,7 @@ pd.options.display.max_columns=False
 import re,nltk
 import logging
 log = logging.getLogger()
-from functools import partial, cached_property
+from functools import partial, cached_property, lru_cache as cache
 import diskcache as dc
 import requests
 from ftfy import fix_text
@@ -140,8 +140,8 @@ TOTALCOL='*total'
 
 DEFAULT_CONSTRAINTS = [
     'w_peak',
-    'w_stressed',
-    's_unstressed',
+    # 'w_stressed',
+    # 's_unstressed',
     'unres_across',
     'unres_within',
 ]

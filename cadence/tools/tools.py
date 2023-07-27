@@ -628,3 +628,14 @@ def read_df(ifn,key='',**attrs):
 
 def read_url(url):
     return requests.get(url).content.decode('utf-8')
+
+
+
+
+
+def dedup(l):
+    o = []
+    for x in l:
+        if not o or x != o[-1]:
+            o.append(x)
+    return o
