@@ -267,7 +267,7 @@ def parse_unit_combos(
             pass
     odf=pd.concat(o) if len(o) else pd.DataFrame()
     if len(odf):
-        odf=final_bounding(odf)
+        odf=final_bounding(odf,**kwargs)
         unit_i=dfunit.unit_i.iloc[0]
         odf['unit_i']=unit_i
         parse_il=list(set(list(zip(odf.parse, odf.combo_i))))
@@ -288,22 +288,35 @@ def parse_unit_combos(
         odf=setindex(odf) if index else resetindex(odf)
     return odf
 
-def final_bounding(parses):
+def final_bounding(parses,constraints=None,**kwargs):
     groups = [g for i,g in parses.groupby(['combo_i','parse'])]
     for g in groups: g.bounded=False
     for i,g in enumerate(groups):
         for ii,gg in enumerate(groups):
             if i>=ii: continue
-            bounds = df_bounds_df(g,gg)
+            bounds = df_bounds_df(g,gg,constraints=constraints)
             if bounds is True:
                 gg.bounded=True
             elif bounds is False:
                 g.bounded=True
     return pd.concat(g for g in groups if not g.bounded)
 
-def df_bounds_df(df1,df2):
-    cdf1=df1[[c for c in df1.columns if c.startswith('*')]]
-    cdf2=df2[[c for c in df2.columns if c.startswith('*')]]
+def df_bounds_df(df1,df2,constraints=None):
+    okcols=set(df1.columns)&set(df2.columns)
+    if constraints is None:
+        constraints = [c for c in okcols if c.startswith('*')]
+    else:
+        constraints = [x for x in ['*'+x for x in constraints] if x in okcols]
+
+
+    cdf1=df1[list(constraints)]
+    cdf2=df2[list(constraints)]
+    
+    # print(cdf1)
+    # print(cdf2)
+    # print(constraints)
+    # stopxx
+    
     s1=cdf1.sum()
     s2=cdf2.sum()
     s1_ever_better_than_s2 = any(s1<s2)
