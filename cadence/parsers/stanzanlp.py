@@ -39,18 +39,21 @@ def get_nlp(
 
     if not key in NLPD:
         # eprint('Loading NLP model:',kwargs)
-        
         import stanza
         kwargs2={**dict(verbose=False), **kwargs}
         try:
             NLPD[key] = stanza.Pipeline(**kwargs2)
-        except stanza.pipeline.core.ResourcesFileNotFoundError:
+        # except stanza.pipeline.core.ResourcesFileNotFoundError:
+        except Exception as e:
+            log.error(e)
             lang = kwargs.get('lang')
             eprint(f'[cadence] Downloading stanza NLP model for language = "{lang}"')
             stanza.download(lang)
             try:
                 NLPD[key] = stanza.Pipeline(**kwargs2)
-            except stanza.pipeline.core.ResourcesFileNotFoundError:
+            # except stanza.pipeline.core.ResourcesFileNotFoundError:
+            except Exception as e:
+                log.error(e)
                 raise Exception(f'[cadence] Cannot download stanza model for language = "{lang}"')
         
         NLPD[key].procstr=procstr

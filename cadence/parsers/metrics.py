@@ -184,6 +184,67 @@ def parse_combo(dfcombo_orig,min_nsyll=None,**kwargs):
         o.append(odf)
     return concatt(o)
 
+
+
+def parse_combo2(dfcombo_orig,min_nsyll=None,exclude_bounded=True,**kwargs):
+    dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
+    bounded={}
+    dfpars=get_poss_parses(len(dfcombo))
+    scored={}
+    for nsyll,nsylldf in sorted(dfpars.groupby('nsyll')):
+        if min_nsyll and nsyll<min_nsyll: continue
+        scored={}
+        for meter in nsylldf.meter:
+            if exclude_bounded:
+                exclude=False
+                for bmeter in bounded:
+                    if meter.startswith(bmeter):
+                        exclude=True
+                        break
+                if exclude: continue
+            scored[meter] = apply_constraints(dfcombo, meter, **kwargs)
+        for mtr1 in scored:
+            for mtr2 in scored:
+                if mtr1>=mtr2: continue
+                if mtr1[-2:]!=mtr2[-2:]: continue
+                s1=scored[mtr1].sum()
+                s2=scored[mtr2].sum()
+                s1_ever_better_than_s2 = any(s1<s2)
+                s2_ever_better_than_s1 = any(s2<s1)
+                if s1_ever_better_than_s2 and not s2_ever_better_than_s1:
+                    # s1 bounds s2
+                    # eprint(mtr1,'bounds',mtr2)
+                    bounded[mtr2]=mtr1
+                elif s2_ever_better_than_s1 and not s1_ever_better_than_s2:
+                    # s2 bounds s1
+                    # eprint(mtr2,'bounds',mtr1)
+                    bounded[mtr1]=mtr2
+    
+    o=[]
+    for mi,(mtr,mdf) in enumerate(sorted(scored.items(),reverse=True)):
+        mdf['slot_meter']=list(mtr.replace('|',''))
+        odf=mdf.join(dfcombo_orig[[]],how='outer')
+        odf[TOTALCOL]=odf[[c for c in odf if c[0]=='*']].sum(axis=1)
+        odf['parse']=format_parse_str(mtr)
+        odf['parse_total'] = odf[TOTALCOL].sum()
+        odf['bounded_by']=format_parse_str(bounded.get(mtr,''))
+        odf['parse_i']=mi+1
+        o.append(odf)
+    
+    odf = concatt(o)
+    odf['parse_total_i']=[x+(1/y) for x,y in zip(odf.parse_total, odf.parse_i)]
+    odf['parse_rank'] = odf.parse_total_i.rank(method='dense').astype(int)
+    return odf.drop('parse_total_i',axis=1).reset_index().sort_values(
+        ['parse_rank','parse_i','slot_i']
+    ).set_index(
+        ['parse_rank','parse_total','parse_i','parse','bounded_by','slot_i','slot_meter']
+    )
+
+
+
+
+
+
 def format_parse_str(pstr):
     return pstr.replace('|','').replace('s','S')
     # if not pstr: return ''
@@ -267,7 +328,7 @@ def parse_unit_combos(
             pass
     odf=pd.concat(o) if len(o) else pd.DataFrame()
     if len(odf):
-        odf=final_bounding(odf)
+        odf=final_bounding(odf,**kwargs)
         unit_i=dfunit.unit_i.iloc[0]
         odf['unit_i']=unit_i
         parse_il=list(set(list(zip(odf.parse, odf.combo_i))))
@@ -288,22 +349,35 @@ def parse_unit_combos(
         odf=setindex(odf) if index else resetindex(odf)
     return odf
 
-def final_bounding(parses):
+def final_bounding(parses,constraints=None,**kwargs):
     groups = [g for i,g in parses.groupby(['combo_i','parse'])]
     for g in groups: g.bounded=False
     for i,g in enumerate(groups):
         for ii,gg in enumerate(groups):
             if i>=ii: continue
-            bounds = df_bounds_df(g,gg)
+            bounds = df_bounds_df(g,gg,constraints=constraints)
             if bounds is True:
                 gg.bounded=True
             elif bounds is False:
                 g.bounded=True
     return pd.concat(g for g in groups if not g.bounded)
 
-def df_bounds_df(df1,df2):
-    cdf1=df1[[c for c in df1.columns if c.startswith('*')]]
-    cdf2=df2[[c for c in df2.columns if c.startswith('*')]]
+def df_bounds_df(df1,df2,constraints=None):
+    okcols=set(df1.columns)&set(df2.columns)
+    if constraints is None:
+        constraints = [c for c in okcols if c.startswith('*')]
+    else:
+        constraints = [x for x in ['*'+x for x in constraints] if x in okcols]
+
+
+    cdf1=df1[list(constraints)]
+    cdf2=df2[list(constraints)]
+    
+    # print(cdf1)
+    # print(cdf2)
+    # print(constraints)
+    # stopxx
+    
     s1=cdf1.sum()
     s2=cdf2.sum()
     s1_ever_better_than_s2 = any(s1<s2)
