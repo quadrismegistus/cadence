@@ -140,8 +140,8 @@ TOTALCOL='*total'
 
 DEFAULT_CONSTRAINTS = [
     'w_peak',
-    # 'w_stressed',
-    # 's_unstressed',
+    'w_stressed',
+    's_unstressed',
     'unres_across',
     'unres_within',
 ]

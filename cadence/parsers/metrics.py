@@ -184,6 +184,67 @@ def parse_combo(dfcombo_orig,min_nsyll=None,**kwargs):
         o.append(odf)
     return concatt(o)
 
+
+
+def parse_combo2(dfcombo_orig,min_nsyll=None,exclude_bounded=True,**kwargs):
+    dfcombo=dfcombo_orig[dfcombo_orig.word_ipa!=""]
+    bounded={}
+    dfpars=get_poss_parses(len(dfcombo))
+    scored={}
+    for nsyll,nsylldf in sorted(dfpars.groupby('nsyll')):
+        if min_nsyll and nsyll<min_nsyll: continue
+        scored={}
+        for meter in nsylldf.meter:
+            if exclude_bounded:
+                exclude=False
+                for bmeter in bounded:
+                    if meter.startswith(bmeter):
+                        exclude=True
+                        break
+                if exclude: continue
+            scored[meter] = apply_constraints(dfcombo, meter, **kwargs)
+        for mtr1 in scored:
+            for mtr2 in scored:
+                if mtr1>=mtr2: continue
+                if mtr1[-2:]!=mtr2[-2:]: continue
+                s1=scored[mtr1].sum()
+                s2=scored[mtr2].sum()
+                s1_ever_better_than_s2 = any(s1<s2)
+                s2_ever_better_than_s1 = any(s2<s1)
+                if s1_ever_better_than_s2 and not s2_ever_better_than_s1:
+                    # s1 bounds s2
+                    # eprint(mtr1,'bounds',mtr2)
+                    bounded[mtr2]=mtr1
+                elif s2_ever_better_than_s1 and not s1_ever_better_than_s2:
+                    # s2 bounds s1
+                    # eprint(mtr2,'bounds',mtr1)
+                    bounded[mtr1]=mtr2
+    
+    o=[]
+    for mi,(mtr,mdf) in enumerate(sorted(scored.items(),reverse=True)):
+        mdf['slot_meter']=list(mtr.replace('|',''))
+        odf=mdf.join(dfcombo_orig[[]],how='outer')
+        odf[TOTALCOL]=odf[[c for c in odf if c[0]=='*']].sum(axis=1)
+        odf['parse']=format_parse_str(mtr)
+        odf['parse_total'] = odf[TOTALCOL].sum()
+        odf['bounded_by']=format_parse_str(bounded.get(mtr,''))
+        odf['parse_i']=mi+1
+        o.append(odf)
+    
+    odf = concatt(o)
+    odf['parse_total_i']=[x+(1/y) for x,y in zip(odf.parse_total, odf.parse_i)]
+    odf['parse_rank'] = odf.parse_total_i.rank(method='dense').astype(int)
+    return odf.drop('parse_total_i',axis=1).reset_index().sort_values(
+        ['parse_rank','parse_i','slot_i']
+    ).set_index(
+        ['parse_rank','parse_total','parse_i','parse','bounded_by','slot_i','slot_meter']
+    )
+
+
+
+
+
+
 def format_parse_str(pstr):
     return pstr.replace('|','').replace('s','S')
     # if not pstr: return ''

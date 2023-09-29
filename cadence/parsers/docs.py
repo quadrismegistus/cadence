@@ -76,6 +76,7 @@ class TextModel(object):
         obj=self.para(para_i)
         if sent_i: obj=obj.sent(sent_i)
         return obj
+    
         
 
     """
@@ -132,7 +133,16 @@ class TextModel(object):
     def iter_stanzas(self,**kwargs): return self.iter_paras(**kwargs)
     def stanza(self,**kwargs): return self.para(**kwargs)
     def stanzas(self,**kwargs): return self.paras(**kwargs)
+
+    def iter_combos(self,**kwargs): 
+        for para in self.iter_paras(**kwargs):
+            yield from para.iter_combos(**kwargs)
     
+    def iter_slices(self,**kwargs): 
+        for para in self.iter_paras(**kwargs):
+            yield from para.iter_slices(**kwargs)
+    
+
     #############################################
     ### Data
     #############################################
@@ -364,6 +374,28 @@ class ParaModel(TextModel):
             for dfcombo in iter_combos(dfunit,**self.kwargs(kwargs)):
                 yield dfcombo
 
+    def iter_slices(
+            self, 
+            n=8, 
+            allow_first_word_break=False, 
+            allow_last_word_break=False, 
+            allow_multiple_combos=False,
+            **kwargs):
+        done=set()
+
+        for combo_df in self.iter_combos(**kwargs):
+            combo_df = combo_df[combo_df.word_ispunc == 0]
+            if len(combo_df) > n:
+                for j in range(n,len(combo_df)+1):
+                    slice_df = combo_df.iloc[j-n:j]
+                    if len(slice_df) == n:
+                        if (allow_first_word_break or slice_df.iloc[0].syll_i == 1):
+                            if (allow_last_word_break or slice_df.iloc[-1].syll_i == slice_df.iloc[-1].word_nsyll):
+                                done_id = tuple(tuple(x) for x in zip(slice_df.sent_i, slice_df.sentpart_i, slice_df.line_i, slice_df.word_i))
+                                if allow_multiple_combos or not done_id in done:    
+                                    done.add(done_id)
+                                    yield slice_df
+
     ####################################
     ## Units
     ####################################
@@ -385,8 +417,6 @@ class ParaModel(TextModel):
     def parse_iter(self,index=True,force=False,num_proc=1,incl_data=True,by_line=False,verbose=True,progress=True,constraints=DEFAULT_CONSTRAINTS,**kwargs):
         if num_proc is None: num_proc = mp.cpu_count()//2
         key=self.get_parse_key(kwargs, constraints=constraints)
-        print('parsing',key)
-        print('num_proc',num_proc)
         if force or not key in self._parses:
             units=list(self.iter_units(**self.kwargs(kwargs)))
             num_units=len(units)
