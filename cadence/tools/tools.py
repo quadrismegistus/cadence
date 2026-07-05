@@ -517,6 +517,7 @@ def check_basic_config():
         nltk.word_tokenize('testing')
     except LookupError:
         nltk.download('punkt',quiet=True)
+        nltk.download('punkt_tab',quiet=True)  # required by nltk>=3.9
     try:
         nltk.corpus.stopwords.words('english')
     except LookupError:

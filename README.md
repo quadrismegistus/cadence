@@ -1,5 +1,10 @@
 # Cadence
 
+> [!IMPORTANT]
+> **This repository was archived in July 2026 and is no longer maintained.**
+> Cadence is superseded by [Prosodic v3](https://github.com/quadrismegistus/prosodic) (`pip install prosodic`), which absorbed its core ideas — syntax-informed phrasal stress, MaxEnt constraint weighting, and prose rhythm parsing (`TextModel(txt, syntax=True)`).
+> Cadence still runs as frozen for reproducibility: last verified July 2026 on Python 3.12 with the pinned `requirements.txt`. Everything cadence does that prosodic doesn't yet (constituency-based MetricalTree phrasal stress, phrasal constraint variants, tree/grid visualizations) is catalogued for porting in prosodic's ROADMAP ([quadrismegistus/prosodic#134](https://github.com/quadrismegistus/prosodic/pull/134)), so nothing is lost.
+
 A rhythm analysis toolkit, gathering multiple parsing engines:
 * ~~[Prosodic](https://github.com/quadrismegistus/prosodic) for fast English and Finnish metrical scansion.~~
   * Cadence now uses its own metrical parser, a rewritten version of Prosodic's.

@@ -13,7 +13,7 @@ def read(filename):
         return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
 
 with open("requirements.txt", "r") as fh:
-    requirements = [x.strip() for x in fh.read().split('\n') if x.strip()]
+    requirements = [x.strip() for x in fh.read().split('\n') if x.strip() and not x.strip().startswith('#')]
 
 print(requirements)
 
