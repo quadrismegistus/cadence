@@ -113,6 +113,28 @@ def lapse(df, is_s):
 
 
 
+def num_beats(is_s):
+    s_now=False
+    n=0
+    for ws in is_s:
+        if ws and not s_now:
+            n+=1
+            s_now=True
+        elif not ws:
+            s_now=False
+    return n
+        
+
+def not_nmeter(df, is_s, n=5):
+    o = [np.nan for x in range(len(df))]
+    viol = int( (len(o)<(n*2)) or (num_beats(is_s) != n) )
+    #if o: o[-1] = viol
+    return [viol for x in o]
+    # return o
+
+def not_pentameter(df, is_s):
+    return not_nmeter(df, is_s, n=5)
+
 
 CONSTRAINTL = [
     w_stressed,
@@ -135,7 +157,9 @@ CONSTRAINTL = [
     unres_within,
 
     clash,
-    lapse
+    lapse,
+
+    not_pentameter
 ]
 
 CONSTRAINTD=dict((func.__name__,func) for func in CONSTRAINTL)
