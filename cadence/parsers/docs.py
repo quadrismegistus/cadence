@@ -69,8 +69,8 @@ class TextModel(object):
     def __repr__(self):
         return f'<Text: “{self.para(1).fsent_str}...” ({self.num_paras} paras)>'
     
-    def kwargs(self,kwargs):
-        return {**self._kwargs, **kwargs}
+    def kwargs(self,kwargs,**kwargs_y):
+        return {**self._kwargs, **kwargs, **kwargs_y}
 
     def get(self,para_i,sent_i):
         obj=self.para(para_i)
@@ -183,7 +183,10 @@ class TextModel(object):
     def syntax(self,para_i=None,**kwargs): return self.get_data(para_i,'syntax',**kwargs)
     def mtrees(self,para_i=None,**kwargs): return self.get_data(para_i,'mtrees',**kwargs)
     def data(self,para_i=None,**kwargs): return self.get_data(para_i,'data',**kwargs)
-    def parse(self,para_i=None,**kwargs): return self.get_data(para_i,'parse',**kwargs)
+    def parse(self,para_i=None,**kwargs): 
+        o=list(self.parse_iter(**kwargs) if para_i is None else self.para(para_i).parse_iter(**kwargs))
+        return pd.concat(o) if o else pd.DataFrame()
+
     def parses(self,para_i=None,**kwargs): return self.get_data(para_i,'parses',**kwargs)
     def parse_iter(self,**kwargs):
         for para in self.paras(**kwargs):
@@ -308,11 +311,11 @@ class ParaModel(TextModel):
     ####################################
 
     def data(self,
-            syntax=True,
+            syntax=False,
             sylls=True,
-            mtree=True,
+            mtree=False,
             index=True,
-            save=True,
+            save=False,
             **kwargs):
 
         odf = self.words(index=False,**self.kwargs(kwargs))
@@ -365,7 +368,8 @@ class ParaModel(TextModel):
     ## Units
     ####################################
         
-    def get_parse_key(self,kwargs,good_keys={'constraints'}):
+    def get_parse_key(self,kwargs,constraints=DEFAULT_CONSTRAINTS,good_keys={'constraints'}):
+        kwargs={**kwargs, **{'constraints':constraints}}
         kwargs=dict((k,v) for k,v in kwargs.items() if k in good_keys)
         if not 'constraints' in kwargs or not kwargs['constraints']:
             kwargs['constraints']=DEFAULT_CONSTRAINTS
@@ -378,9 +382,11 @@ class ParaModel(TextModel):
         return kwargs_key(kwargs)
 
 
-    def parse_iter(self,index=True,force=False,num_proc=None,incl_data=True,by_line=False,verbose=True,progress=True,**kwargs):
+    def parse_iter(self,index=True,force=False,num_proc=1,incl_data=True,by_line=False,verbose=True,progress=True,constraints=DEFAULT_CONSTRAINTS,**kwargs):
         if num_proc is None: num_proc = mp.cpu_count()//2
-        key=self.get_parse_key(kwargs)
+        key=self.get_parse_key(kwargs, constraints=constraints)
+        print('parsing',key)
+        print('num_proc',num_proc)
         if force or not key in self._parses:
             units=list(self.iter_units(**self.kwargs(kwargs)))
             num_units=len(units)
@@ -389,8 +395,8 @@ class ParaModel(TextModel):
                 units,
                 num_proc=num_proc,
                 
-                kwargs=self.kwargs(kwargs),
-                progress=False#progress if not verbose else False
+                kwargs=self.kwargs(kwargs,constraints=constraints),
+                progress=progress if not verbose else False
             )
         else:
             num_units=self._parses[key]['unit_i'].nunique()
@@ -420,7 +426,7 @@ class ParaModel(TextModel):
             yield odf
         self._parses[key]=concatt(o)
     
-    def parse(self,index=True,incl_data=True,force=False,by_line=False,verbose=True,**kwargs):
+    def parse(self,index=True,incl_data=True,force=False,by_line=False,verbose=True,constraints=DEFAULT_CONSTRAINTS,**kwargs):
         key=self.get_parse_key(kwargs)
         parsed=False
         if force or not key in self._parses:
@@ -428,7 +434,7 @@ class ParaModel(TextModel):
             kwargs=self.kwargs(kwargs)
             if 'by_line' in kwargs: del kwargs['by_line']
             kwargs['verbose']=verbose
-            oiterr=self.parse_iter(force=force,by_line=False,**kwargs)
+            oiterr=self.parse_iter(force=force,by_line=False,constraints=constraints,**kwargs)
             list(oiterr)
             if not key in self._parses: return pd.DataFrame()
             parsed=True
@@ -458,6 +464,7 @@ class SentModel(ParaModel):
         self.nlp=nlp_sent_obj
         self._mtree=None
         self._mtree_df=None
+        self._btree=None
         self._kwargs=kwargs
 
     def __repr__(self):
@@ -468,6 +475,13 @@ class SentModel(ParaModel):
         if self._mtree is None:
             self._mtree=get_mtree(self.nlp,**self.kwargs(kwargs))
         return self._mtree
+
+    @cache
+    def btree(self,**kwargs):
+        from .rhythm import to_binary_tree
+        btree=to_binary_tree(self.nlp.constituency)
+        return btree
+
     
     def mtree_df(self,**kwargs):
         if self._mtree_df is None:
